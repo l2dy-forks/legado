@@ -105,17 +105,8 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
     private fun initView() {
         initSearchView()
         binding.tvBookName.setText(R.string.all_read_time)
-        binding.tvRemove.setOnClickListener {
-            alert(R.string.delete, R.string.sure_del) {
-                yesButton {
-                    appDb.readRecordDao.clear()
-                    appDb.dailyReadRecordDao.clear()
-                    initData()
-                    initChart()
-                }
-                noButton()
-            }
-        }
+        // Hide the clear-all button from the summary row; clear is now per-item only
+        binding.tvRemove.visibility = android.view.View.GONE
         binding.recyclerView.adapter = adapter
         binding.recyclerView.applyNavigationBarPadding()
     }

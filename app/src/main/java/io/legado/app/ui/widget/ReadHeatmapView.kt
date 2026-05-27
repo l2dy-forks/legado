@@ -133,6 +133,11 @@ class ReadHeatmapView @JvmOverloads constructor(
         buildDateGrid()
         requestLayout()
         invalidate()
+        // Auto-scroll to the rightmost (most recent) after layout
+        post {
+            scrollX = maxScrollX
+            invalidate()
+        }
     }
 
     private fun buildDateGrid() {
