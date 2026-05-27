@@ -63,6 +63,8 @@ val appDb by lazy {
     Room.databaseBuilder(appCtx, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
         .fallbackToDestructiveMigrationFrom(false, 1, 2, 3, 4, 5, 6, 7, 8, 9)
         .addMigrations(*DatabaseMigrations.migrations)
+        // TODO: 移除 allowMainThreadQueries()，需要确保所有 DAO 调用都在协程中执行
+        // 参考: Book.kt save/delete, BookSourcePart.kt getBookSource 等需要迁移到协程
         .allowMainThreadQueries()
         .addCallback(AppDatabase.dbCallback)
         .build()

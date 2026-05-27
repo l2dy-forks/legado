@@ -86,7 +86,7 @@ class ServerConfigDialog() : BaseDialogFragment(R.layout.dialog_webdav_server, t
                 ).let {
                     binding.flexbox.addView(it.root)
                     it.root.id = index + 1000
-                    it.textInputLayout.hint = rowUi.name
+                    it.tvLabel.text = rowUi.name
                     it.editText.setText(config?.getString(rowUi.name))
                 }
                 RowUi.Type.password -> ItemSourceEditBinding.inflate(
@@ -96,7 +96,7 @@ class ServerConfigDialog() : BaseDialogFragment(R.layout.dialog_webdav_server, t
                 ).let {
                     binding.flexbox.addView(it.root)
                     it.root.id = index + 1000
-                    it.textInputLayout.hint = rowUi.name
+                    it.tvLabel.text = rowUi.name
                     it.editText.inputType =
                         InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT
                     it.editText.setText(config?.getString(rowUi.name))

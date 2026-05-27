@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    compileSdk = compile_sdk_version
+    compileSdk = libs.versions.compile.sdk.get().toInteger()
     namespace = 'com.script'
     kotlin {
         jvmToolchain {
@@ -42,7 +42,7 @@ dependencies {
     api libs.mozilla.rhino
 
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.okhttp)
+    implementation(libs.okio)
     implementation(libs.androidx.collection)
 
 //    def coroutines_version = '1.7.3'

@@ -90,7 +90,7 @@ class RssSourceEditAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 }
             }
             editText.setText(editEntity.value)
-            textInputLayout.hint = editEntity.hint
+            tvLabel.text = editEntity.hint
             val textWatcher = object : TextWatcher {
                 override fun beforeTextChanged(
                     s: CharSequence,

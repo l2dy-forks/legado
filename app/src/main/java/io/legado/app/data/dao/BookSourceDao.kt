@@ -40,7 +40,8 @@ interface BookSourceDao {
         or bookSourceGroup like '%' || :searchKey || '%'
         or bookSourceUrl like '%' || :searchKey || '%'
         or bookSourceComment like '%' || :searchKey || '%' 
-        order by customOrder asc"""
+        order by customOrder asc
+        LIMIT 800"""
     )
     fun search(searchKey: String): List<BookSource>
 

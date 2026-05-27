@@ -66,7 +66,7 @@ class SourceLoginDialog : BaseDialogFragment(R.layout.dialog_login, true) {
                     ).let {
                         binding.flexbox.addView(it.root)
                         it.root.id = index + 1000
-                        it.textInputLayout.hint = rowUi.name
+                        it.tvLabel.text = rowUi.name
                         it.editText.setText(loginInfo?.get(rowUi.name))
                     }
 
@@ -77,7 +77,7 @@ class SourceLoginDialog : BaseDialogFragment(R.layout.dialog_login, true) {
                     ).let {
                         binding.flexbox.addView(it.root)
                         it.root.id = index + 1000
-                        it.textInputLayout.hint = rowUi.name
+                        it.tvLabel.text = rowUi.name
                         it.editText.inputType =
                             InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT
                         it.editText.setText(loginInfo?.get(rowUi.name))

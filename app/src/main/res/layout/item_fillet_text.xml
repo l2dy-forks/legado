@@ -11,6 +11,6 @@
     android:maxLines="1"
     android:paddingHorizontal="12dp"
     android:paddingVertical="4dp"
-    android:textAppearance="?attr/textAppearanceLabelLarge"
+    android:textSize="15sp"
     android:textColor="@color/primaryText"
     tools:ignore="UnusedAttribute" />

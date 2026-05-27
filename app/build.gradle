@@ -21,10 +21,12 @@ static def releaseTime() {
 
 def name = "legado"
 def version = "3." + releaseTime()
-def gitCommits = Integer.parseInt('git rev-list HEAD --count'.execute().text.trim())
+def gitCommits = providers.exec {
+    commandLine('git', 'rev-list', 'HEAD', '--count')
+}.standardOutput.asText.get().trim().toInteger()
 
 android {
-    compileSdk = compile_sdk_version
+    compileSdk = libs.versions.compile.sdk.get().toInteger()
     namespace = 'io.legado.app'
     kotlin {
         jvmToolchain {
@@ -61,8 +63,6 @@ android {
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments += [
-                        "room.incremental"     : "true",
-                        "room.expandProjection": "true",
                         "room.schemaLocation"  : "$projectDir/schemas".toString()
                 ]
             }
