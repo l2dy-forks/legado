@@ -611,6 +611,10 @@
     <string name="web_dav_url">WebDav server address</string>
     <string name="web_dav_account">WebDav account</string>
     <string name="web_dav_account_s">Input your WebDav account</string>
+    <string name="web_dav_test">Test connection</string>
+    <string name="web_dav_test_s">Test WebDav server connection</string>
+    <string name="web_dav_test_success">WebDav connection successful</string>
+    <string name="web_dav_test_fail">WebDav connection failed: %s</string>
     <string name="rss_source">RSS source</string>
     <string name="rss_source_edit">Edit RSS source</string>
     <string name="screen">Filter</string>

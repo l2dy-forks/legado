@@ -50,6 +50,14 @@
             app:allowDividerBelow="false"
             app:iconSpaceReserved="false" />
 
+      <io.legado.app.lib.prefs.Preference
+          android:key="web_dav_test"
+          android:summary="@string/web_dav_test_s"
+          android:title="@string/web_dav_test"
+          app:allowDividerAbove="false"
+          app:allowDividerBelow="false"
+          app:iconSpaceReserved="false" />
+
         <io.legado.app.lib.prefs.SwitchPreference
             android:defaultValue="false"
             android:dependency="syncBookProgress"

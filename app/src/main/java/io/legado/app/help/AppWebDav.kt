@@ -100,6 +100,22 @@ object AppWebDav {
         }
     }
 
+    /**
+     * 测试WebDav连接
+     */
+    suspend fun testConnection(): Result<Boolean> {
+        return kotlin.runCatching {
+            val account = appCtx.getPrefString(PreferKey.webDavAccount)
+            if (account.isNullOrEmpty()) {
+                throw NoStackTraceException(appCtx.getString(R.string.web_dav_account_s))
+            }
+            val password = appCtx.getPrefString(PreferKey.webDavPassword)
+            val mAuthorization = Authorization(account, password ?: "")
+            val webDav = WebDav(rootWebDavUrl, mAuthorization)
+            webDav.check()
+        }
+    }
+
     @Throws(Exception::class)
     suspend fun getBackupNames(): ArrayList<String> {
         val names = arrayListOf<String>()

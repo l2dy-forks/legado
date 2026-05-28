@@ -235,6 +235,7 @@ class BackupConfigFragment : PreferenceFragment(),
             PreferKey.restoreIgnore -> backupIgnore()
             "web_dav_backup" -> backup()
             "web_dav_restore" -> restore()
+            "web_dav_test" -> testWebDav()
             "import_old" -> restoreOld.launch()
         }
         return super.onPreferenceTreeClick(preference)
@@ -257,6 +258,32 @@ class BackupConfigFragment : PreferenceFragment(),
         }
     }
 
+
+    private fun testWebDav() {
+        waitDialog.setText("测试中…")
+        waitDialog.show()
+        lifecycleScope.launch {
+            try {
+                val result = withContext(IO) {
+                    AppWebDav.testConnection()
+                }
+                val success = result.getOrDefault(false)
+                if (success) {
+                    appCtx.toastOnUi(R.string.web_dav_test_success)
+                } else {
+                    appCtx.toastOnUi(
+                        appCtx.getString(R.string.web_dav_test_fail, "连接被拒绝")
+                    )
+                }
+            } catch (e: Throwable) {
+                appCtx.toastOnUi(
+                    appCtx.getString(R.string.web_dav_test_fail, e.localizedMessage)
+                )
+            } finally {
+                waitDialog.dismiss()
+            }
+        }
+    }
 
     fun backup() {
         val backupPath = AppConfig.backupPath
