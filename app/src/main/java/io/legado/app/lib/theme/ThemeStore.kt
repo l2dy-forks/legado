@@ -151,6 +151,56 @@ private constructor(private val mContext: Context) : ThemeStoreInterface {
         return this
     }
 
+    override fun colorOnPrimary(@ColorInt color: Int): ThemeStore {
+        mEditor.putInt(ThemeStorePrefKeys.KEY_COLOR_ON_PRIMARY, color)
+        return this
+    }
+
+    override fun colorPrimaryContainer(@ColorInt color: Int): ThemeStore {
+        mEditor.putInt(ThemeStorePrefKeys.KEY_COLOR_PRIMARY_CONTAINER, color)
+        return this
+    }
+
+    override fun colorOnPrimaryContainer(@ColorInt color: Int): ThemeStore {
+        mEditor.putInt(ThemeStorePrefKeys.KEY_COLOR_ON_PRIMARY_CONTAINER, color)
+        return this
+    }
+
+    override fun colorSecondaryContainer(@ColorInt color: Int): ThemeStore {
+        mEditor.putInt(ThemeStorePrefKeys.KEY_COLOR_SECONDARY_CONTAINER, color)
+        return this
+    }
+
+    override fun colorOnSecondaryContainer(@ColorInt color: Int): ThemeStore {
+        mEditor.putInt(ThemeStorePrefKeys.KEY_COLOR_ON_SECONDARY_CONTAINER, color)
+        return this
+    }
+
+    override fun colorSurface(@ColorInt color: Int): ThemeStore {
+        mEditor.putInt(ThemeStorePrefKeys.KEY_COLOR_SURFACE, color)
+        return this
+    }
+
+    override fun colorOnSurface(@ColorInt color: Int): ThemeStore {
+        mEditor.putInt(ThemeStorePrefKeys.KEY_COLOR_ON_SURFACE, color)
+        return this
+    }
+
+    override fun colorSurfaceVariant(@ColorInt color: Int): ThemeStore {
+        mEditor.putInt(ThemeStorePrefKeys.KEY_COLOR_SURFACE_VARIANT, color)
+        return this
+    }
+
+    override fun colorOnSurfaceVariant(@ColorInt color: Int): ThemeStore {
+        mEditor.putInt(ThemeStorePrefKeys.KEY_COLOR_ON_SURFACE_VARIANT, color)
+        return this
+    }
+
+    override fun colorSurfaceContainer(@ColorInt color: Int): ThemeStore {
+        mEditor.putInt(ThemeStorePrefKeys.KEY_COLOR_SURFACE_CONTAINER, color)
+        return this
+    }
+
     override fun autoGeneratePrimaryDark(autoGenerate: Boolean): ThemeStore {
         mEditor.putBoolean(ThemeStorePrefKeys.KEY_AUTO_GENERATE_PRIMARYDARK, autoGenerate)
         return this
@@ -302,6 +352,98 @@ private constructor(private val mContext: Context) : ThemeStoreInterface {
             return prefs(context).getInt(
                 ThemeStorePrefKeys.KEY_BOTTOM_BACKGROUND,
                 ThemeUtils.resolveColor(context, android.R.attr.colorBackground)
+            )
+        }
+
+        // M3 color token getters
+
+        @CheckResult
+        @ColorInt
+        fun colorOnPrimary(context: Context = appCtx): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_COLOR_ON_PRIMARY,
+                Color.WHITE
+            )
+        }
+
+        @CheckResult
+        @ColorInt
+        fun colorPrimaryContainer(context: Context = appCtx): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_COLOR_PRIMARY_CONTAINER,
+                ColorUtils.blendColors(primaryColor(context), Color.WHITE, 0.6f)
+            )
+        }
+
+        @CheckResult
+        @ColorInt
+        fun colorOnPrimaryContainer(context: Context = appCtx): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_COLOR_ON_PRIMARY_CONTAINER,
+                ColorUtils.blendColors(primaryColor(context), Color.BLACK, 0.7f)
+            )
+        }
+
+        @CheckResult
+        @ColorInt
+        fun colorSecondaryContainer(context: Context = appCtx): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_COLOR_SECONDARY_CONTAINER,
+                ColorUtils.blendColors(accentColor(context), Color.WHITE, 0.6f)
+            )
+        }
+
+        @CheckResult
+        @ColorInt
+        fun colorOnSecondaryContainer(context: Context = appCtx): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_COLOR_ON_SECONDARY_CONTAINER,
+                ColorUtils.blendColors(accentColor(context), Color.BLACK, 0.7f)
+            )
+        }
+
+        @CheckResult
+        @ColorInt
+        fun colorSurface(context: Context = appCtx): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_COLOR_SURFACE,
+                backgroundColor(context)
+            )
+        }
+
+        @CheckResult
+        @ColorInt
+        fun colorOnSurface(context: Context = appCtx): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_COLOR_ON_SURFACE,
+                textColorPrimary(context)
+            )
+        }
+
+        @CheckResult
+        @ColorInt
+        fun colorSurfaceVariant(context: Context = appCtx): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_COLOR_SURFACE_VARIANT,
+                ColorUtils.blendColors(backgroundColor(context), primaryColor(context), 0.05f)
+            )
+        }
+
+        @CheckResult
+        @ColorInt
+        fun colorOnSurfaceVariant(context: Context = appCtx): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_COLOR_ON_SURFACE_VARIANT,
+                textColorSecondary(context)
+            )
+        }
+
+        @CheckResult
+        @ColorInt
+        fun colorSurfaceContainer(context: Context = appCtx): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_COLOR_SURFACE_CONTAINER,
+                ColorUtils.blendColors(backgroundColor(context), primaryColor(context), 0.08f)
             )
         }
 

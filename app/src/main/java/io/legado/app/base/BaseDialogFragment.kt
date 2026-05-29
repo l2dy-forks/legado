@@ -19,6 +19,7 @@ import io.legado.app.help.config.AppConfig
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.lib.theme.ThemeStore
 import io.legado.app.lib.theme.filletBackground
+import io.legado.app.lib.theme.primaryColor
 import io.legado.app.utils.dpToPx
 import io.legado.app.utils.setBackgroundKeepPadding
 import kotlinx.coroutines.CoroutineScope
@@ -85,6 +86,7 @@ abstract class BaseDialogFragment(
         if (!AppConfig.isEInkMode) {
             dialog?.window?.setBackgroundDrawable(requireContext().filletBackground)
         }
+        view.findViewById<View>(R.id.tool_bar)?.setBackgroundColor(requireContext().primaryColor)
         onFragmentCreated(view, savedInstanceState)
         observeLiveBus()
     }

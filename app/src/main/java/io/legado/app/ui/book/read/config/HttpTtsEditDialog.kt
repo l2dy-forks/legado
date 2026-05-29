@@ -13,6 +13,7 @@ import io.legado.app.databinding.DialogHttpTtsEditBinding
 import io.legado.app.lib.dialogs.alert
 import android.graphics.drawable.GradientDrawable
 import io.legado.app.lib.theme.backgroundColor
+import io.legado.app.lib.theme.primaryColor
 import io.legado.app.utils.ColorUtils
 import io.legado.app.ui.about.AppLogDialog
 import io.legado.app.ui.login.SourceLoginActivity
@@ -60,7 +61,7 @@ class HttpTtsEditDialog() : BaseDialogFragment(R.layout.dialog_http_tts_edit, tr
                     cornerRadius, cornerRadius, cornerRadius, cornerRadius,
                     0f, 0f, 0f, 0f
                 )
-                setColor(ColorUtils.shiftColor(bg, 0.9f))
+                setColor(view.context.primaryColor)
             }
         }
         binding.tvUrl.run {

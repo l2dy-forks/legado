@@ -15,6 +15,7 @@ import io.legado.app.databinding.DialogWebdavServerBinding
 import io.legado.app.databinding.ItemSourceEditBinding
 import android.graphics.drawable.GradientDrawable
 import io.legado.app.lib.theme.backgroundColor
+import io.legado.app.lib.theme.primaryColor
 import io.legado.app.lib.theme.accentColor
 import io.legado.app.utils.ColorUtils
 import io.legado.app.utils.GSON
@@ -60,7 +61,7 @@ class ServerConfigDialog() : BaseDialogFragment(R.layout.dialog_webdav_server, t
                     cornerRadius, cornerRadius, cornerRadius, cornerRadius,
                     0f, 0f, 0f, 0f
                 )
-                setColor(ColorUtils.shiftColor(bg, 0.9f))
+                setColor(view.context.primaryColor)
             }
         }
         binding.toolBar.inflateMenu(R.menu.server_config)

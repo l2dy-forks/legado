@@ -11,6 +11,7 @@ import io.legado.app.data.entities.Bookmark
 import io.legado.app.databinding.DialogBookmarkBinding
 import android.graphics.drawable.GradientDrawable
 import io.legado.app.lib.theme.backgroundColor
+import io.legado.app.lib.theme.primaryColor
 import io.legado.app.utils.ColorUtils
 import io.legado.app.utils.setLayout
 import io.legado.app.utils.viewbindingdelegate.viewBinding
@@ -49,7 +50,7 @@ class BookmarkDialog() : BaseDialogFragment(R.layout.dialog_bookmark, true) {
                     cornerRadius, cornerRadius, cornerRadius, cornerRadius,
                     0f, 0f, 0f, 0f
                 )
-                setColor(ColorUtils.shiftColor(bg, 0.9f))
+                setColor(view.context.primaryColor)
             }
         }
         val arguments = arguments ?: let {

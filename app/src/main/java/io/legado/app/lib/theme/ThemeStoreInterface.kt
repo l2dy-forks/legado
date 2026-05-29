@@ -84,6 +84,28 @@ internal interface ThemeStoreInterface {
 
     fun bottomBackground(@ColorInt color: Int): ThemeStore
 
+    // M3 color tokens
+
+    fun colorOnPrimary(@ColorInt color: Int): ThemeStore
+
+    fun colorPrimaryContainer(@ColorInt color: Int): ThemeStore
+
+    fun colorOnPrimaryContainer(@ColorInt color: Int): ThemeStore
+
+    fun colorSecondaryContainer(@ColorInt color: Int): ThemeStore
+
+    fun colorOnSecondaryContainer(@ColorInt color: Int): ThemeStore
+
+    fun colorSurface(@ColorInt color: Int): ThemeStore
+
+    fun colorOnSurface(@ColorInt color: Int): ThemeStore
+
+    fun colorSurfaceVariant(@ColorInt color: Int): ThemeStore
+
+    fun colorOnSurfaceVariant(@ColorInt color: Int): ThemeStore
+
+    fun colorSurfaceContainer(@ColorInt color: Int): ThemeStore
+
     // Commit/apply
 
     fun apply()

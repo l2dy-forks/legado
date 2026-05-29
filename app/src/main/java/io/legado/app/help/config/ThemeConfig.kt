@@ -13,6 +13,7 @@ import io.legado.app.constant.EventBus
 import io.legado.app.constant.PreferKey
 import io.legado.app.constant.Theme
 import io.legado.app.help.DefaultData
+import io.legado.app.lib.theme.M3ColorHelper
 import io.legado.app.lib.theme.ThemeStore
 import io.legado.app.model.BookCover
 import io.legado.app.utils.BitmapUtils
@@ -248,6 +249,19 @@ object ThemeConfig {
                     .backgroundColor(Color.WHITE)
                     .bottomBackground(Color.WHITE)
                     .apply()
+                val eink = M3ColorHelper.computeEInkTokens()
+                ThemeStore.editTheme(this)
+                    .colorOnPrimary(eink.onPrimary)
+                    .colorPrimaryContainer(eink.primaryContainer)
+                    .colorOnPrimaryContainer(eink.onPrimaryContainer)
+                    .colorSecondaryContainer(eink.secondaryContainer)
+                    .colorOnSecondaryContainer(eink.onSecondaryContainer)
+                    .colorSurface(eink.surface)
+                    .colorOnSurface(eink.onSurface)
+                    .colorSurfaceVariant(eink.surfaceVariant)
+                    .colorOnSurfaceVariant(eink.onSurfaceVariant)
+                    .colorSurfaceContainer(eink.surfaceContainer)
+                    .apply()
             }
 
             AppConfig.isNightTheme -> {
@@ -263,11 +277,27 @@ object ThemeConfig {
                 }
                 val bBackground =
                     getPrefInt(PreferKey.cNBBackground, getCompatColor(R.color.md_grey_850))
+                val pColor = ColorUtils.withAlpha(primary, 1f)
+                val aColor = ColorUtils.withAlpha(accent, 1f)
+                val bgColor = ColorUtils.withAlpha(background, 1f)
                 ThemeStore.editTheme(this)
-                    .primaryColor(ColorUtils.withAlpha(primary, 1f))
-                    .accentColor(ColorUtils.withAlpha(accent, 1f))
-                    .backgroundColor(ColorUtils.withAlpha(background, 1f))
+                    .primaryColor(pColor)
+                    .accentColor(aColor)
+                    .backgroundColor(bgColor)
                     .bottomBackground(ColorUtils.withAlpha(bBackground, 1f))
+                    .apply()
+                val m3 = M3ColorHelper.computeTokens(pColor, aColor, bgColor, true)
+                ThemeStore.editTheme(this)
+                    .colorOnPrimary(m3.onPrimary)
+                    .colorPrimaryContainer(m3.primaryContainer)
+                    .colorOnPrimaryContainer(m3.onPrimaryContainer)
+                    .colorSecondaryContainer(m3.secondaryContainer)
+                    .colorOnSecondaryContainer(m3.onSecondaryContainer)
+                    .colorSurface(m3.surface)
+                    .colorOnSurface(m3.onSurface)
+                    .colorSurfaceVariant(m3.surfaceVariant)
+                    .colorOnSurfaceVariant(m3.onSurfaceVariant)
+                    .colorSurfaceContainer(m3.surfaceContainer)
                     .apply()
             }
 
@@ -284,11 +314,27 @@ object ThemeConfig {
                 }
                 val bBackground =
                     getPrefInt(PreferKey.cBBackground, getCompatColor(R.color.md_grey_200))
+                val pColor = ColorUtils.withAlpha(primary, 1f)
+                val aColor = ColorUtils.withAlpha(accent, 1f)
+                val bgColor = ColorUtils.withAlpha(background, 1f)
                 ThemeStore.editTheme(this)
-                    .primaryColor(ColorUtils.withAlpha(primary, 1f))
-                    .accentColor(ColorUtils.withAlpha(accent, 1f))
-                    .backgroundColor(ColorUtils.withAlpha(background, 1f))
+                    .primaryColor(pColor)
+                    .accentColor(aColor)
+                    .backgroundColor(bgColor)
                     .bottomBackground(ColorUtils.withAlpha(bBackground, 1f))
+                    .apply()
+                val m3 = M3ColorHelper.computeTokens(pColor, aColor, bgColor, false)
+                ThemeStore.editTheme(this)
+                    .colorOnPrimary(m3.onPrimary)
+                    .colorPrimaryContainer(m3.primaryContainer)
+                    .colorOnPrimaryContainer(m3.onPrimaryContainer)
+                    .colorSecondaryContainer(m3.secondaryContainer)
+                    .colorOnSecondaryContainer(m3.onSecondaryContainer)
+                    .colorSurface(m3.surface)
+                    .colorOnSurface(m3.onSurface)
+                    .colorSurfaceVariant(m3.surfaceVariant)
+                    .colorOnSurfaceVariant(m3.onSurfaceVariant)
+                    .colorSurfaceContainer(m3.surfaceContainer)
                     .apply()
             }
         }

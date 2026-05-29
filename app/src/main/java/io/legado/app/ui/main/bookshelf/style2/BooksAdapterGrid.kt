@@ -4,12 +4,14 @@ import android.content.Context
 import android.os.Bundle
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.card.MaterialCardView
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookGroup
 import io.legado.app.databinding.ItemBookshelfGridBinding
 import io.legado.app.databinding.ItemBookshelfGridGroupBinding
 import io.legado.app.help.book.isLocal
 import io.legado.app.help.config.AppConfig
+import io.legado.app.lib.theme.colorSurfaceContainer
 import io.legado.app.utils.invisible
 import splitties.views.onLongClick
 
@@ -49,6 +51,7 @@ class BooksAdapterGrid(context: Context, callBack: CallBack) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun onBind(item: Book, position: Int) = binding.run {
+            (root as? MaterialCardView)?.setCardBackgroundColor(context.colorSurfaceContainer)
             tvName.text = item.name
             ivCover.load(item.getDisplayCover(), item.name, item.author, false, item.origin)
             upRefresh(this, item)
@@ -108,6 +111,7 @@ class BooksAdapterGrid(context: Context, callBack: CallBack) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun onBind(item: BookGroup, position: Int) = binding.run {
+            (root as? MaterialCardView)?.setCardBackgroundColor(context.colorSurfaceContainer)
             tvName.text = item.groupName
             ivCover.load(item.cover)
         }

@@ -29,6 +29,7 @@ import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.ThemeConfig
 import io.legado.app.lib.theme.ThemeStore
 import io.legado.app.lib.theme.backgroundColor
+import io.legado.app.lib.theme.colorSurfaceContainer
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.ui.widget.TitleBar
 import io.legado.app.utils.ColorUtils
@@ -143,15 +144,12 @@ abstract class BaseActivity<VB : ViewBinding>(
 
     private val cardBackgroundColor: Int
         get() {
-            val bgColor = backgroundColor
             val prefKey = if (AppConfig.isNightTheme) PreferKey.cNCardBg else PreferKey.cCardBg
             val savedColor = getPrefInt(prefKey)
             return if (savedColor != 0) {
                 savedColor
-            } else if (AppConfig.isNightTheme) {
-                ColorUtils.shiftColor(bgColor, 1.20f)
             } else {
-                ColorUtils.shiftColor(bgColor, 0.80f)
+                colorSurfaceContainer
             }
         }
 
@@ -175,6 +173,8 @@ abstract class BaseActivity<VB : ViewBinding>(
                 val childContent = view.getChildAt(0)
                 // Skip if child content not yet attached — retry next frame
                 if (childContent == null) continue
+                // Skip ActionMode popups (text selection floating toolbar)
+                if (isActionModePopup(view)) continue
                 // Set card-colored rounded background on DecorView itself
                 view.background = GradientDrawable().apply {
                     setColor(cardColor)
@@ -194,6 +194,31 @@ abstract class BaseActivity<VB : ViewBinding>(
         } catch (_: Exception) {
             false
         }
+    }
+
+    /**
+     * 检查 PopupWindow 是否是 ActionMode 弹窗（文本选择浮动工具栏）。
+     * 通过遍历视图层次结构查找 ActionBarContextView / ActionMenuView / FloatingToolbar 来判断。
+     */
+    private fun isActionModePopup(view: View): Boolean {
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                val child = view.getChildAt(i)
+                val name = child.javaClass.name
+                if (name.contains("ActionBarContextView")
+                    || name.contains("ActionMode")
+                    || name.contains("ActionMenuView")
+                    || name.contains("FloatingToolbar")
+                    || name.contains("FloatingActionMode")
+                ) {
+                    return true
+                }
+                if (child is ViewGroup && isActionModePopup(child)) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     open fun onCompatCreateOptionsMenu(menu: Menu) = super.onCreateOptionsMenu(menu)
@@ -274,16 +299,12 @@ abstract class BaseActivity<VB : ViewBinding>(
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        val result = try {
+        return try {
             super.dispatchTouchEvent(ev)
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
             false
         }
-        if (ev.action == MotionEvent.ACTION_UP) {
-            applyRoundedCornersToPopup(retries = 3)
-        }
-        return result
     }
 
     override fun finish() {

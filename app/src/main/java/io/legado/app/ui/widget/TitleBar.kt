@@ -19,6 +19,7 @@ import androidx.core.view.children
 import com.google.android.material.appbar.AppBarLayout
 import io.legado.app.R
 import io.legado.app.help.config.AppConfig
+import io.legado.app.lib.theme.colorOnPrimary
 import io.legado.app.lib.theme.elevation
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.utils.activity

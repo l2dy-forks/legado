@@ -73,6 +73,36 @@ val Context.backgroundColor: Int
 val Context.bottomBackground: Int
     get() = ThemeStore.bottomBackground(this)
 
+val Context.colorOnPrimary: Int
+    get() = ThemeStore.colorOnPrimary(this)
+
+val Context.colorPrimaryContainer: Int
+    get() = ThemeStore.colorPrimaryContainer(this)
+
+val Context.colorOnPrimaryContainer: Int
+    get() = ThemeStore.colorOnPrimaryContainer(this)
+
+val Context.colorSecondaryContainer: Int
+    get() = ThemeStore.colorSecondaryContainer(this)
+
+val Context.colorOnSecondaryContainer: Int
+    get() = ThemeStore.colorOnSecondaryContainer(this)
+
+val Context.colorSurface: Int
+    get() = ThemeStore.colorSurface(this)
+
+val Context.colorOnSurface: Int
+    get() = ThemeStore.colorOnSurface(this)
+
+val Context.colorSurfaceVariant: Int
+    get() = ThemeStore.colorSurfaceVariant(this)
+
+val Context.colorOnSurfaceVariant: Int
+    get() = ThemeStore.colorOnSurfaceVariant(this)
+
+val Context.colorSurfaceContainer: Int
+    get() = ThemeStore.colorSurfaceContainer(this)
+
 val Context.primaryTextColor: Int
     get() = getPrimaryTextColor(isDarkTheme)
 
@@ -99,6 +129,36 @@ val Fragment.backgroundColor: Int
 
 val Fragment.bottomBackground: Int
     get() = ThemeStore.bottomBackground(requireContext())
+
+val Fragment.colorOnPrimary: Int
+    get() = ThemeStore.colorOnPrimary(requireContext())
+
+val Fragment.colorPrimaryContainer: Int
+    get() = ThemeStore.colorPrimaryContainer(requireContext())
+
+val Fragment.colorOnPrimaryContainer: Int
+    get() = ThemeStore.colorOnPrimaryContainer(requireContext())
+
+val Fragment.colorSecondaryContainer: Int
+    get() = ThemeStore.colorSecondaryContainer(requireContext())
+
+val Fragment.colorOnSecondaryContainer: Int
+    get() = ThemeStore.colorOnSecondaryContainer(requireContext())
+
+val Fragment.colorSurface: Int
+    get() = ThemeStore.colorSurface(requireContext())
+
+val Fragment.colorOnSurface: Int
+    get() = ThemeStore.colorOnSurface(requireContext())
+
+val Fragment.colorSurfaceVariant: Int
+    get() = ThemeStore.colorSurfaceVariant(requireContext())
+
+val Fragment.colorOnSurfaceVariant: Int
+    get() = ThemeStore.colorOnSurfaceVariant(requireContext())
+
+val Fragment.colorSurfaceContainer: Int
+    get() = ThemeStore.colorSurfaceContainer(requireContext())
 
 val Fragment.primaryTextColor: Int
     get() = requireContext().getPrimaryTextColor(isDarkTheme)
@@ -143,7 +203,7 @@ val Context.filletBackground: GradientDrawable
     get() {
         val background = GradientDrawable()
         background.cornerRadius = resources.getDimension(R.dimen.dialog_corner_radius)
-        background.setColor(backgroundColor)
+        background.setColor(colorSurface)
         return background
     }
 

@@ -8,8 +8,11 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import io.legado.app.lib.theme.ThemeUtils
 import io.legado.app.lib.theme.accentColor
+import io.legado.app.lib.theme.backgroundColor
 import io.legado.app.lib.theme.isDarkTheme
+import io.legado.app.lib.theme.secondaryTextColor
 import io.legado.app.utils.dpToPx
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -90,29 +93,40 @@ class ReadHeatmapView @JvmOverloads constructor(
     init {
         try {
             val isDark = context.isDarkTheme
+            val accent = context.accentColor
+            val bg = context.backgroundColor
             emptyColor = if (isDark) {
-                0xFF161B22.toInt()
+                blendColor(bg, 0xFFFFFFFF.toInt(), 0.1f)
             } else {
-                0xFFEBEDF0.toInt()
+                blendColor(bg, 0xFF000000.toInt(), 0.05f)
             }
             levelColors = if (isDark) {
                 intArrayOf(
-                    0xFF0E4429.toInt(),
-                    0xFF006D32.toInt(),
-                    0xFF26A641.toInt(),
-                    0xFF39D353.toInt()
+                    blendColor(accent, bg, 0.85f),
+                    blendColor(accent, bg, 0.6f),
+                    blendColor(accent, bg, 0.35f),
+                    accent
                 )
             } else {
                 intArrayOf(
-                    0xFF9BE9A8.toInt(),
-                    0xFF40C463.toInt(),
-                    0xFF30A14E.toInt(),
-                    0xFF216E39.toInt()
+                    blendColor(accent, 0xFFFFFFFF.toInt(), 0.8f),
+                    blendColor(accent, 0xFFFFFFFF.toInt(), 0.55f),
+                    blendColor(accent, 0xFFFFFFFF.toInt(), 0.3f),
+                    accent
                 )
             }
-            textPaint.color = if (isDark) 0xFF8B949E.toInt() else 0xFF656D76.toInt()
-            tooltipBgPaint.color = if (isDark) 0xFF2D333B.toInt() else 0xFFFFFFFF.toInt()
-            tooltipPaint.color = if (isDark) 0xFFFFFFFF.toInt() else 0xFF24292F.toInt()
+            textPaint.color = context.secondaryTextColor
+            val tooltipTextColor = ThemeUtils.resolveColor(
+                context,
+                com.google.android.material.R.attr.colorOnSurface,
+                if (isDark) 0xFFFFFFFF.toInt() else 0xFF24292F.toInt()
+            )
+            tooltipBgPaint.color = ThemeUtils.resolveColor(
+                context,
+                com.google.android.material.R.attr.colorSurface,
+                if (isDark) 0xFF2D333B.toInt() else 0xFFFFFFFF.toInt()
+            )
+            tooltipPaint.color = tooltipTextColor
         } catch (e: Exception) {
             emptyColor = 0xFFEBEDF0.toInt()
             levelColors = intArrayOf(
@@ -326,5 +340,14 @@ class ReadHeatmapView @JvmOverloads constructor(
             mins > 0 -> "${mins}分钟"
             else -> "<1分钟"
         }
+    }
+
+    private fun blendColor(color1: Int, color2: Int, ratio: Float): Int {
+        val inverseRatio = 1f - ratio
+        val a = (android.graphics.Color.alpha(color1) * inverseRatio + android.graphics.Color.alpha(color2) * ratio).toInt()
+        val r = (android.graphics.Color.red(color1) * inverseRatio + android.graphics.Color.red(color2) * ratio).toInt()
+        val g = (android.graphics.Color.green(color1) * inverseRatio + android.graphics.Color.green(color2) * ratio).toInt()
+        val b = (android.graphics.Color.blue(color1) * inverseRatio + android.graphics.Color.blue(color2) * ratio).toInt()
+        return android.graphics.Color.argb(a, r, g, b)
     }
 }

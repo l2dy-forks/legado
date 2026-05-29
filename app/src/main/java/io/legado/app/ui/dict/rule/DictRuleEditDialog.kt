@@ -16,7 +16,7 @@ import io.legado.app.data.entities.DictRule
 import io.legado.app.databinding.DialogDictRuleEditBinding
 import android.graphics.drawable.GradientDrawable
 import io.legado.app.lib.theme.backgroundColor
-import io.legado.app.utils.ColorUtils
+import io.legado.app.lib.theme.primaryColor
 import io.legado.app.utils.*
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 
@@ -51,7 +51,7 @@ class DictRuleEditDialog() : BaseDialogFragment(R.layout.dialog_dict_rule_edit, 
                     cornerRadius, cornerRadius, cornerRadius, cornerRadius,
                     0f, 0f, 0f, 0f
                 )
-                setColor(ColorUtils.shiftColor(bg, 0.9f))
+                setColor(view.context.primaryColor)
             }
         }
         binding.toolBar.inflateMenu(R.menu.dict_rule_edit)

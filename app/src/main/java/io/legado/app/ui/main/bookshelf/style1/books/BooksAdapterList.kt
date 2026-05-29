@@ -3,6 +3,7 @@ package io.legado.app.ui.main.bookshelf.style1.books
 import android.content.Context
 import android.os.Bundle
 import android.view.ViewGroup
+import com.google.android.material.card.MaterialCardView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import io.legado.app.base.adapter.ItemViewHolder
@@ -10,6 +11,7 @@ import io.legado.app.data.entities.Book
 import io.legado.app.databinding.ItemBookshelfListBinding
 import io.legado.app.help.book.isLocal
 import io.legado.app.help.config.AppConfig
+import io.legado.app.lib.theme.colorSurfaceContainer
 import io.legado.app.utils.invisible
 import io.legado.app.utils.toTimeAgo
 import splitties.views.onLongClick
@@ -31,6 +33,7 @@ class BooksAdapterList(
         item: Book,
         payloads: MutableList<Any>
     ) = binding.run {
+        (root as? MaterialCardView)?.setCardBackgroundColor(context.colorSurfaceContainer)
         if (payloads.isEmpty()) {
             tvName.text = item.name
             tvAuthor.text = item.author

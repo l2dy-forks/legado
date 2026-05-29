@@ -4,12 +4,14 @@ import android.content.res.ColorStateList
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
+import android.view.ViewGroup
 import androidx.preference.PreferenceGroup
 import androidx.preference.PreferenceViewHolder
 import io.legado.app.R
 import io.legado.app.constant.PreferKey
 import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.theme.backgroundColor
+import io.legado.app.lib.theme.colorSurfaceContainer
 import io.legado.app.utils.ColorUtils
 import io.legado.app.utils.getPrefInt
 
@@ -36,6 +38,14 @@ object CardPositionHelper {
             }
         }
         view.background = createDrawable(ctx, position, cornerRadius)
+        if (position == CardPosition.FIRST || position == CardPosition.SINGLE) {
+            if (!hasVisibleCategoryAbove(preference)) {
+                val topMargin = ctx.resources.getDimensionPixelSize(R.dimen.prefs_card_margin_horizontal)
+                val lp = view.layoutParams as? ViewGroup.MarginLayoutParams ?: return
+                lp.topMargin = topMargin
+                view.layoutParams = lp
+            }
+        }
     }
 
     /**
@@ -54,15 +64,12 @@ object CardPositionHelper {
         position: CardPosition,
         cornerRadius: Float
     ): Drawable {
-        val bgColor = ctx.backgroundColor
         val prefKey = if (AppConfig.isNightTheme) PreferKey.cNCardBg else PreferKey.cCardBg
         val savedColor = ctx.getPrefInt(prefKey)
         val cardColor = if (savedColor != 0) {
             savedColor
-        } else if (AppConfig.isNightTheme) {
-            ColorUtils.shiftColor(bgColor, 1.05f)
         } else {
-            ColorUtils.shiftColor(bgColor, 0.95f)
+            ctx.colorSurfaceContainer
         }
         val rippleColor = if (AppConfig.isNightTheme) 0x20FFFFFF else 0x20000000
 
@@ -113,6 +120,16 @@ object CardPositionHelper {
             }
             else -> {}
         }
+    }
+
+    private fun hasVisibleCategoryAbove(preference: androidx.preference.Preference): Boolean {
+        val parent = preference.parent ?: return false
+        for (i in 0 until parent.preferenceCount) {
+            val sibling = parent.getPreference(i)
+            if (sibling === preference) break
+            if (sibling is PreferenceCategory && sibling.isVisible) return true
+        }
+        return false
     }
 
     private fun computeCardPosition(preference: androidx.preference.Preference): CardPosition {

@@ -24,6 +24,18 @@ object ThemeStorePrefKeys {
     const val KEY_BACKGROUND_COLOR = "backgroundColor"
     const val KEY_BOTTOM_BACKGROUND = "bottomBackground"
 
+    // M3 color tokens
+    const val KEY_COLOR_ON_PRIMARY = "m3_color_on_primary"
+    const val KEY_COLOR_PRIMARY_CONTAINER = "m3_color_primary_container"
+    const val KEY_COLOR_ON_PRIMARY_CONTAINER = "m3_color_on_primary_container"
+    const val KEY_COLOR_SECONDARY_CONTAINER = "m3_color_secondary_container"
+    const val KEY_COLOR_ON_SECONDARY_CONTAINER = "m3_color_on_secondary_container"
+    const val KEY_COLOR_SURFACE = "m3_color_surface"
+    const val KEY_COLOR_ON_SURFACE = "m3_color_on_surface"
+    const val KEY_COLOR_SURFACE_VARIANT = "m3_color_surface_variant"
+    const val KEY_COLOR_ON_SURFACE_VARIANT = "m3_color_on_surface_variant"
+    const val KEY_COLOR_SURFACE_CONTAINER = "m3_color_surface_container"
+
     const val KEY_APPLY_PRIMARYDARK_STATUSBAR = "apply_primarydark_statusbar"
     const val KEY_APPLY_PRIMARY_NAVBAR = "apply_primary_navbar"
     const val KEY_AUTO_GENERATE_PRIMARYDARK = "auto_generate_primarydark"

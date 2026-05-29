@@ -3,11 +3,13 @@ package io.legado.app.ui.main.bookshelf.style1.books
 import android.content.Context
 import android.os.Bundle
 import android.view.ViewGroup
+import com.google.android.material.card.MaterialCardView
 import io.legado.app.base.adapter.ItemViewHolder
 import io.legado.app.data.entities.Book
 import io.legado.app.databinding.ItemBookshelfGridBinding
 import io.legado.app.help.book.isLocal
 import io.legado.app.help.config.AppConfig
+import io.legado.app.lib.theme.colorSurfaceContainer
 import io.legado.app.utils.invisible
 import splitties.views.onLongClick
 
@@ -24,6 +26,7 @@ class BooksAdapterGrid(context: Context, private val callBack: CallBack) :
         item: Book,
         payloads: MutableList<Any>
     ) = binding.run {
+        (root as? MaterialCardView)?.setCardBackgroundColor(context.colorSurfaceContainer)
         if (payloads.isEmpty()) {
             tvName.text = item.name
             ivCover.load(item.getDisplayCover(), item.name, item.author, false, item.origin)

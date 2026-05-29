@@ -7,6 +7,7 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import com.bumptech.glide.request.RequestOptions
+import com.google.android.material.card.MaterialCardView
 import io.legado.app.R
 import io.legado.app.base.adapter.ItemViewHolder
 import io.legado.app.base.adapter.RecyclerAdapter
@@ -14,6 +15,7 @@ import io.legado.app.data.entities.RssSource
 import io.legado.app.databinding.ItemRssBinding
 import io.legado.app.help.glide.ImageLoader
 import io.legado.app.help.glide.OkHttpModelLoader
+import io.legado.app.lib.theme.colorSurfaceContainer
 import splitties.views.onLongClick
 
 class RssAdapter(
@@ -34,6 +36,7 @@ class RssAdapter(
         payloads: MutableList<Any>
     ) {
         binding.apply {
+            (root as? MaterialCardView)?.setCardBackgroundColor(context.colorSurfaceContainer)
             tvName.text = item.sourceName
             val options = RequestOptions()
                 .set(OkHttpModelLoader.sourceOriginOption, item.sourceUrl)

@@ -4,6 +4,19 @@
     <color name="primaryDark">@color/md_blue_grey_700</color>
     <color name="accent">@color/md_deep_orange_800</color>
 
+    <!-- M3 derived colors - Night mode defaults -->
+    <color name="m3_on_primary">#FF381E72</color>
+    <color name="m3_primary_container">#FF4F378B</color>
+    <color name="m3_on_primary_container">#FFEADDFF</color>
+    <color name="m3_on_secondary">#FF332D41</color>
+    <color name="m3_secondary_container">#FF4A4458</color>
+    <color name="m3_on_secondary_container">#FFE8DEF8</color>
+    <color name="m3_surface">#FF141218</color>
+    <color name="m3_on_surface">#FFE6E0E9</color>
+    <color name="m3_surface_variant">#FF49454F</color>
+    <color name="m3_on_surface_variant">#FFCAC4D0</color>
+    <color name="m3_surface_container">#FF211F26</color>
+
     <color name="disabled">@color/md_dark_disabled</color>
 
     <color name="background">@color/md_grey_900</color>

@@ -20,6 +20,7 @@ import io.legado.app.databinding.ItemSourceEditBinding
 import io.legado.app.lib.dialogs.alert
 import android.graphics.drawable.GradientDrawable
 import io.legado.app.lib.theme.backgroundColor
+import io.legado.app.lib.theme.primaryColor
 import io.legado.app.lib.theme.accentColor
 import io.legado.app.utils.ColorUtils
 import io.legado.app.ui.about.AppLogDialog
@@ -68,7 +69,7 @@ class SourceLoginDialog : BaseDialogFragment(R.layout.dialog_login, true) {
                     cornerRadius, cornerRadius, cornerRadius, cornerRadius,
                     0f, 0f, 0f, 0f
                 )
-                setColor(ColorUtils.shiftColor(bg, 0.9f))
+                setColor(view.context.primaryColor)
             }
         }
         val source = viewModel.source ?: return

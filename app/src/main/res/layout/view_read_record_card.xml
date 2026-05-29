@@ -34,28 +34,26 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
-                <TextView
+                <io.legado.app.ui.widget.text.PrimaryTextView
                     android:id="@+id/tv_today_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/primaryText"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     tools:text="2小时30分" />
 
-                <TextView
+                <io.legado.app.ui.widget.text.SecondaryTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/today_read_time"
-                    android:textColor="@color/secondaryText"
                     android:textSize="12sp" />
             </LinearLayout>
 
             <!-- Divider -->
             <View
+                android:id="@+id/divider_2"
                 android:layout_width="1dp"
-                android:layout_height="36dp"
-                android:background="@color/divider" />
+                android:layout_height="36dp" />
 
             <!-- Consecutive days -->
             <LinearLayout
@@ -65,28 +63,26 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
-                <TextView
+                <io.legado.app.ui.widget.text.PrimaryTextView
                     android:id="@+id/tv_consecutive_days"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/primaryText"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     tools:text="7天" />
 
-                <TextView
+                <io.legado.app.ui.widget.text.SecondaryTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/consecutive_days"
-                    android:textColor="@color/secondaryText"
                     android:textSize="12sp" />
             </LinearLayout>
 
             <!-- Divider -->
             <View
+                android:id="@+id/divider_1"
                 android:layout_width="1dp"
-                android:layout_height="36dp"
-                android:background="@color/divider" />
+                android:layout_height="36dp" />
 
             <!-- Total books -->
             <LinearLayout
@@ -96,20 +92,18 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
-                <TextView
+                <io.legado.app.ui.widget.text.PrimaryTextView
                     android:id="@+id/tv_total_books"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/primaryText"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     tools:text="12本" />
 
-                <TextView
+                <io.legado.app.ui.widget.text.SecondaryTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/total_books_read"
-                    android:textColor="@color/secondaryText"
                     android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>

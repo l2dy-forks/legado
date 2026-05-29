@@ -21,7 +21,9 @@ import io.legado.app.constant.PreferKey
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.LocalConfig
 import io.legado.app.lib.dialogs.alert
+import io.legado.app.lib.theme.colorSurfaceContainer
 import io.legado.app.lib.theme.primaryTextColor
+import io.legado.app.lib.theme.secondaryTextColor
 import io.legado.app.ui.book.search.SearchActivity
 import io.legado.app.ui.widget.ReadBarChartView
 import io.legado.app.utils.applyNavigationBarPadding
@@ -110,6 +112,16 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
         binding.tvRemove.visibility = android.view.View.GONE
         binding.recyclerView.adapter = adapter
         binding.recyclerView.applyNavigationBarPadding()
+        // Divider colors from theme
+        val dividerColor = secondaryTextColor and 0x33FFFFFF
+        binding.cardChartInclude.divider1.setBackgroundColor(dividerColor)
+        binding.cardChartInclude.divider2.setBackgroundColor(dividerColor)
+        // Card background colors from theme
+        val prefKey = if (AppConfig.isNightTheme) PreferKey.cNCardBg else PreferKey.cCardBg
+        val savedColor = getPrefInt(prefKey)
+        val cardBg = if (savedColor != 0) savedColor else colorSurfaceContainer
+        binding.cardChartInclude.cardChart.setCardBackgroundColor(cardBg)
+        binding.cardSummary.setCardBackgroundColor(cardBg)
     }
 
     private fun initSearchView() {
@@ -270,6 +282,11 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
         RecyclerAdapter<ReadRecordShow, ItemReadRecordBinding>(context) {
 
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        private val cardBg: Int = run {
+            val prefKey = if (AppConfig.isNightTheme) PreferKey.cNCardBg else PreferKey.cCardBg
+            val saved = getPrefInt(prefKey)
+            if (saved != 0) saved else colorSurfaceContainer
+        }
 
         override fun getViewBinding(parent: ViewGroup): ItemReadRecordBinding {
             return ItemReadRecordBinding.inflate(inflater, parent, false)
@@ -281,6 +298,8 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
             item: ReadRecordShow,
             payloads: MutableList<Any>,
         ) {
+            (holder.itemView as? com.google.android.material.card.MaterialCardView)
+                ?.setCardBackgroundColor(cardBg)
             binding.apply {
                 tvBookName.text = item.bookName
                 tvReadingTime.text = formatDuring(item.readTime)
