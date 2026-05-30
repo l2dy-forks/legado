@@ -110,7 +110,8 @@ val Context.colorSurfaceContainer: Int
  */
 val Context.cardBackgroundColor: Int
     get() {
-        val prefKey = if (isDarkTheme) PreferKey.cNCardBg else PreferKey.cCardBg
+        if (AppConfig.isEInkMode) return backgroundColor
+        val prefKey = if (AppConfig.isNightTheme) PreferKey.cNCardBg else PreferKey.cCardBg
         val savedColor = getPrefInt(prefKey)
         return if (savedColor != 0) savedColor else colorSurfaceContainer
     }
@@ -120,7 +121,7 @@ val Context.cardBackgroundColor: Int
  */
 val Context.menuBackgroundColor: Int
     get() {
-        val prefKey = if (isDarkTheme) PreferKey.cNCardBg else PreferKey.cCardBg
+        val prefKey = if (AppConfig.isNightTheme) PreferKey.cNCardBg else PreferKey.cCardBg
         val savedColor = getPrefInt(prefKey)
         return if (savedColor != 0) savedColor else backgroundColor
     }
@@ -133,10 +134,18 @@ val Context.menuBackgroundColor: Int
  */
 val Context.popupBackgroundColor: Int
     get() {
-        val prefKey = if (isDarkTheme) PreferKey.cNPopupBg else PreferKey.cPopupBg
+        if (AppConfig.isEInkMode) return backgroundColor
+        val prefKey = if (AppConfig.isNightTheme) PreferKey.cNPopupBg else PreferKey.cPopupBg
         val savedColor = getPrefInt(prefKey)
         return if (savedColor != 0) savedColor else cardBackgroundColor
     }
+
+/**
+ * 浮窗/弹出菜单文字主色：根据 popupBackgroundColor 的明暗自动选择
+ * 浅色背景 → 深色文字，深色背景 → 白色文字
+ */
+val Context.popupPrimaryTextColor: Int
+    get() = getPrimaryTextColor(ColorUtils.isColorLight(popupBackgroundColor))
 
 val Context.iconTintColor: Int
     get() = colorOnSurface
@@ -206,6 +215,9 @@ val Fragment.menuBackgroundColor: Int
 
 val Fragment.popupBackgroundColor: Int
     get() = requireContext().popupBackgroundColor
+
+val Fragment.popupPrimaryTextColor: Int
+    get() = requireContext().popupPrimaryTextColor
 
 val Fragment.iconTintColor: Int
     get() = requireContext().iconTintColor

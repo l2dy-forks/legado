@@ -8,6 +8,7 @@ import io.legado.app.base.adapter.RecyclerAdapter
 import io.legado.app.databinding.ItemTextBinding
 import io.legado.app.databinding.PopupActionBinding
 import io.legado.app.lib.dialogs.SelectItem
+import io.legado.app.lib.theme.popupPrimaryTextColor
 
 class PopupAction(private val context: Context) : ThemedPopupWindow(context) {
 
@@ -52,6 +53,7 @@ class PopupAction(private val context: Context) : ThemedPopupWindow(context) {
         ) {
             with(binding) {
                 textView.text = item.title
+                textView.setTextColor(context.popupPrimaryTextColor)
             }
         }
 

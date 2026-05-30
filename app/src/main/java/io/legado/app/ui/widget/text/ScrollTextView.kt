@@ -11,8 +11,11 @@ import android.view.ViewConfiguration
 import android.view.animation.Interpolator
 import android.widget.OverScroller
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
-import io.legado.app.lib.theme.secondaryTextColor
+import io.legado.app.R
+import io.legado.app.help.config.AppConfig
+import io.legado.app.lib.theme.colorOnSurface
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -26,7 +29,11 @@ class ScrollTextView(context: Context, attrs: AttributeSet?) :
 
     init {
         if (!isInEditMode) {
-            setTextColor(context.secondaryTextColor)
+            // 墨水屏使用纯黑文字；其他主题使用 primaryText，自动跟随夜间模式切换
+            setTextColor(
+                if (AppConfig.isEInkMode) context.colorOnSurface
+                else ContextCompat.getColor(context, R.color.primaryText)
+            )
         }
     }
 

@@ -2,6 +2,7 @@
 <androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:divider="@color/transparent"
+    android:dividerHeight="0dp"
     app:allowDividerBelow="false">
 
     <!-- 内容源管理 -->

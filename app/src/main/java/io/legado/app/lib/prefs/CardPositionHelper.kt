@@ -38,14 +38,18 @@ object CardPositionHelper {
             }
         }
         view.background = createDrawable(ctx, position, cornerRadius)
+        val lp = view.layoutParams as? ViewGroup.MarginLayoutParams ?: return
         if (position == CardPosition.FIRST || position == CardPosition.SINGLE) {
             if (!hasVisibleCategoryAbove(preference)) {
-                val topMargin = ctx.resources.getDimensionPixelSize(R.dimen.prefs_card_margin_horizontal)
-                val lp = view.layoutParams as? ViewGroup.MarginLayoutParams ?: return
-                lp.topMargin = topMargin
-                view.layoutParams = lp
+                lp.topMargin = ctx.resources.getDimensionPixelSize(R.dimen.prefs_card_margin_horizontal)
+            } else {
+                lp.topMargin = 0
             }
+        } else {
+            // Reset topMargin for MIDDLE/LAST to avoid stale margin from recycled views
+            lp.topMargin = 0
         }
+        view.layoutParams = lp
     }
 
     /**
@@ -66,7 +70,9 @@ object CardPositionHelper {
     ): Drawable {
         val prefKey = if (AppConfig.isNightTheme) PreferKey.cNCardBg else PreferKey.cCardBg
         val savedColor = ctx.getPrefInt(prefKey)
-        val cardColor = if (savedColor != 0) {
+        val cardColor = if (AppConfig.isEInkMode) {
+            ctx.backgroundColor
+        } else if (savedColor != 0) {
             savedColor
         } else {
             ctx.colorSurfaceContainer

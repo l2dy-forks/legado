@@ -9,6 +9,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.view.isGone
+import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.preference.PreferenceViewHolder
 import io.legado.app.R
@@ -56,7 +57,7 @@ open class Preference(context: Context, attrs: AttributeSet) :
             val tvSummary = viewHolder.findViewById(R.id.preference_desc) as? TextView
             tvSummary?.let {
                 tvSummary.text = summary
-                tvSummary.isGone = summary.isNullOrEmpty()
+                tvSummary.isInvisible = summary.isNullOrEmpty()
             }
             if (isBottomBackground && !viewHolder.itemView.isInEditMode) {
                 val isLight = ColorUtils.isColorLight(context.bottomBackground)

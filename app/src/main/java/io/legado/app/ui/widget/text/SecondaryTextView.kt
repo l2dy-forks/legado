@@ -3,7 +3,10 @@ package io.legado.app.ui.widget.text
 import android.content.Context
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
-import io.legado.app.lib.theme.secondaryTextColor
+import androidx.core.content.ContextCompat
+import io.legado.app.R
+import io.legado.app.help.config.AppConfig
+import io.legado.app.lib.theme.colorOnSurfaceVariant
 
 /**
  * @author Aidan Follestad (afollestad)
@@ -13,6 +16,9 @@ class SecondaryTextView(context: Context, attrs: AttributeSet) :
     AppCompatTextView(context, attrs) {
 
     init {
-        setTextColor(context.secondaryTextColor)
+        setTextColor(
+            if (AppConfig.isEInkMode) context.colorOnSurfaceVariant
+            else ContextCompat.getColor(context, R.color.secondaryText)
+        )
     }
 }

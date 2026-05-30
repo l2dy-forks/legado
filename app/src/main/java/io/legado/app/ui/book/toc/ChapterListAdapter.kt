@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
+import androidx.core.content.ContextCompat
 import io.legado.app.R
 import io.legado.app.base.adapter.DiffRecyclerAdapter
 import io.legado.app.base.adapter.ItemViewHolder
@@ -23,7 +24,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
-import io.legado.app.lib.theme.primaryTextColor
 import io.legado.app.lib.theme.cardBackgroundColor
 
 class ChapterListAdapter(context: Context, val callback: Callback) :
@@ -132,7 +132,7 @@ class ChapterListAdapter(context: Context, val callback: Callback) :
                 if (isDur) {
                     tvChapterName.setTextColor(context.accentColor)
                 } else {
-                    tvChapterName.setTextColor(context.primaryTextColor)
+                    tvChapterName.setTextColor(ContextCompat.getColor(context, R.color.primaryText))
                 }
                 tvChapterName.text = getDisplayTitle(item)
                 if (item.isVolume) {

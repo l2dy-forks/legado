@@ -104,6 +104,7 @@
         <io.legado.app.lib.prefs.ColorPreference
             android:defaultValue="@color/background_card"
             android:key="colorCardBg"
+                        android:summary="@string/card_bg_desc"
             android:title="@string/card_background_color"
             app:cpv_dialogType="preset"
             app:iconSpaceReserved="false" />
@@ -111,6 +112,7 @@
         <io.legado.app.lib.prefs.ColorPreference
             android:defaultValue="@color/background_card"
             android:key="colorPopupBg"
+                        android:summary="@string/popup_bg_desc"
             android:title="@string/popup_background_color"
             app:cpv_dialogType="preset"
             app:iconSpaceReserved="false" />
@@ -118,6 +120,7 @@
         <io.legado.app.lib.prefs.ColorPreference
             android:defaultValue="@color/md_red_600"
             android:key="colorTextAccent"
+                        android:summary="@string/text_accent_desc"
             android:title="@string/text_accent_color"
             app:cpv_dialogType="preset"
             app:iconSpaceReserved="false" />
@@ -179,6 +182,7 @@
         <io.legado.app.lib.prefs.ColorPreference
             android:defaultValue="@color/md_grey_850"
             android:key="colorCardBgNight"
+                        android:summary="@string/card_bg_desc"
             android:title="@string/card_background_color"
             app:cpv_dialogType="preset"
             app:iconSpaceReserved="false" />
@@ -186,6 +190,7 @@
         <io.legado.app.lib.prefs.ColorPreference
             android:defaultValue="@color/md_grey_850"
             android:key="colorPopupBgNight"
+                        android:summary="@string/popup_bg_desc"
             android:title="@string/popup_background_color"
             app:cpv_dialogType="preset"
             app:iconSpaceReserved="false" />
@@ -193,6 +198,7 @@
         <io.legado.app.lib.prefs.ColorPreference
             android:defaultValue="@color/md_deep_orange_800"
             android:key="colorTextAccentNight"
+                        android:summary="@string/text_accent_desc"
             android:title="@string/text_accent_color"
             app:cpv_dialogType="preset"
             app:iconSpaceReserved="false" />

@@ -66,6 +66,7 @@ import io.legado.app.utils.GSON
 import io.legado.app.utils.StartActivityContract
 import io.legado.app.utils.applyNavigationBarPadding
 import io.legado.app.utils.dpToPx
+import io.legado.app.utils.getCompatColor
 import io.legado.app.utils.gone
 import io.legado.app.utils.longToastOnUi
 import io.legado.app.utils.openFileUri

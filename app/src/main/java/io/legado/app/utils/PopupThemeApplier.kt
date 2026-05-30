@@ -9,7 +9,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
 import android.widget.AbsListView
+import android.widget.TextView
 import io.legado.app.lib.theme.popupBackgroundColor
+import io.legado.app.utils.ColorUtils
 
 internal object PopupThemeApplier {
 
@@ -27,6 +29,11 @@ internal object PopupThemeApplier {
             val viewsField = wmClass.getDeclaredField("mViews").apply { isAccessible = true }
             val views = viewsField.get(instance) as? List<*> ?: return false
             val cardColor = context.popupBackgroundColor
+            val textColor = if (ColorUtils.isColorLight(cardColor)) {
+                0xDE000000.toInt()  // 深色文字用于浅色背景
+            } else {
+                0xFFFFFFFF.toInt()  // 白色文字用于深色背景
+            }
             val radius = context.resources.displayMetrics.density * 12f
 
             for (view in views) {
@@ -48,7 +55,10 @@ internal object PopupThemeApplier {
                 applyTransparentLayer(view)
                 bgView?.let { applyTransparentLayer(it) }
                 val animatedLayer = findPopupContentLayer(contentView ?: bgView ?: view)
-                animatedLayer?.let { applyRoundedLayer(it, cardColor, radius) }
+                animatedLayer?.let {
+                    applyRoundedLayer(it, cardColor, radius)
+                    applyTextColorToPopup(it, textColor)
+                }
                 themed = true
             }
         } catch (_: Exception) {
@@ -58,6 +68,11 @@ internal object PopupThemeApplier {
 
     fun applyMenuItemParents(context: Context, parent: View?) {
         val cardColor = context.popupBackgroundColor
+        val textColor = if (ColorUtils.isColorLight(cardColor)) {
+            0xDE000000.toInt()
+        } else {
+            0xFFFFFFFF.toInt()
+        }
         val radius = context.resources.displayMetrics.density * 12f
         var view = parent
         var depth = 0
@@ -65,6 +80,7 @@ internal object PopupThemeApplier {
         while (view != null && depth < MAX_PARENT_DEPTH) {
             if (!contentApplied && isPopupContentLayer(view)) {
                 applyRoundedLayer(view, cardColor, radius)
+                applyTextColorToPopup(view, textColor)
                 contentApplied = true
             } else if (isPopupContainerLayer(view)) {
                 applyTransparentLayer(view)
@@ -93,6 +109,27 @@ internal object PopupThemeApplier {
     private fun applyTransparentLayer(view: View) {
         view.background = ColorDrawable(Color.TRANSPARENT)
         view.clipToOutline = false
+    }
+
+    /**
+     * 遍历弹出层中的所有 TextView，统一设置文字颜色以适配自定义浮窗背景。
+     * 延迟执行以等待系统填充列表项。
+     */
+    private fun applyTextColorToPopup(popupContentView: View, textColor: Int) {
+        popupContentView.post {
+            applyTextColorRecursive(popupContentView, textColor)
+        }
+    }
+
+    private fun applyTextColorRecursive(view: View, textColor: Int) {
+        if (view is TextView) {
+            view.setTextColor(textColor)
+        }
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                applyTextColorRecursive(view.getChildAt(i), textColor)
+            }
+        }
     }
 
     private fun findPopupContentLayer(view: View?): View? {

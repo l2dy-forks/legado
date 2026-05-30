@@ -728,6 +728,17 @@
     <string name="background_color">背景色</string>
     <string name="navbar_color">底部操作栏颜色</string>
     <string name="card_background_color">卡片背景色</string>
+    <string name="day_color_primary_desc">Toolbar、TitleBar 等顶部栏的背景色</string>
+    <string name="day_color_accent_desc">按钮、选中态、链接等强调元素的颜色</string>
+    <string name="day_background_desc">页面主体背景色，影响所有 Activity 和 Fragment</string>
+    <string name="day_navbar_desc">底部导航栏的背景色</string>
+    <string name="card_bg_desc">列表卡片、RecyclerView 条目的背景色</string>
+    <string name="popup_bg_desc">弹出菜单、Dialog、Spinner 下拉的背景色</string>
+    <string name="text_accent_desc">可点击文字、标签等文字强调色</string>
+    <string name="night_primary_desc">夜间模式下顶部栏的背景色</string>
+    <string name="night_accent_desc">夜间模式下按钮、选中态等强调色</string>
+    <string name="night_background_desc">夜间模式下页面主体背景色</string>
+    <string name="night_navbar_desc">夜间模式下底部导航栏的背景色</string>
     <string name="text_accent_color">文字强调色</string>
     <string name="day">白天</string>
     <string name="day_color_primary">白天，主色调</string>

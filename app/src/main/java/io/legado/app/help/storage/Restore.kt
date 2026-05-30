@@ -272,7 +272,7 @@ object Restore {
                     }
                 }
             }
-            edit.apply()
+            edit.commit()
         }
         ReadBookConfig.apply {
             comicStyleSelect = appCtx.getPrefInt(PreferKey.comicStyleSelect)

@@ -43,6 +43,7 @@
                     tools:text="2小时30分" />
 
                 <io.legado.app.ui.widget.text.SecondaryTextView
+                    android:id="@+id/tv_today_time_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/today_read_time"
@@ -72,6 +73,7 @@
                     tools:text="7天" />
 
                 <io.legado.app.ui.widget.text.SecondaryTextView
+                    android:id="@+id/tv_consecutive_days_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/consecutive_days"
@@ -101,6 +103,7 @@
                     tools:text="12本" />
 
                 <io.legado.app.ui.widget.text.SecondaryTextView
+                    android:id="@+id/tv_total_books_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/total_books_read"

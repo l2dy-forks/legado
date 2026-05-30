@@ -26,6 +26,7 @@ import io.legado.app.databinding.ItemTextBinding
 import io.legado.app.databinding.PopupActionMenuBinding
 import io.legado.app.help.config.AppConfig
 import io.legado.app.ui.widget.ThemedPopupWindow
+import io.legado.app.lib.theme.popupPrimaryTextColor
 import io.legado.app.utils.getPrefBoolean
 import io.legado.app.utils.gone
 import io.legado.app.utils.isAbsUrl
@@ -212,6 +213,7 @@ class TextActionMenu(
             payloads: MutableList<Any>
         ) {
             binding.textView.text = item.title
+            binding.textView.setTextColor(context.popupPrimaryTextColor)
         }
 
         override fun registerListener(holder: ItemViewHolder, binding: ItemTextBinding) {

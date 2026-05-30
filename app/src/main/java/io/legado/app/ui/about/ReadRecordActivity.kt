@@ -17,20 +17,25 @@ import io.legado.app.data.appDb
 import io.legado.app.data.entities.ReadRecordShow
 import io.legado.app.databinding.ActivityReadRecordBinding
 import io.legado.app.databinding.ItemReadRecordBinding
+import io.legado.app.constant.EventBus
 import io.legado.app.constant.PreferKey
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.LocalConfig
 import io.legado.app.lib.dialogs.alert
+import io.legado.app.lib.theme.accentColor
 import io.legado.app.lib.theme.cardBackgroundColor
 import io.legado.app.lib.theme.colorSurfaceContainer
 import io.legado.app.lib.theme.popupBackgroundColor
 import io.legado.app.lib.theme.primaryTextColor
 import io.legado.app.lib.theme.secondaryTextColor
+import io.legado.app.utils.ColorUtils
+import io.legado.app.utils.observeEvent
 import io.legado.app.ui.book.search.SearchActivity
 import io.legado.app.ui.widget.ReadBarChartView
 import io.legado.app.utils.applyNavigationBarPadding
 import io.legado.app.utils.applyTint
 import io.legado.app.utils.cnCompare
+import io.legado.app.utils.getCompatColor
 import io.legado.app.utils.getPrefInt
 import io.legado.app.utils.getInt
 import io.legado.app.utils.putInt
@@ -63,6 +68,9 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
         initAllTime()
         initData()
         initChart()
+        observeEvent<String>(EventBus.RECREATE) {
+            recreate()
+        }
     }
 
     override fun onCompatCreateOptionsMenu(menu: Menu): Boolean {
@@ -114,16 +122,44 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
         binding.tvRemove.visibility = android.view.View.GONE
         binding.recyclerView.adapter = adapter
         binding.recyclerView.applyNavigationBarPadding()
-        // Divider colors from theme
-        val dividerColor = secondaryTextColor and 0x33FFFFFF
-        binding.cardChartInclude.divider1.setBackgroundColor(dividerColor)
-        binding.cardChartInclude.divider2.setBackgroundColor(dividerColor)
         // Card background colors from theme
         val cardBg = cardBackgroundColor
+        val isCardLight = ColorUtils.isColorLight(cardBg)
+        val cardPrimaryText = if (isCardLight) {
+            getCompatColor(R.color.md_light_primary_text)
+        } else {
+            getCompatColor(R.color.md_dark_primary_text)
+        }
+        val cardSecondaryText = if (isCardLight) {
+            getCompatColor(R.color.md_light_secondary)
+        } else {
+            getCompatColor(R.color.md_dark_secondary)
+        }
+        // Divider colors based on card background
+        val dividerColor = if (isCardLight) {
+            0x1F000000 // 12% black for light cards
+        } else {
+            0x1FFFFFFF // 12% white for dark cards
+        }
+        binding.cardChartInclude.divider1.setBackgroundColor(dividerColor)
+        binding.cardChartInclude.divider2.setBackgroundColor(dividerColor)
         binding.cardChartInclude.cardChart.setCardBackgroundColor(cardBg)
         binding.cardSummary.setCardBackgroundColor(cardBg)
         // TabLayout 背景色与卡片一致
         binding.cardChartInclude.tabChartType.setBackgroundColor(cardBg)
+        // Tab 指示器颜色
+        binding.cardChartInclude.tabChartType.setSelectedTabIndicatorColor(accentColor)
+        // Stats text colors based on card background
+        binding.cardChartInclude.tvTodayTime.setTextColor(cardPrimaryText)
+        binding.cardChartInclude.tvTodayTimeLabel.setTextColor(cardSecondaryText)
+        binding.cardChartInclude.tvConsecutiveDays.setTextColor(cardPrimaryText)
+        binding.cardChartInclude.tvConsecutiveDaysLabel.setTextColor(cardSecondaryText)
+        binding.cardChartInclude.tvTotalBooks.setTextColor(cardPrimaryText)
+        binding.cardChartInclude.tvTotalBooksLabel.setTextColor(cardSecondaryText)
+        // Summary card text colors
+        binding.tvBookName.setTextColor(cardPrimaryText)
+        binding.tvReadingTime.setTextColor(cardPrimaryText)
+        binding.tvRemove.setTextColor(cardPrimaryText)
     }
 
     private fun initSearchView() {
@@ -284,7 +320,6 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
         RecyclerAdapter<ReadRecordShow, ItemReadRecordBinding>(context) {
 
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        private val cardBg: Int = context.cardBackgroundColor
 
         override fun getViewBinding(parent: ViewGroup): ItemReadRecordBinding {
             return ItemReadRecordBinding.inflate(inflater, parent, false)
@@ -296,10 +331,29 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
             item: ReadRecordShow,
             payloads: MutableList<Any>,
         ) {
+            // Read colors dynamically so they update with day/night theme changes
+            val cardBg = context.cardBackgroundColor
+            val isCardLight = ColorUtils.isColorLight(cardBg)
+            val cardPrimaryText = if (isCardLight) {
+                context.getCompatColor(R.color.md_light_primary_text)
+            } else {
+                context.getCompatColor(R.color.md_dark_primary_text)
+            }
+            val cardSecondaryText = if (isCardLight) {
+                context.getCompatColor(R.color.md_light_secondary)
+            } else {
+                context.getCompatColor(R.color.md_dark_secondary)
+            }
             (holder.itemView as? com.google.android.material.card.MaterialCardView)
                 ?.setCardBackgroundColor(cardBg)
             binding.apply {
                 tvBookName.text = item.bookName
+                tvBookName.setTextColor(cardPrimaryText)
+                tvReadingTimeTag.setTextColor(cardSecondaryText)
+                tvReadingTime.setTextColor(cardSecondaryText)
+                tvLastReadTimeTag.setTextColor(cardSecondaryText)
+                tvLastReadTime.setTextColor(cardSecondaryText)
+                tvRemove.setTextColor(cardPrimaryText)
                 tvReadingTime.text = formatDuring(item.readTime)
                 if (item.lastRead > 0) {
                     tvLastReadTime.text = dateFormat.format(item.lastRead)

@@ -729,6 +729,17 @@
     <string name="accent">Accent</string>
     <string name="background_color">Background color</string>
     <string name="navbar_color">NavBar color</string>
+    <string name="day_color_primary_desc">Toolbar, TitleBar and top bar background color</string>
+    <string name="day_color_accent_desc">Buttons, selected state, links and accent elements color</string>
+    <string name="day_background_desc">Main page background color for all Activities and Fragments</string>
+    <string name="day_navbar_desc">Bottom navigation bar background color</string>
+    <string name="card_bg_desc">List cards and RecyclerView item background color</string>
+    <string name="popup_bg_desc">Popup menu, Dialog and Spinner dropdown background color</string>
+    <string name="text_accent_desc">Clickable text, labels and text accent color</string>
+    <string name="night_primary_desc">Night mode top bar background color</string>
+    <string name="night_accent_desc">Night mode buttons, selected state accent color</string>
+    <string name="night_background_desc">Night mode main page background color</string>
+    <string name="night_navbar_desc">Night mode bottom navigation bar background color</string>
     <string name="popup_background_color">浮窗背景色</string>
     <string name="card_background_color">Card background color</string>
     <string name="text_accent_color">Text accent color</string>

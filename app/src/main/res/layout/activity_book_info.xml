@@ -364,7 +364,7 @@
                             android:paddingLeft="8dp"
                             android:paddingBottom="8dp"
                             android:text="@string/book_intro"
-                            android:textColor="@color/secondaryText"
+                            android:textColor="@color/primaryText"
                             android:textIsSelectable="true"
                             android:textSize="14sp"
                             android:visibility="visible"
