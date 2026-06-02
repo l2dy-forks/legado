@@ -7,7 +7,6 @@ import androidx.media3.common.MediaItem
 import cn.hutool.core.codec.PercentCodec
 import cn.hutool.core.net.RFC3986
 import cn.hutool.core.util.HexUtil
-import com.bumptech.glide.load.model.GlideUrl
 import com.script.buildScriptBindings
 import com.script.rhino.RhinoScriptEngine
 import com.script.rhino.runScriptWithContext
@@ -23,7 +22,6 @@ import io.legado.app.help.ConcurrentRateLimiter
 import io.legado.app.help.JsExtensions
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.exoplayer.ExoPlayerHelper
-import io.legado.app.help.glide.GlideHeaders
 import io.legado.app.help.http.BackstageWebView
 import io.legado.app.help.http.CookieManager
 import io.legado.app.help.http.CookieManager.mergeCookies
@@ -646,11 +644,11 @@ class AnalyzeUrl(
     }
 
     /**
-     *获取处理过阅读定义的urlOption和cookie的GlideUrl
+     * 获取处理过阅读定义的urlOption和cookie的URL及请求头
      */
-    fun getGlideUrl(): GlideUrl {
+    fun getGlideUrl(): UrlWithHeaders {
         setCookie()
-        return GlideUrl(url, GlideHeaders(headerMap))
+        return UrlWithHeaders(url, headerMap)
     }
 
     fun getUserAgent(): String {
@@ -848,4 +846,14 @@ class AnalyzeUrl(
         var frequency: Int
     )
 
+}
+
+/**
+ * 简单的 URL + 请求头数据类，替代 Glide 的 GlideUrl。
+ */
+data class UrlWithHeaders(
+    val url: String,
+    val headers: Map<String, String>
+) {
+    fun toStringUrl(): String = url
 }

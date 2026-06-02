@@ -43,6 +43,7 @@ import io.legado.app.utils.postEvent
 import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
+import java.util.concurrent.atomic.AtomicInteger
 
 class BookInfoViewModel(application: Application) : BaseViewModel(application) {
     val bookData = MutableLiveData<Book>()
@@ -53,6 +54,8 @@ class BookInfoViewModel(application: Application) : BaseViewModel(application) {
     private var changeSourceCoroutine: Coroutine<*>? = null
     val waitDialogData = MutableLiveData<Boolean>()
     val actionLive = MutableLiveData<String>()
+    // 数据版本号：upEditBook() 调用时递增，防止过期后台操作（如 upCoverByRule）覆写最新数据
+    private val dataVersion = AtomicInteger(0)
 
     fun initData(intent: Intent) {
         execute {
@@ -97,17 +100,20 @@ class BookInfoViewModel(application: Application) : BaseViewModel(application) {
     }
 
     private fun upBook(book: Book) {
+        val version = dataVersion.get()
         execute {
-            bookData.postValue(book)
-            upCoverByRule(book)
+            postBookData(book, version)
+            upCoverByRule(book, version)
             bookSource = if (book.isLocal) null else
                 appDb.bookSourceDao.getBookSource(book.origin)
             if (book.tocUrl.isEmpty() && !book.isLocal) {
-                loadBookInfo(book, runPreUpdateJs = inBookshelf)
+                loadBookInfo(book, runPreUpdateJs = inBookshelf, version = version)
             } else {
                 val chapterList = appDb.bookChapterDao.getChapterList(book.bookUrl)
                 if (chapterList.isNotEmpty()) {
-                    chapterListData.postValue(chapterList)
+                    if (dataVersion.get() == version) {
+                        chapterListData.postValue(chapterList)
+                    }
                 } else {
                     loadChapter(book)
                 }
@@ -115,7 +121,7 @@ class BookInfoViewModel(application: Application) : BaseViewModel(application) {
         }
     }
 
-    private fun upCoverByRule(book: Book) {
+    private fun upCoverByRule(book: Book, version: Int = dataVersion.get()) {
         execute {
             if (book.coverUrl.isNullOrBlank() && book.customCoverUrl.isNullOrBlank()) {
                 val coverUrl = BookCover.searchCover(book)
@@ -123,7 +129,7 @@ class BookInfoViewModel(application: Application) : BaseViewModel(application) {
                     return@execute
                 }
                 book.customCoverUrl = coverUrl
-                bookData.postValue(book)
+                postBookData(book, version)
                 if (inBookshelf) {
                     saveBook(book)
                 }
@@ -172,11 +178,12 @@ class BookInfoViewModel(application: Application) : BaseViewModel(application) {
         book: Book,
         canReName: Boolean = true,
         runPreUpdateJs: Boolean = true,
-        scope: CoroutineScope = viewModelScope
+        scope: CoroutineScope = viewModelScope,
+        version: Int = dataVersion.get(),
     ) {
         if (book.isLocal) {
             LocalBook.upBookInfo(book)
-            bookData.postValue(book)
+            postBookData(book, version)
             loadChapter(book)
         } else {
             val bookSource = bookSource ?: let {
@@ -188,15 +195,10 @@ class BookInfoViewModel(application: Application) : BaseViewModel(application) {
                 .onSuccess(IO) {
                     val dbBook = appDb.bookDao.getBook(book.name, book.author)
                     if (!inBookshelf && dbBook != null && !dbBook.isNotShelf && dbBook.origin == book.origin) {
-                        /**
-                         * book 来自搜索时(inBookshelf == false)，搜索的书名不存在于书架，但是加载详情后，书名更新，存在同名书籍
-                         * 此时 book 的数据会与数据库中的不同，需要更新 #3652 #4619
-                         * book 加载详情后虽然书名作者相同，但是又可能不是数据库中(书源不同)的那本书 #3149
-                         */
                         dbBook.updateTo(it)
                         inBookshelf = true
                     }
-                    bookData.postValue(it)
+                    postBookData(it, version)
                     if (inBookshelf) {
                         it.save()
                     }
@@ -490,10 +492,22 @@ class BookInfoViewModel(application: Application) : BaseViewModel(application) {
     }
 
     fun upEditBook() {
+        // 递增版本号，使所有进行中的后台操作（如 upCoverByRule）的 postValue 失效
+        dataVersion.incrementAndGet()
         bookData.value?.let {
             appDb.bookDao.getBook(it.bookUrl)?.let { book ->
-                bookData.value = book
+                bookData.postValue(book)
             }
+        }
+    }
+
+    /**
+     * 带版本检查的 bookData 更新。只有当前数据版本匹配时才允许写入，
+     * 防止 upCoverByRule 等后台异步操作覆写 upEditBook() 设置的最新数据。
+     */
+    private fun postBookData(book: Book, version: Int) {
+        if (dataVersion.get() == version) {
+            bookData.postValue(book)
         }
     }
 

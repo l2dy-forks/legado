@@ -2,12 +2,14 @@ package io.legado.app.ui.book.read.config
 
 import android.content.Context
 import android.view.ViewGroup
+import coil3.SingletonImageLoader
+import coil3.request.ImageRequest
+import coil3.request.target
 import io.legado.app.base.adapter.ItemViewHolder
 import io.legado.app.base.adapter.RecyclerAdapter
 import io.legado.app.constant.EventBus
 import io.legado.app.databinding.ItemBgImageBinding
 import io.legado.app.help.config.ReadBookConfig
-import io.legado.app.help.glide.ImageLoader
 import io.legado.app.utils.postEvent
 import java.io.File
 
@@ -25,12 +27,12 @@ class BgAdapter(context: Context, val textColor: Int) :
         payloads: MutableList<Any>
     ) {
         binding.run {
-            ImageLoader.load(
-                context,
-                context.assets.open("bg${File.separator}$item").readBytes()
-            )
-                .centerCrop()
-                .into(ivBg)
+            val bytes = context.assets.open("bg${File.separator}$item").readBytes()
+            val request = ImageRequest.Builder(context)
+                .data(bytes)
+                .target(ivBg)
+                .build()
+            SingletonImageLoader.get(context).enqueue(request)
             tvName.setTextColor(textColor)
             tvName.text = item.substringBeforeLast(".")
         }

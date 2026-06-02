@@ -16,10 +16,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
-import com.bumptech.glide.Glide
-import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
-import com.bumptech.glide.request.target.Target.SIZE_ORIGINAL
-import com.bumptech.glide.util.FixedPreloadSizeProvider
+import coil3.SingletonImageLoader
 import io.legado.app.BuildConfig
 import io.legado.app.R
 import io.legado.app.base.VMBaseActivity
@@ -49,6 +46,7 @@ import io.legado.app.ui.book.manga.entities.BaseMangaPage
 import io.legado.app.ui.book.manga.entities.MangaPage
 import io.legado.app.ui.book.manga.recyclerview.MangaAdapter
 import io.legado.app.ui.book.manga.recyclerview.MangaLayoutManager
+import io.legado.app.ui.book.manga.recyclerview.MangaPreloader
 import io.legado.app.ui.book.manga.recyclerview.ScrollTimer
 import io.legado.app.ui.book.read.MangaMenu
 import io.legado.app.ui.book.read.ReadBookActivity.Companion.RESULT_DELETED
@@ -87,10 +85,6 @@ class ReadMangaActivity : VMBaseActivity<ActivityMangaBinding, ReadMangaViewMode
         MangaAdapter(this)
     }
 
-    private val mSizeProvider by lazy {
-        FixedPreloadSizeProvider<Any>(resources.displayMetrics.widthPixels, SIZE_ORIGINAL)
-    }
-
     private val mPagerSnapHelper: PagerSnapHelper by lazy {
         PagerSnapHelper()
     }
@@ -99,8 +93,6 @@ class ReadMangaActivity : VMBaseActivity<ActivityMangaBinding, ReadMangaViewMode
     private val mLabelBuilder by lazy { StringBuilder() }
 
     private var mMenu: Menu? = null
-
-    private var mRecyclerViewPreloader: RecyclerViewPreloader<Any>? = null
 
     private val networkChangedListener by lazy {
         NetworkChangedListener(this)
@@ -205,6 +197,7 @@ class ReadMangaActivity : VMBaseActivity<ActivityMangaBinding, ReadMangaViewMode
             setDisableClickScroll(AppConfig.disableClickScroll)
             setDisableMangaScale(AppConfig.disableMangaScale)
             setRecyclerViewPreloader(AppConfig.mangaPreDownloadNum)
+            mMangaPreloader.attach()
             setPreScrollListener { _, _, _, position ->
                 if (mAdapter.isNotEmpty()) {
                     val item = mAdapter.getItem(position)
@@ -396,12 +389,13 @@ class ReadMangaActivity : VMBaseActivity<ActivityMangaBinding, ReadMangaViewMode
 
     override fun onDestroy() {
         ReadManga.unregister(this)
+        mMangaPreloader.detach()
         super.onDestroy()
     }
 
     override fun onLowMemory() {
         super.onLowMemory()
-        Glide.get(this).clearMemory()
+        SingletonImageLoader.get(this).memoryCache?.clear()
     }
 
     override fun sureNewProgress(progress: BookProgress) {
@@ -661,14 +655,12 @@ class ReadMangaActivity : VMBaseActivity<ActivityMangaBinding, ReadMangaViewMode
         return super.dispatchKeyEvent(event)
     }
 
+    private val mMangaPreloader by lazy {
+        MangaPreloader(binding.recyclerView, mAdapter, AppConfig.mangaPreDownloadNum)
+    }
+
     private fun setRecyclerViewPreloader(maxPreload: Int) {
-        if (mRecyclerViewPreloader != null) {
-            binding.recyclerView.removeOnScrollListener(mRecyclerViewPreloader!!)
-        }
-        mRecyclerViewPreloader = RecyclerViewPreloader(
-            Glide.with(this), mAdapter, mSizeProvider, maxPreload
-        )
-        binding.recyclerView.addOnScrollListener(mRecyclerViewPreloader!!)
+        mMangaPreloader.setMaxPreload(maxPreload)
     }
 
     private fun setHorizontalScroll(enable: Boolean) {

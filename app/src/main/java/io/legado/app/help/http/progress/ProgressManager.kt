@@ -1,4 +1,4 @@
-package io.legado.app.help.glide.progress
+package io.legado.app.help.http.progress
 
 import io.legado.app.model.analyzeRule.AnalyzeUrl
 import java.util.concurrent.ConcurrentHashMap
@@ -63,4 +63,7 @@ object ProgressManager {
         }
     }
 
+    fun clear() {
+        listenersMap.clear()
+    }
 }

@@ -3,9 +3,39 @@ package io.legado.app.utils.canvasrecorder
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import com.bumptech.glide.Glide
+import android.util.LruCache
 import io.legado.app.utils.canvasrecorder.pools.CanvasPool
-import splitties.init.appCtx
+
+/**
+ * 简单的 Bitmap 复用池，替代 Glide 的 BitmapPool。
+ */
+private class SimpleBitmapPool(maxSize: Int = 4 * 1024 * 1024) { // 4MB
+    private val cache = object : LruCache<Int, Bitmap>(maxSize) {
+        override fun sizeOf(key: Int, value: Bitmap): Int = value.allocationByteCount
+        override fun entryRemoved(evicted: Boolean, key: Int, oldValue: Bitmap, newValue: Bitmap?) {
+            if (evicted) oldValue.recycle()
+        }
+    }
+
+    fun get(width: Int, height: Int, config: Bitmap.Config): Bitmap {
+        val size = width * height * 4
+        val key = (width shl 16) or height
+        cache.remove(key)?.let { cached ->
+            if (cached.width == width && cached.height == height && !cached.isRecycled) {
+                cached.eraseColor(Color.TRANSPARENT)
+                return cached
+            }
+            cached.recycle()
+        }
+        return Bitmap.createBitmap(width, height, config)
+    }
+
+    fun put(bitmap: Bitmap) {
+        if (bitmap.isRecycled) return
+        val key = (bitmap.width shl 16) or bitmap.height
+        cache.put(key, bitmap)
+    }
+}
 
 class CanvasRecorderImpl : BaseCanvasRecorder() {
 
@@ -64,7 +94,7 @@ class CanvasRecorderImpl : BaseCanvasRecorder() {
 
     companion object {
         private val canvasPool = CanvasPool(2)
-        private val bitmapPool = Glide.get(appCtx).bitmapPool
+        private val bitmapPool = SimpleBitmapPool()
     }
 
 }

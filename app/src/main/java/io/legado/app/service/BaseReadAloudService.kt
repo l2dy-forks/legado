@@ -36,8 +36,8 @@ import io.legado.app.constant.Status
 import io.legado.app.help.MediaHelp
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.coroutine.Coroutine
-import io.legado.app.help.glide.ImageLoader
 import io.legado.app.lib.permission.Permissions
+import io.legado.app.model.BookCover
 import io.legado.app.lib.permission.PermissionsCompat
 import io.legado.app.model.ReadAloud
 import io.legado.app.model.ReadBook
@@ -157,13 +157,13 @@ abstract class BaseReadAloudService : BaseService(),
             toastOnUi("朗读定时 ${AppConfig.ttsTimer} 分钟")
         }
         execute {
-            ImageLoader
-                .loadBitmap(this@BaseReadAloudService, ReadBook.book?.getDisplayCover())
-                .submit()
-                .get()
-        }.onSuccess {
-            if (it.width > 16 && it.height > 16) {
-                cover = it
+            BookCover.executeCoverBitmap(
+                context = this@BaseReadAloudService,
+                path = ReadBook.book?.getDisplayCover(),
+            )
+        }.onSuccess { bitmap ->
+            if (bitmap != null && bitmap.width > 16 && bitmap.height > 16) {
+                cover = bitmap
                 upReadAloudNotification()
             }
         }

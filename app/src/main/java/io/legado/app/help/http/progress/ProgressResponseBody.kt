@@ -1,4 +1,4 @@
-package io.legado.app.help.glide.progress
+package io.legado.app.help.http.progress
 
 import android.os.Handler
 import android.os.Looper
@@ -61,5 +61,4 @@ class ProgressResponseBody internal constructor(
     companion object {
         private val mainThreadHandler = Handler(Looper.getMainLooper())
     }
-
 }

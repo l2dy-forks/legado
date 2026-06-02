@@ -1,7 +1,6 @@
 package io.legado.app.ui.book.info.compose
 
 import android.view.ViewGroup
-import android.widget.ImageView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,10 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import io.legado.app.R
+import coil3.compose.AsyncImage
 import io.legado.app.data.entities.Book
 import io.legado.app.model.BookCover
 import io.legado.app.ui.widget.image.CoverImageView
@@ -70,17 +68,11 @@ fun HeroHeader(
             .fillMaxWidth()
             .height(heroTotalHeight),
     ) {
-        // 模糊封面背景
-        AndroidView(
-            factory = { ctx ->
-                ImageView(ctx).apply {
-                    scaleType = ImageView.ScaleType.CENTER_CROP
-                }
-            },
-            update = { imageView ->
-                BookCover.loadBlur(context, coverUrl, false, null)
-                    .into(imageView)
-            },
+        // 模糊封面背景（Coil AsyncImage）
+        AsyncImage(
+            model = BookCover.loadBlurRequest(context, coverUrl),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(bgHeight)

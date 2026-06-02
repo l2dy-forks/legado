@@ -77,11 +77,11 @@ class BackupConfigFragment : PreferenceFragment(),
         result.uri?.let { uri ->
             if (uri.isContentScheme()) {
                 AppConfig.backupPath = uri.toString()
-                backup(uri.toString())
+                doLocalBackup(uri.toString())
             } else {
                 uri.path?.let { path ->
                     AppConfig.backupPath = path
-                    backup(path)
+                    doLocalBackup(path)
                 }
             }
         }
@@ -133,11 +133,6 @@ class BackupConfigFragment : PreferenceFragment(),
         upPreferenceSummary(PreferKey.webDavDir, AppConfig.webDavDir)
         upPreferenceSummary(PreferKey.webDavDeviceName, AppConfig.webDavDeviceName)
         upPreferenceSummary(PreferKey.backupPath, getPrefString(PreferKey.backupPath))
-        findPreference<io.legado.app.lib.prefs.Preference>("web_dav_restore")
-            ?.onLongClick {
-                restoreFromLocal()
-                true
-            }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -233,8 +228,14 @@ class BackupConfigFragment : PreferenceFragment(),
         when (preference.key) {
             PreferKey.backupPath -> selectBackupPath.launch()
             PreferKey.restoreIgnore -> backupIgnore()
-            "web_dav_backup" -> backup()
-            "web_dav_restore" -> restore()
+            "local_backup" -> localBackup()
+            "local_restore" -> restoreDoc.launch {
+                title = getString(R.string.select_restore_file)
+                mode = HandleFileContract.FILE
+                allowExtensions = arrayOf("zip")
+            }
+            "web_dav_backup" -> webDavBackup()
+            "web_dav_restore" -> webDavRestore()
             "web_dav_test" -> testWebDav()
             "import_old" -> restoreOld.launch()
         }
@@ -285,7 +286,7 @@ class BackupConfigFragment : PreferenceFragment(),
         }
     }
 
-    fun backup() {
+    fun localBackup() {
         val backupPath = AppConfig.backupPath
         if (backupPath.isNullOrEmpty()) {
             backupDir.launch()
@@ -296,7 +297,7 @@ class BackupConfigFragment : PreferenceFragment(),
                         FileDoc.fromDir(backupPath).checkWrite()
                     }
                     if (canWrite) {
-                        backup(backupPath)
+                        doLocalBackup(backupPath)
                     } else {
                         backupDir.launch()
                     }
@@ -307,8 +308,8 @@ class BackupConfigFragment : PreferenceFragment(),
         }
     }
 
-    private fun backup(backupPath: String) {
-        waitDialog.setText("备份中…")
+    private fun doLocalBackup(backupPath: String) {
+        waitDialog.setText("本地备份中…")
         waitDialog.setOnCancelListener {
             backupJob?.cancel()
         }
@@ -316,11 +317,11 @@ class BackupConfigFragment : PreferenceFragment(),
         backupJob?.cancel()
         backupJob = lifecycleScope.launch {
             try {
-                Backup.backupLocked(requireContext(), backupPath)
+                Backup.backupLocalLocked(requireContext(), backupPath)
                 appCtx.toastOnUi(R.string.backup_success)
             } catch (e: Throwable) {
                 ensureActive()
-                AppLog.put("备份出错\n${e.localizedMessage}", e)
+                AppLog.put("本地备份出错\n${e.localizedMessage}", e)
                 appCtx.toastOnUi(
                     appCtx.getString(
                         R.string.backup_fail,
@@ -339,12 +340,39 @@ class BackupConfigFragment : PreferenceFragment(),
             .addPermissions(*Permissions.Group.STORAGE)
             .rationale(R.string.tip_perm_request_storage)
             .onGranted {
-                backup(path)
+                doLocalBackup(path)
             }
             .request()
     }
 
-    fun restore() {
+    fun webDavBackup() {
+        waitDialog.setText("WebDav备份中…")
+        waitDialog.setOnCancelListener {
+            backupJob?.cancel()
+        }
+        waitDialog.show()
+        backupJob?.cancel()
+        backupJob = lifecycleScope.launch {
+            try {
+                Backup.backupWebDavLocked(requireContext())
+                appCtx.toastOnUi(R.string.backup_success)
+            } catch (e: Throwable) {
+                ensureActive()
+                AppLog.put("WebDav备份出错\n${e.localizedMessage}", e)
+                appCtx.toastOnUi(
+                    appCtx.getString(
+                        R.string.backup_fail,
+                        e.localizedMessage
+                    )
+                )
+            } finally {
+                ensureActive()
+                waitDialog.dismiss()
+            }
+        }
+    }
+
+    fun webDavRestore() {
         waitDialog.setText(R.string.loading)
         waitDialog.setOnCancelListener {
             restoreJob?.cancel()
@@ -354,18 +382,11 @@ class BackupConfigFragment : PreferenceFragment(),
             restoreJob = coroutineContext[Job]
             showRestoreDialog(requireContext())
         }.onError {
-            AppLog.put("恢复备份出错WebDavError\n${it.localizedMessage}", it)
+            AppLog.put("WebDav恢复出错\n${it.localizedMessage}", it)
             if (context == null) {
                 return@onError
             }
-            alert {
-                setTitle(R.string.restore)
-                setMessage("WebDavError\n${it.localizedMessage}\n将从本地备份恢复。")
-                okButton {
-                    restoreFromLocal()
-                }
-                cancelButton()
-            }
+            appCtx.toastOnUi("WebDav恢复出错\n${it.localizedMessage}")
         }.onFinally {
             waitDialog.dismiss()
         }

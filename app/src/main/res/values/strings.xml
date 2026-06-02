@@ -100,6 +100,7 @@
     <string name="offline_cache_t">Offline cache</string>
     <string name="offline_cache_s">cache the selected chapter(s) to Storage</string>
     <string name="change_origin">Change Origin</string>
+    <string name="view_source">View Source</string>
     <string name="about_description">
         \u3000\u3000 This is an open source reading software newly developed by Kotlin, welcome to join us.
     </string>
@@ -239,6 +240,7 @@
     <string name="data_loading">Loading…</string>
     <string name="load_error_retry">Load failed, tap to retry</string>
     <string name="book_intro">Book description</string>
+    <string name="no_intro">No introduction</string>
     <string name="intro_show">Description:%s</string>
     <string name="intro_show_null">Description: no introduction</string>
     <string name="open_from_other">Open external book</string>
@@ -760,6 +762,12 @@
     <string name="sort_by_url">Sort by URL</string>
     <string name="backup_summary">Backup the local and WebDav simultaneously</string>
     <string name="restore_summary">Restore from WebDAV first, Restore form the local backup on long click</string>
+    <string name="local_backup_restore">Local backup and restore</string>
+    <string name="web_dav_backup_restore">WebDav backup and restore</string>
+    <string name="local_backup_summary">Backup to local storage</string>
+    <string name="local_restore_summary">Restore from local backup file</string>
+    <string name="web_dav_backup_summary">Backup to WebDav server</string>
+    <string name="web_dav_restore_summary">Restore from WebDav server</string>
     <string name="import_old_summary">Select a legacy backup folder</string>
     <string name="enabled">Enabled</string>
     <string name="disabled">Disabled</string>

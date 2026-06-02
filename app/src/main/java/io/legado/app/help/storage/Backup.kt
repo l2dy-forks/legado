@@ -124,12 +124,33 @@ object Backup {
     suspend fun backupLocked(context: Context, path: String?) {
         mutex.withLock {
             withContext(IO) {
-                backup(context, path)
+                backup(context, path, toLocal = true, toWebDav = true)
             }
         }
     }
 
-    private suspend fun backup(context: Context, path: String?) {
+    suspend fun backupLocalLocked(context: Context, path: String?) {
+        mutex.withLock {
+            withContext(IO) {
+                backup(context, path, toLocal = true, toWebDav = false)
+            }
+        }
+    }
+
+    suspend fun backupWebDavLocked(context: Context) {
+        mutex.withLock {
+            withContext(IO) {
+                backup(context, null, toLocal = false, toWebDav = true)
+            }
+        }
+    }
+
+    private suspend fun backup(
+        context: Context,
+        path: String?,
+        toLocal: Boolean = true,
+        toWebDav: Boolean = true
+    ) {
         LogUtils.d(TAG, "开始备份 path:$path")
         LocalConfig.lastBackup = System.currentTimeMillis()
         val aes = BackupAES()
@@ -216,36 +237,42 @@ object Backup {
             zipFileName
         }
         if (ZipUtils.zipFiles(paths, zipFilePath)) {
-            when {
-                path.isNullOrBlank() -> {
-                    copyBackup(context.getExternalFilesDir(null)!!, backupFileName)
-                }
+            if (toLocal) {
+                when {
+                    path.isNullOrBlank() -> {
+                        copyBackup(context.getExternalFilesDir(null)!!, backupFileName)
+                    }
 
-                path.isContentScheme() -> {
-                    copyBackup(context, path.toUri(), backupFileName)
-                }
+                    path.isContentScheme() -> {
+                        copyBackup(context, path.toUri(), backupFileName)
+                    }
 
-                else -> {
-                    copyBackup(File(path), backupFileName)
+                    else -> {
+                        copyBackup(File(path), backupFileName)
+                    }
                 }
             }
-            try {
-                AppWebDav.backUpWebDav(zipFileName)
-            } catch (e: Exception) {
-                AppLog.put("上传备份至webdav失败\n$e", e)
+            if (toWebDav) {
+                try {
+                    AppWebDav.backUpWebDav(zipFileName)
+                } catch (e: Exception) {
+                    AppLog.put("上传备份至webdav失败\n$e", e)
+                }
             }
         }
         FileUtils.delete(backupPath)
         FileUtils.delete(zipFilePath)
         currentCoroutineContext().ensureActive()
-        ReadBookConfig.getAllPicBgStr().map {
-            if (it.contains(File.separator)) {
-                File(it)
-            } else {
-                appCtx.externalFiles.getFile("bg", it)
+        if (toWebDav) {
+            ReadBookConfig.getAllPicBgStr().map {
+                if (it.contains(File.separator)) {
+                    File(it)
+                } else {
+                    appCtx.externalFiles.getFile("bg", it)
+                }
+            }.let {
+                AppWebDav.upBgs(it.toTypedArray())
             }
-        }.let {
-            AppWebDav.upBgs(it.toTypedArray())
         }
     }
 

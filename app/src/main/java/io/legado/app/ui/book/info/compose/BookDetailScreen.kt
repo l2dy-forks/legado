@@ -136,12 +136,11 @@ fun BookDetailScreen(
                     )
 
                     val intro = book.getDisplayIntro()
-                    if (!intro.isNullOrBlank()) {
-                        IntroCard(
-                            intro = intro,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                        )
-                    }
+                    IntroCard(
+                        intro = intro?.takeIf { it.isNotBlank() }
+                            ?: stringResource(R.string.no_intro),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    )
 
                     ChapterCard(
                         latestChapterTitle = latestChapterTitle ?: stringResource(R.string.no_last_chapter),

@@ -24,6 +24,10 @@ import io.legado.app.help.book.isAudio
 import io.legado.app.help.book.removeType
 import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.dialogs.alert
+import coil3.SingletonImageLoader
+import coil3.asDrawable
+import coil3.request.target
+import io.legado.app.help.coil.LegadoFetcher
 import io.legado.app.model.AudioPlay
 import io.legado.app.model.BookCover
 import io.legado.app.service.AudioPlayService
@@ -195,10 +199,29 @@ class AudioPlayActivity :
     }
 
     private fun upCover(path: String?) {
-        BookCover.load(this, path, sourceOrigin = AudioPlay.bookSource?.bookSourceUrl) {
-            BookCover.loadBlur(this, path, sourceOrigin = AudioPlay.bookSource?.bookSourceUrl)
-                .into(binding.ivBg)
-        }.into(binding.ivCover)
+        val coverRequest = BookCover.loadRequest(
+            this, path,
+            sourceOrigin = AudioPlay.bookSource?.bookSourceUrl
+        ).newBuilder()
+            .target(
+                onSuccess = { result ->
+                    binding.ivCover.setImageDrawable(result.asDrawable(resources))
+                }
+            )
+            .build()
+        SingletonImageLoader.get(this).enqueue(coverRequest)
+
+        val blurRequest = BookCover.loadBlurRequest(
+            this, path,
+            sourceOrigin = AudioPlay.bookSource?.bookSourceUrl
+        ).newBuilder()
+            .target(
+                onSuccess = { result ->
+                    binding.ivBg.setImageDrawable(result.asDrawable(resources))
+                }
+            )
+            .build()
+        SingletonImageLoader.get(this).enqueue(blurRequest)
     }
 
     private fun playButton() {

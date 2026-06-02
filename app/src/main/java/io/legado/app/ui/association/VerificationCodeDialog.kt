@@ -8,17 +8,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.viewModels
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.RequestOptions
-import com.bumptech.glide.request.target.Target
+import coil3.SingletonImageLoader
+import coil3.asDrawable
+import coil3.request.ImageRequest
 import io.legado.app.R
 import io.legado.app.base.BaseDialogFragment
 import io.legado.app.databinding.DialogVerificationCodeViewBinding
-import io.legado.app.help.glide.ImageLoader
-import io.legado.app.help.glide.OkHttpModelLoader
+import io.legado.app.help.coil.LegadoFetcher
 import io.legado.app.help.source.SourceVerificationHelp
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.lib.theme.primaryColor
@@ -85,36 +81,31 @@ class VerificationCodeDialog() : BaseDialogFragment(R.layout.dialog_verification
     @SuppressLint("CheckResult")
     private fun loadImage(url: String, sourceUrl: String?) {
         ImageProvider.remove(url)
-        ImageLoader.loadBitmap(requireContext(), url).apply {
-            sourceUrl?.let {
-                apply(RequestOptions().set(OkHttpModelLoader.sourceOriginOption, it))
+        val request = ImageRequest.Builder(requireContext())
+            .data(url)
+            .apply {
+                if (sourceUrl != null) {
+                    extras[LegadoFetcher.sourceOriginKey] = sourceUrl
+                }
             }
-        }.error(R.drawable.image_loading_error)
-            .diskCacheStrategy(DiskCacheStrategy.NONE)
-            .skipMemoryCache(true)
-            .listener(object : RequestListener<Bitmap> {
-                override fun onLoadFailed(
-                    e: GlideException?,
-                    model: Any?,
-                    target: Target<Bitmap?>,
-                    isFirstResource: Boolean
-                ): Boolean {
-                    return false
+            .diskCachePolicy(coil3.request.CachePolicy.DISABLED)
+            .memoryCachePolicy(coil3.request.CachePolicy.DISABLED)
+            .target(
+                onSuccess = { result ->
+                    val drawable = result.asDrawable(resources)
+                    val bitmap = (drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                    if (bitmap != null) {
+                        val copiedBitmap = bitmap.copy(bitmap.config!!, true)
+                        ImageProvider.put(url, copiedBitmap)
+                        binding.verificationCodeImageView.setImageBitmap(copiedBitmap)
+                    }
+                },
+                onError = { _ ->
+                    binding.verificationCodeImageView.setImageResource(R.drawable.image_loading_error)
                 }
-
-                override fun onResourceReady(
-                    resource: Bitmap,
-                    model: Any,
-                    target: Target<Bitmap?>?,
-                    dataSource: DataSource,
-                    isFirstResource: Boolean
-                ): Boolean {
-                    val bitmap = resource.copy(resource.config!!, true)
-                    ImageProvider.put(url, bitmap) // 传给 PhotoDialog
-                    return false
-                }
-            })
-            .into(binding.verificationCodeImageView)
+            )
+            .build()
+        SingletonImageLoader.get(requireContext()).enqueue(request)
     }
 
     @SuppressLint("InflateParams")

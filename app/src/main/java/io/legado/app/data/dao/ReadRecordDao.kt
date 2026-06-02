@@ -32,6 +32,17 @@ interface ReadRecordDao {
     )
     fun search(searchKey: String): List<ReadRecordShow>
 
+    @Query(
+        """
+        select bookName, sum(readTime) as readTime, max(lastRead) as lastRead 
+        from readRecord 
+        where bookName like '%' || :searchKey || '%'
+        group by bookName 
+        order by bookName collate localized
+        limit :limit offset :offset"""
+    )
+    fun searchPaged(searchKey: String, limit: Int, offset: Int): List<ReadRecordShow>
+
     @Query("select sum(readTime) from readRecord where bookName = :bookName")
     fun getReadTime(bookName: String): Long?
 

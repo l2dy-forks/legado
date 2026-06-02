@@ -1,6 +1,9 @@
 package io.legado.app.ui.main.bookshelf.compose
 
+import android.view.View as AndroidView
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -32,7 +35,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryScrollableTabRow
 //import androidx.compose.material3.PullToRefreshBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
@@ -45,6 +47,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -56,8 +59,11 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
@@ -65,6 +71,7 @@ import androidx.compose.ui.unit.dp
 import io.legado.app.R
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookGroup
+import io.legado.app.help.config.AppConfig
 import io.legado.app.ui.common.compose.EmptyStateView
 import io.legado.app.ui.common.compose.LocalAnimationsEnabled
 import io.legado.app.ui.common.compose.legadoPopupBackgroundColor
@@ -124,6 +131,33 @@ fun BookshelfScreen(
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val context = LocalContext.current
     var menuExpanded by remember { mutableStateOf(false) }
+    val animationsEnabled = LocalAnimationsEnabled.current
+    val groupContentOffsetX = remember { Animatable(0f) }
+    var groupContentWidthPx by remember { mutableFloatStateOf(0f) }
+    var previousAnimatedGroupId by remember { mutableStateOf(selectedGroupId) }
+
+    LaunchedEffect(selectedGroupId, bookGroupStyle, animationsEnabled, groupContentWidthPx) {
+        val previousGroupId = previousAnimatedGroupId
+        previousAnimatedGroupId = selectedGroupId
+        val previousIndex = groups.indexOfFirst { it.groupId == previousGroupId }
+        val selectedIndex = groups.indexOfFirst { it.groupId == selectedGroupId }
+        val shouldAnimate = bookGroupStyle == 0 &&
+                animationsEnabled &&
+                groupContentWidthPx > 0f &&
+                previousGroupId != selectedGroupId &&
+                previousIndex >= 0 &&
+                selectedIndex >= 0
+        if (shouldAnimate) {
+            val direction = if (selectedIndex > previousIndex) 1 else -1
+            groupContentOffsetX.snapTo(groupContentWidthPx * direction)
+            groupContentOffsetX.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 220),
+            )
+        } else {
+            groupContentOffsetX.snapTo(0f)
+        }
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -132,25 +166,38 @@ fun BookshelfScreen(
                 title = {
                     Text(
                         stringResource(R.string.bookshelf),
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = if (AppConfig.isEInkMode) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onPrimary
+                        },
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
+                    containerColor = if (AppConfig.isEInkMode) {
+                        MaterialTheme.colorScheme.surface
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
                 ),
                 actions = {
+                    val iconTint = if (AppConfig.isEInkMode) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onPrimary
+                    }
                     IconButton(onClick = onSearchClick) {
                         Icon(
                             painter = painterResource(R.drawable.ic_search),
                             contentDescription = stringResource(R.string.action_search),
-                            tint = MaterialTheme.colorScheme.onPrimary,
+                            tint = iconTint,
                         )
                     }
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_more_vert),
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
+                            tint = iconTint,
                         )
                     }
                     DropdownMenu(
@@ -249,6 +296,7 @@ fun BookshelfScreen(
         val contentModifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
+        val view = LocalView.current
         val content: @Composable () -> Unit = {
             Box(
                 modifier = Modifier
@@ -260,7 +308,14 @@ fun BookshelfScreen(
                         val thresholdPx = with(this) { 100.dp.toPx() }
                         val directionSlop = with(this) { 8.dp.toPx() }
                         awaitEachGesture {
-                            val down = awaitFirstDown()
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            val selectedIndexAtDown = groups
+                                .indexOfFirst { it.groupId == selectedGroupId }
+                                .coerceAtLeast(0)
+                            var disallowingParent = selectedIndexAtDown < groups.lastIndex
+                            if (disallowingParent) {
+                                view.requestParentDisallowIntercept(true)
+                            }
                             var totalDragX = 0f
                             var directionDecided = false
                             var weHandle = false
@@ -285,9 +340,21 @@ fun BookshelfScreen(
                                     } else {
                                         idx > 0              // 右滑：还有上一组
                                     }
+                                    // 阻止父级 ViewPager 拦截水平滑动
+                                    if (weHandle && !disallowingParent) {
+                                        view.requestParentDisallowIntercept(true)
+                                        disallowingParent = true
+                                    } else if (!weHandle && disallowingParent) {
+                                        view.requestParentDisallowIntercept(false)
+                                        disallowingParent = false
+                                    }
                                 }
-                                // 仅在可以切换分组时消费，否则放行给 ViewPager
                                 if (weHandle) event.consume()
+                            }
+
+                            // 手势结束，恢复 ViewPager 拦截能力
+                            if (disallowingParent) {
+                                view.requestParentDisallowIntercept(false)
                             }
 
                             if (weHandle && abs(totalDragX) > thresholdPx) {
@@ -321,7 +388,11 @@ fun BookshelfScreen(
                                     @Suppress("DEPRECATION")
                                     TabRowDefaults.SecondaryIndicator(
                                         Modifier.tabIndicatorOffset(tabPositions[selectedIndex]),
-                                        color = MaterialTheme.colorScheme.primary,
+                                        color = if (AppConfig.isEInkMode) {
+                                            MaterialTheme.colorScheme.onSurface
+                                        } else {
+                                            MaterialTheme.colorScheme.primary
+                                        },
                                         height = 2.dp,
                                     )
                                 }
@@ -331,7 +402,11 @@ fun BookshelfScreen(
                                 Tab(
                                     selected = index == selectedIndex,
                                     onClick = { onGroupSelected(group.groupId) },
-                                    selectedContentColor = MaterialTheme.colorScheme.primary,
+                                    selectedContentColor = if (AppConfig.isEInkMode) {
+                                        MaterialTheme.colorScheme.onSurface
+                                    } else {
+                                        MaterialTheme.colorScheme.primary
+                                    },
                                     unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                     text = {
                                         Text(
@@ -352,42 +427,60 @@ fun BookshelfScreen(
                     }
 
                     // 书籍列表/网格/空状态
-                    if (books.isEmpty()) {
-                        EmptyStateView()
-                    } else if (bookGroupStyle == 1) {
-                        BookGroupMixedContent(
-                            books = books,
-                            groups = groups,
-                            gridColumns = gridColumns,
-                            onBookClick = onBookClick,
-                            onBookLongClick = onBookLongClick,
-                            onBookDelete = onBookDelete,
-                            onGroupClick = onGroupSelected,
-                            showFastScroller = showFastScroller,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    } else if (gridColumns > 0) {
-                        BookGridContent(
-                            books = books,
-                            columns = gridColumns,
-                            onBookClick = onBookClick,
-                            onBookLongClick = onBookLongClick,
-                            showFastScroller = showFastScroller,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    } else {
-                        BookListContent(
-                            books = books,
-                            onBookClick = onBookClick,
-                            onBookLongClick = onBookLongClick,
-                            onBookDelete = onBookDelete,
-                            isUpdating = isUpdating,
-                            lastUpdateVersion = lastUpdateVersion,
-                            showUnread = showUnread,
-                            showLastUpdateTime = showLastUpdateTime,
-                            showFastScroller = showFastScroller,
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                    val bookshelfContent: @Composable () -> Unit = {
+                        if (books.isEmpty()) {
+                            EmptyStateView()
+                        } else if (bookGroupStyle == 1) {
+                            BookGroupMixedContent(
+                                books = books,
+                                groups = groups,
+                                gridColumns = gridColumns,
+                                onBookClick = onBookClick,
+                                onBookLongClick = onBookLongClick,
+                                onBookDelete = onBookDelete,
+                                onGroupClick = onGroupSelected,
+                                showFastScroller = showFastScroller,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        } else if (gridColumns > 0) {
+                            BookGridContent(
+                                books = books,
+                                columns = gridColumns,
+                                onBookClick = onBookClick,
+                                onBookLongClick = onBookLongClick,
+                                showFastScroller = showFastScroller,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        } else {
+                            BookListContent(
+                                books = books,
+                                onBookClick = onBookClick,
+                                onBookLongClick = onBookLongClick,
+                                onBookDelete = onBookDelete,
+                                isUpdating = isUpdating,
+                                lastUpdateVersion = lastUpdateVersion,
+                                showUnread = showUnread,
+                                showLastUpdateTime = showLastUpdateTime,
+                                showFastScroller = showFastScroller,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clipToBounds()
+                            .onSizeChanged { groupContentWidthPx = it.width.toFloat() },
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .offset {
+                                    IntOffset(groupContentOffsetX.value.roundToInt(), 0)
+                                },
+                        ) {
+                            bookshelfContent()
+                        }
                     }
                 }
             }
@@ -482,8 +575,10 @@ private fun SwipeToDeleteItem(
     val density = LocalDensity.current
     val revealDp = 120.dp
     val revealPx = with(density) { revealDp.toPx() }
+    val directionSlopPx = with(density) { 8.dp.toPx() }
     var offsetX by remember { mutableFloatStateOf(0f) }
     val animationsEnabled = LocalAnimationsEnabled.current
+    val view = LocalView.current
 
     Box(modifier = modifier.clipToBounds()) {
         // 底层：删除按钮（固定在右侧）
@@ -513,6 +608,28 @@ private fun SwipeToDeleteItem(
         Box(
             modifier = Modifier
                 .offset { IntOffset(offsetX.roundToInt(), 0) }
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        var totalDragX = 0f
+                        var disallowingParent = false
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes
+                                .firstOrNull { it.id == down.id }
+                                ?: break
+                            if (!change.pressed) break
+                            totalDragX += change.positionChange().x
+                            if (totalDragX < -directionSlopPx && !disallowingParent) {
+                                view.requestParentDisallowIntercept(true)
+                                disallowingParent = true
+                            }
+                        }
+                        if (disallowingParent) {
+                            view.requestParentDisallowIntercept(false)
+                        }
+                    }
+                }
                 .draggable(
                     orientation = Orientation.Horizontal,
                     state = rememberDraggableState { delta ->
@@ -527,9 +644,7 @@ private fun SwipeToDeleteItem(
                             animate(
                                 initialValue = offsetX,
                                 targetValue = target,
-                                animationSpec = androidx.compose.animation.core.tween(
-                                    durationMillis = 200,
-                                ),
+                                animationSpec = tween(durationMillis = 200),
                             ) { value, _ -> offsetX = value }
                         } else {
                             // E-Ink 模式：瞬间跳转，无动画
@@ -804,4 +919,12 @@ private fun getGroupIds(group: Long): List<Long> {
         bit = bit shl 1
     }
     return ids.ifEmpty { listOf(0L) }
+}
+
+private fun AndroidView.requestParentDisallowIntercept(disallow: Boolean) {
+    var viewParent = parent
+    while (viewParent != null) {
+        viewParent.requestDisallowInterceptTouchEvent(disallow)
+        viewParent = viewParent.parent
+    }
 }

@@ -243,15 +243,16 @@ dependencies {
     implementation(fileTree(dir: 'cronetlib', include: ['*.jar', '*.aar']))
     implementation(libs.protobuf.javalite)
 
-    //Glide
+    //Glide (保留用于 Markwon 图片渲染)
     implementation(libs.glide.glide)
-    implementation(libs.glide.okhttp)
-    ksp(libs.glide.ksp)
+
+    //Coil 3
+    implementation(libs.coil.compose)
+    implementation(libs.coil.okhttp)
+    implementation(libs.coil.svg)
 
     //Svg
     implementation(libs.androidsvg)
-    //Glide svg plugin
-    implementation(libs.glide.svg)
 
     //webServer
     implementation(libs.nanohttpd.nanohttpd)
@@ -288,8 +289,6 @@ dependencies {
     implementation libs.firebase.analytics
     implementation libs.firebase.perf
 
-    implementation libs.glide.recyclerview
-
     //Compose
     implementation platform(libs.compose.bom)
     implementation libs.compose.material3
@@ -300,7 +299,6 @@ dependencies {
     implementation libs.activity.compose
     implementation libs.lifecycle.viewmodel.compose
     implementation libs.lifecycle.runtime.compose
-    implementation libs.glide.compose
     debugImplementation libs.compose.ui.tooling
 
     //LeakCanary, 内存泄露检测

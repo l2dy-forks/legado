@@ -136,6 +136,12 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
                             }
                         }
                     }
+                    // 每次 Fragment 重新可见时强制重新查询，确保从编辑页返回后数据同步
+                    LaunchedEffect(lifecycleOwner) {
+                        lifecycleOwner.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+                            refreshVersionFlow.value++
+                        }
+                    }
                     DisposableEffect(Unit) {
                         val groupsObserver = Observer<List<BookGroup>> { groups = it }
                         appDb.bookGroupDao.show.observeForever(groupsObserver)

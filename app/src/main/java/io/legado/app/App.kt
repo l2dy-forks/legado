@@ -43,6 +43,7 @@ import io.legado.app.help.config.ReadBookConfig
 import io.legado.app.help.config.ThemeConfig
 import io.legado.app.help.config.ThemeConfig.applyDayNight
 import io.legado.app.help.config.ThemeConfig.applyDayNightInit
+import io.legado.app.help.coil.CoilInitializer
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.help.http.Cronet
 import io.legado.app.help.http.ObsoleteUrlFactory
@@ -112,6 +113,8 @@ class App : Application() {
             initRhino()
             //初始化封面
             BookCover.toString()
+            //初始化 Coil 图片加载器
+            CoilInitializer.init()
             //清除过期数据
             appDb.cacheDao.clearDeadline(System.currentTimeMillis())
             if (getPrefBoolean(PreferKey.autoClearExpired, true)) {

@@ -2,32 +2,34 @@ package io.legado.app.model
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.annotation.Keep
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestBuilder
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.Transformation
-import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.RequestOptions
-import com.bumptech.glide.request.target.Target
-import com.bumptech.glide.request.target.Target.SIZE_ORIGINAL
+import android.graphics.Bitmap
+import coil3.SingletonImageLoader
+import coil3.asDrawable
+import coil3.asImage
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.request.error
+import coil3.request.placeholder
+import coil3.request.target
+import coil3.request.transformations
+import coil3.size.Dimension
+import coil3.size.Precision
+import coil3.size.Scale
+import coil3.size.Size
+import coil3.toBitmap
 import io.legado.app.R
 import io.legado.app.constant.PreferKey
 import io.legado.app.data.entities.BaseSource
 import io.legado.app.data.entities.Book
 import io.legado.app.help.CacheManager
 import io.legado.app.help.DefaultData
+import io.legado.app.help.coil.BlurTransformation
+import io.legado.app.help.coil.LegadoFetcher
 import io.legado.app.help.config.AppConfig
-import io.legado.app.help.glide.BlurTransformation
-import io.legado.app.help.glide.ImageLoader
-import io.legado.app.help.glide.OkHttpModelLoader
 import io.legado.app.model.analyzeRule.AnalyzeRule
 import io.legado.app.model.analyzeRule.AnalyzeRule.Companion.setCoroutineContext
 import io.legado.app.model.analyzeRule.AnalyzeUrl
@@ -38,7 +40,6 @@ import io.legado.app.utils.getPrefBoolean
 import io.legado.app.utils.getPrefString
 import kotlinx.coroutines.currentCoroutineContext
 import splitties.init.appCtx
-import java.io.File
 
 @Keep
 @Suppress("ConstPropertyName")
@@ -84,122 +85,99 @@ object BookCover {
     }
 
     /**
-     * 加载封面
+     * 构建封面加载 ImageRequest（Coil 版）
      */
-    fun load(
+    fun loadRequest(
         context: Context,
         path: String?,
         loadOnlyWifi: Boolean = false,
         sourceOrigin: String? = null,
-        onLoadFinish: (() -> Unit)? = null,
-    ): RequestBuilder<Drawable> {
+    ): ImageRequest {
         if (AppConfig.useDefaultCover) {
-            return ImageLoader.load(context, defaultDrawable)
-                .centerCrop()
+            return ImageRequest.Builder(context)
+                .data(defaultDrawable)
+                .build()
         }
-        var options = RequestOptions().set(OkHttpModelLoader.loadOnlyWifiOption, loadOnlyWifi)
-        if (sourceOrigin != null) {
-            options = options.set(OkHttpModelLoader.sourceOriginOption, sourceOrigin)
-        }
-        var builder = ImageLoader.load(context, path)
-            .apply(options)
-        if (onLoadFinish != null) {
-            builder = builder.addListener(object : RequestListener<Drawable> {
-                override fun onLoadFailed(
-                    e: GlideException?,
-                    model: Any?,
-                    target: Target<Drawable?>,
-                    isFirstResource: Boolean,
-                ): Boolean {
-                    onLoadFinish.invoke()
-                    return false
-                }
-
-                override fun onResourceReady(
-                    resource: Drawable,
-                    model: Any,
-                    target: Target<Drawable?>?,
-                    dataSource: DataSource,
-                    isFirstResource: Boolean,
-                ): Boolean {
-                    onLoadFinish.invoke()
-                    return false
-                }
-            })
-        }
-        return builder.placeholder(defaultDrawable)
-            .error(defaultDrawable)
-            .centerCrop()
-    }
-
-    /**
-     * 加载漫画图片
-     */
-    fun loadManga(
-        context: Context,
-        path: String?,
-        loadOnlyWifi: Boolean = false,
-        sourceOrigin: String? = null,
-        transformation: Transformation<Bitmap>? = null,
-    ): RequestBuilder<Drawable> {
-        var options = RequestOptions().set(OkHttpModelLoader.loadOnlyWifiOption, loadOnlyWifi)
-            .set(OkHttpModelLoader.mangaOption, true)
-        if (sourceOrigin != null) {
-            options = options.set(OkHttpModelLoader.sourceOriginOption, sourceOrigin)
-        }
-        return ImageLoader.load(context, path)
-            .apply(options)
-            .override(context.resources.displayMetrics.widthPixels, SIZE_ORIGINAL)
-            .diskCacheStrategy(DiskCacheStrategy.ALL)
-            .skipMemoryCache(true).let {
-                if (transformation != null) {
-                    it.transform(transformation)
-                } else {
-                    it
+        return ImageRequest.Builder(context)
+            .data(path)
+            .apply {
+                extras[LegadoFetcher.loadOnlyWifiKey] = loadOnlyWifi
+                if (sourceOrigin != null) {
+                    extras[LegadoFetcher.sourceOriginKey] = sourceOrigin
                 }
             }
-    }
-
-    fun preloadManga(
-        context: Context,
-        path: String?,
-        loadOnlyWifi: Boolean = false,
-        sourceOrigin: String? = null,
-    ): RequestBuilder<File?> {
-        var options = RequestOptions().set(OkHttpModelLoader.loadOnlyWifiOption, loadOnlyWifi)
-            .set(OkHttpModelLoader.mangaOption, true)
-        if (sourceOrigin != null) {
-            options = options.set(OkHttpModelLoader.sourceOriginOption, sourceOrigin)
-        }
-        return Glide.with(context)
-            .downloadOnly()
-            .apply(options)
-            .load(path)
+            .placeholder(defaultDrawable.asImage())
+            .error(defaultDrawable.asImage())
+            .crossfade(true)
+            .build()
     }
 
     /**
-     * 加载模糊封面
+     * 构建模糊封面 ImageRequest（Coil 版）
      */
-    fun loadBlur(
+    fun loadBlurRequest(
         context: Context,
         path: String?,
         loadOnlyWifi: Boolean = false,
         sourceOrigin: String? = null,
-    ): RequestBuilder<Drawable> {
-        val loadBlur = ImageLoader.load(context, defaultDrawable)
-            .transform(BlurTransformation(25), CenterCrop())
+    ): ImageRequest {
         if (AppConfig.useDefaultCover) {
-            return loadBlur
+            return ImageRequest.Builder(context)
+                .data(defaultDrawable)
+                .transformations(BlurTransformation(25))
+                .build()
         }
-        var options = RequestOptions().set(OkHttpModelLoader.loadOnlyWifiOption, loadOnlyWifi)
-        if (sourceOrigin != null) {
-            options = options.set(OkHttpModelLoader.sourceOriginOption, sourceOrigin)
-        }
-        return ImageLoader.load(context, path)
-            .apply(options)
-            .transform(BlurTransformation(25), CenterCrop())
-            .transition(DrawableTransitionOptions.withCrossFade(1500))
-            .thumbnail(loadBlur)
+        return ImageRequest.Builder(context)
+            .data(path)
+            .apply {
+                extras[LegadoFetcher.loadOnlyWifiKey] = loadOnlyWifi
+                if (sourceOrigin != null) {
+                    extras[LegadoFetcher.sourceOriginKey] = sourceOrigin
+                }
+            }
+            .transformations(BlurTransformation(25))
+            .crossfade(1500)
+            .build()
+    }
+
+    /**
+     * 构建漫画图片加载 ImageRequest（Coil 版）
+     */
+    fun loadMangaRequest(
+        context: Context,
+        path: String?,
+        loadOnlyWifi: Boolean = false,
+        sourceOrigin: String? = null,
+    ): ImageRequest {
+        return ImageRequest.Builder(context)
+            .data(path)
+            .apply {
+                extras[LegadoFetcher.loadOnlyWifiKey] = loadOnlyWifi
+                extras[LegadoFetcher.mangaKey] = true
+                if (sourceOrigin != null) {
+                    extras[LegadoFetcher.sourceOriginKey] = sourceOrigin
+                }
+            }
+            .size(Size(Dimension(context.resources.displayMetrics.widthPixels), Dimension.Undefined))
+            .precision(Precision.INEXACT)
+            .scale(Scale.FILL)
+            .memoryCachePolicy(CachePolicy.DISABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .build()
+    }
+
+    /**
+     * 同步获取封面位图（用于通知栏等场景）
+     */
+    suspend fun executeCoverBitmap(
+        context: Context,
+        path: String?,
+        loadOnlyWifi: Boolean = false,
+        sourceOrigin: String? = null,
+    ): Bitmap? {
+        val request = loadRequest(context, path, loadOnlyWifi, sourceOrigin)
+        val result = SingletonImageLoader.get(context).execute(request)
+        return result.image?.toBitmap()
     }
 
     fun getCoverRule(): CoverRule {

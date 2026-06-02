@@ -99,6 +99,7 @@
     <string name="offline_cache_t">离线缓存</string>
     <string name="offline_cache_s">缓存选择的章节到本地</string>
     <string name="change_origin">换源</string>
+    <string name="view_source">查看源</string>
     <string name="about_description">
         \u3000\u3000这是一款使用 Kotlin 全新开发的开源的阅读软件，欢迎您的加入。
     </string>
@@ -241,6 +242,7 @@
     <string name="data_loading">加载数据中…</string>
     <string name="load_error_retry">加载失败，点击重试</string>
     <string name="book_intro">内容简介</string>
+    <string name="no_intro">暂无简介</string>
     <string name="intro_show">简介：%s</string>
     <string name="intro_show_null">简介：暂无简介</string>
     <string name="open_from_other">打开外部书籍</string>
@@ -757,6 +759,12 @@
     <string name="sort_by_url">地址排序</string>
     <string name="backup_summary">本地和 WebDav 一起备份</string>
     <string name="restore_summary">优先从 WebDav 恢复，长按从本地恢复</string>
+    <string name="local_backup_restore">本地备份与恢复</string>
+    <string name="web_dav_backup_restore">WebDav 备份与恢复</string>
+    <string name="local_backup_summary">备份到本地存储</string>
+    <string name="local_restore_summary">从本地备份文件恢复</string>
+    <string name="web_dav_backup_summary">备份到 WebDav 服务器</string>
+    <string name="web_dav_restore_summary">从 WebDav 服务器恢复</string>
     <string name="import_old_summary">选择旧版备份文件夹</string>
     <string name="enabled">已启用</string>
     <string name="disabled">已禁用</string>

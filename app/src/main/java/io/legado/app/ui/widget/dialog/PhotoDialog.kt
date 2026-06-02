@@ -4,15 +4,17 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
-import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
-import com.bumptech.glide.request.RequestOptions
+import coil3.SingletonImageLoader
+import coil3.asDrawable
+import coil3.asImage
+import coil3.request.ImageRequest
+import coil3.request.CachePolicy
+import coil3.size.Scale
 import io.legado.app.R
 import io.legado.app.base.BaseDialogFragment
 import io.legado.app.databinding.DialogPhotoViewBinding
 import io.legado.app.help.book.BookHelp
-import io.legado.app.help.glide.ImageLoader
-import io.legado.app.help.glide.OkHttpModelLoader
+import io.legado.app.help.coil.LegadoFetcher
 import io.legado.app.model.BookCover
 import io.legado.app.model.ImageProvider
 import io.legado.app.model.ReadBook
@@ -49,23 +51,36 @@ class PhotoDialog() : BaseDialogFragment(R.layout.dialog_photo_view) {
         val file = ReadBook.book?.let { book ->
             BookHelp.getImage(book, src)
         }
-        if (file?.exists() == true) {
-            ImageLoader.load(requireContext(), file)
-                .error(R.drawable.image_loading_error)
-                .dontTransform()
-                .downsample(DownsampleStrategy.NONE)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .into(binding.photoView)
+        val request = if (file?.exists() == true) {
+            ImageRequest.Builder(requireContext())
+                .data(file)
+                .error(android.graphics.drawable.ColorDrawable(android.graphics.Color.GRAY).asImage())
+                .scale(Scale.FIT)
+                .diskCachePolicy(CachePolicy.DISABLED)
+                .target(
+                    onSuccess = { result ->
+                        binding.photoView.setImageDrawable(result.asDrawable(resources))
+                    }
+                )
+                .build()
         } else {
-            ImageLoader.load(requireContext(), src).apply {
-                arguments.getString("sourceOrigin")?.let { sourceOrigin ->
-                    apply(RequestOptions().set(OkHttpModelLoader.sourceOriginOption, sourceOrigin))
+            ImageRequest.Builder(requireContext())
+                .data(src)
+                .apply {
+                    arguments.getString("sourceOrigin")?.let { sourceOrigin ->
+                        extras[LegadoFetcher.sourceOriginKey] = sourceOrigin
+                    }
                 }
-            }.error(BookCover.defaultDrawable)
-                .dontTransform()
-                .downsample(DownsampleStrategy.NONE)
-                .into(binding.photoView)
+                .scale(Scale.FIT)
+                .error(BookCover.defaultDrawable.asImage())
+                .target(
+                    onSuccess = { result ->
+                        binding.photoView.setImageDrawable(result.asDrawable(resources))
+                    }
+                )
+                .build()
         }
+        SingletonImageLoader.get(requireContext()).enqueue(request)
     }
 
 }

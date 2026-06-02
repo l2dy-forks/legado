@@ -732,6 +732,12 @@
     <string name="sort_by_url">Sắp xếp theo URL</string>
     <string name="backup_summary">Sao lưu cục bộ và WebDav đồng thời</string>
     <string name="restore_summary">Khôi phục từ WebDAV trước, nhấn giữ để khôi phục từ bản sao lưu cục bộ</string>
+    <string name="local_backup_restore">Sao lưu và khôi phục cục bộ</string>
+    <string name="web_dav_backup_restore">Sao lưu và khôi phục WebDav</string>
+    <string name="local_backup_summary">Sao lưu vào bộ nhớ cục bộ</string>
+    <string name="local_restore_summary">Khôi phục từ tệp sao lưu cục bộ</string>
+    <string name="web_dav_backup_summary">Sao lưu vào máy chủ WebDav</string>
+    <string name="web_dav_restore_summary">Khôi phục từ máy chủ WebDav</string>
     <string name="import_old_summary">Chọn một thư mục sao lưu cũ</string>
     <string name="enabled">Đã bật</string>
     <string name="disabled">Đã tắt</string>

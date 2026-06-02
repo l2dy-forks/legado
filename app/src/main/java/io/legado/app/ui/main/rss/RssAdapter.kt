@@ -6,15 +6,20 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
-import com.bumptech.glide.request.RequestOptions
+import coil3.SingletonImageLoader
+import coil3.asDrawable
+import coil3.asImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.request.error
+import coil3.request.placeholder
 import com.google.android.material.card.MaterialCardView
 import io.legado.app.R
 import io.legado.app.base.adapter.ItemViewHolder
 import io.legado.app.base.adapter.RecyclerAdapter
 import io.legado.app.data.entities.RssSource
 import io.legado.app.databinding.ItemRssBinding
-import io.legado.app.help.glide.ImageLoader
-import io.legado.app.help.glide.OkHttpModelLoader
+import io.legado.app.help.coil.LegadoFetcher
 import io.legado.app.lib.theme.colorSurfaceContainer
 import io.legado.app.utils.showThemed
 import splitties.views.onLongClick
@@ -39,14 +44,21 @@ class RssAdapter(
         binding.apply {
             (root as? MaterialCardView)?.setCardBackgroundColor(context.colorSurfaceContainer)
             tvName.text = item.sourceName
-            val options = RequestOptions()
-                .set(OkHttpModelLoader.sourceOriginOption, item.sourceUrl)
-            ImageLoader.load(fragment, lifecycle, item.sourceIcon)
-                .apply(options)
-                .centerCrop()
-                .placeholder(R.drawable.image_rss)
-                .error(R.drawable.image_rss)
-                .into(ivIcon)
+            val request = ImageRequest.Builder(context)
+                .data(item.sourceIcon)
+                .apply {
+                    extras[LegadoFetcher.sourceOriginKey] = item.sourceUrl
+                }
+                .crossfade(true)
+                .placeholder(context.getDrawable(R.drawable.image_rss)?.asImage())
+                .error(context.getDrawable(R.drawable.image_rss)?.asImage())
+                .target(
+                    onSuccess = { result ->
+                        ivIcon.setImageDrawable(result.asDrawable(context.resources))
+                    }
+                )
+                .build()
+            SingletonImageLoader.get(context).enqueue(request)
         }
     }
 

@@ -13,7 +13,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import io.legado.app.help.config.AppConfig
 
 /**
  * 可折叠文本组件，默认显示 [collapsedMaxLines] 行，点击展开/折叠。
@@ -28,6 +30,12 @@ fun CollapsibleText(
     var expanded by remember { mutableStateOf(false) }
     var isOverflow by remember { mutableStateOf(false) }
     val animationsEnabled = LocalAnimationsEnabled.current
+    // E-Ink 模式下用纯黑文字，避免强调色在白色背景上不醒目
+    val buttonColor = if (AppConfig.isEInkMode) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
 
     Column(modifier = modifier) {
         Text(
@@ -53,7 +61,7 @@ fun CollapsibleText(
                 Text(
                     text = if (expanded) "折叠" else "展开",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = buttonColor,
                 )
             }
         }

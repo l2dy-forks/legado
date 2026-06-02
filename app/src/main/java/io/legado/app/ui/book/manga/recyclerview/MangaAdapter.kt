@@ -7,6 +7,7 @@ import android.util.SparseArray
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.MarginLayoutParams
 import androidx.annotation.IntRange
 import androidx.core.util.size
 import androidx.core.view.updateLayoutParams
@@ -14,16 +15,12 @@ import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
-import com.bumptech.glide.Glide
-import com.bumptech.glide.ListPreloader.PreloadModelProvider
-import com.bumptech.glide.RequestBuilder
-import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
+import coil3.transform.Transformation
 import io.legado.app.base.adapter.ItemViewHolder
 import io.legado.app.base.adapter.RecyclerAdapter.Companion.TYPE_FOOTER_VIEW
 import io.legado.app.databinding.ItemBookMangaEdgeBinding
 import io.legado.app.databinding.ItemBookMangaPageBinding
-import io.legado.app.help.glide.progress.ProgressManager
-import io.legado.app.model.BookCover
+import io.legado.app.help.http.progress.ProgressManager
 import io.legado.app.model.ReadManga
 import io.legado.app.ui.book.manga.config.MangaColorFilterConfig
 import io.legado.app.ui.book.manga.entities.EpaperTransformation
@@ -34,11 +31,11 @@ import io.legado.app.utils.dpToPx
 
 
 class MangaAdapter(private val context: Context) :
-    RecyclerView.Adapter<RecyclerView.ViewHolder>(), PreloadModelProvider<Any> {
+    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val inflater: LayoutInflater = LayoutInflater.from(context)
     private lateinit var mConfig: MangaColorFilterConfig
-    private var mTransformation: BitmapTransformation? = null
+    private var mTransformation: Transformation? = null
     private var currentMangaEInkThreshold = 0
 
     companion object {
@@ -184,7 +181,10 @@ class MangaAdapter(private val context: Context) :
                 vh.itemView.updateLayoutParams<ViewGroup.LayoutParams> {
                     height = MATCH_PARENT
                 }
-                Glide.with(context).clear(vh.binding.image)
+                // 重置下边距
+                (vh.itemView.layoutParams as? MarginLayoutParams)?.bottomMargin = 0
+                // Clear image and cancel loading for recycled view
+                vh.binding.image.setImageDrawable(null)
                 if (vh.binding.image.tag is String) {
                     ProgressManager.removeListener(vh.binding.image.tag as String)
                 }
@@ -194,7 +194,22 @@ class MangaAdapter(private val context: Context) :
 
     override fun onBindViewHolder(vh: RecyclerView.ViewHolder, position: Int) {
         when (vh) {
-            is PageViewHolder -> vh.onBind(getItem(position) as MangaPage)
+            is PageViewHolder -> {
+                vh.onBind(getItem(position) as MangaPage)
+                // 最后一个实际 item 增加下边距（屏幕高度的 15%，确保不同手机都有足够间距）
+                val isLast = position == getActualItemCount() - 1
+                (vh.itemView.layoutParams as? MarginLayoutParams)?.let { lp ->
+                    val marginBottom = if (isLast) {
+                        (context.resources.displayMetrics.heightPixels * 0.15f).toInt()
+                    } else {
+                        0
+                    }
+                    if (lp.bottomMargin != marginBottom) {
+                        lp.bottomMargin = marginBottom
+                        vh.itemView.layoutParams = lp
+                    }
+                }
+            }
             is PageMoreViewHolder -> vh.onBind(getItem(position) as ReaderLoading)
         }
     }
@@ -225,24 +240,6 @@ class MangaAdapter(private val context: Context) :
                 notifyItemRemoved(getActualItemCount() + index - 2)
             }
         }
-    }
-
-    override fun getPreloadItems(position: Int): List<Any> {
-        if (isEmpty() || position >= getItems().size) {
-            return emptyList()
-        }
-        return getItems().subList(position, position + 1)
-    }
-
-    override fun getPreloadRequestBuilder(item: Any): RequestBuilder<*>? {
-        if (item is MangaPage) {
-            return BookCover.preloadManga(
-                context,
-                item.mImageUrl,
-                sourceOrigin = ReadManga.book?.origin,
-            )
-        }
-        return null
     }
 
     fun setMangaImageColorFilter(config: MangaColorFilterConfig) {

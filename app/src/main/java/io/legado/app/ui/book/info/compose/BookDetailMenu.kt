@@ -48,9 +48,9 @@ fun BookDetailMenu(
             text = { Text(stringResource(R.string.refresh), color = textColor) },
             onClick = { onDismiss(); onAction(MENU_REFRESH) },
         )
-        // 换源
+        // 查看源
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.change_origin), color = textColor) },
+            text = { Text(stringResource(R.string.view_source), color = textColor) },
             onClick = { onDismiss(); onAction(MENU_CHANGE_SOURCE) },
         )
         // 分组

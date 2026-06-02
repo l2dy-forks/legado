@@ -5,23 +5,15 @@ import android.graphics.Canvas
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
-import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
-import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
-import java.nio.charset.StandardCharsets
-import java.security.MessageDigest
+import coil3.size.Size
+import coil3.transform.Transformation
 
-class GrayscaleTransformation : BitmapTransformation() {
-    private val ID = "io.legado.app.model.GrayscaleTransformation"
+class GrayscaleTransformation : Transformation() {
 
-    private val ID_BYTES = ID.toByteArray(StandardCharsets.UTF_8)
+    override val cacheKey: String = "GrayscaleTransformation"
 
-    override fun transform(
-        pool: BitmapPool,
-        toTransform: Bitmap,
-        outWidth: Int,
-        outHeight: Int,
-    ): Bitmap {
-        val resultBitmap = pool.get(outWidth, outHeight, Bitmap.Config.ARGB_8888)
+    override suspend fun transform(input: Bitmap, size: Size): Bitmap {
+        val resultBitmap = Bitmap.createBitmap(input.width, input.height, Bitmap.Config.ARGB_8888)
 
         val canvas = Canvas(resultBitmap)
         val paint = Paint()
@@ -36,22 +28,7 @@ class GrayscaleTransformation : BitmapTransformation() {
         )
         val filter = ColorMatrixColorFilter(matrix)
         paint.colorFilter = filter
-        canvas.drawBitmap(toTransform, 0f, 0f, paint)
+        canvas.drawBitmap(input, 0f, 0f, paint)
         return resultBitmap
-    }
-
-    override fun updateDiskCacheKey(messageDigest: MessageDigest) {
-        messageDigest.update(ID_BYTES)
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        other as GrayscaleTransformation
-        return ID == other.ID
-    }
-
-    override fun hashCode(): Int {
-        return ID.hashCode()
     }
 }

@@ -11,17 +11,9 @@ import android.text.TextPaint
 import android.util.AttributeSet
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.RequestOptions
-import com.bumptech.glide.request.target.Target
+import coil3.asDrawable
+import coil3.request.ImageRequest
 import io.legado.app.constant.AppPattern
-import io.legado.app.help.config.AppConfig
-import io.legado.app.help.glide.ImageLoader
-import io.legado.app.help.glide.OkHttpModelLoader
 import io.legado.app.lib.theme.accentColor
 import io.legado.app.model.BookCover
 import io.legado.app.utils.textHeight
@@ -161,41 +153,12 @@ class CoverImageView @JvmOverloads constructor(
         minimumWidth = width
     }
 
-    private val glideListener by lazy {
-        object : RequestListener<Drawable> {
-
-            override fun onLoadFailed(
-                e: GlideException?,
-                model: Any?,
-                target: Target<Drawable>,
-                isFirstResource: Boolean
-            ): Boolean {
-                defaultCover = true
-                return false
-            }
-
-            override fun onResourceReady(
-                resource: Drawable,
-                model: Any,
-                target: Target<Drawable>?,
-                dataSource: DataSource,
-                isFirstResource: Boolean
-            ): Boolean {
-                defaultCover = false
-                return false
-            }
-
-        }
-    }
-
     fun load(
         path: String? = null,
         name: String? = null,
         author: String? = null,
         loadOnlyWifi: Boolean = false,
         sourceOrigin: String? = null,
-        fragment: Fragment? = null,
-        lifecycle: Lifecycle? = null,
         onLoadFinish: (() -> Unit)? = null
     ) {
         this.bitmapPath = path
@@ -203,52 +166,33 @@ class CoverImageView @JvmOverloads constructor(
         this.author = author?.replace(AppPattern.bdRegex, "")?.trim()
         defaultCover = true
         invalidate()
-        if (AppConfig.useDefaultCover) {
-            ImageLoader.load(context, BookCover.defaultDrawable)
-                .centerCrop()
-                .into(this)
-        } else {
-            var options = RequestOptions().set(OkHttpModelLoader.loadOnlyWifiOption, loadOnlyWifi)
-            if (sourceOrigin != null) {
-                options = options.set(OkHttpModelLoader.sourceOriginOption, sourceOrigin)
-            }
-            var builder = if (fragment != null && lifecycle != null) {
-                ImageLoader.load(fragment, lifecycle, path)
-            } else {
-                ImageLoader.load(context, path)//Glide自动识别http://,content://和file://
-            }
-            builder = builder.apply(options)
-                .placeholder(BookCover.defaultDrawable)
-                .error(BookCover.defaultDrawable)
-                .listener(glideListener)
-            if (onLoadFinish != null) {
-                builder = builder.addListener(object : RequestListener<Drawable> {
-                    override fun onLoadFailed(
-                        e: GlideException?,
-                        model: Any?,
-                        target: Target<Drawable?>,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        onLoadFinish.invoke()
-                        return false
-                    }
-
-                    override fun onResourceReady(
-                        resource: Drawable,
-                        model: Any,
-                        target: Target<Drawable?>?,
-                        dataSource: DataSource,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        onLoadFinish.invoke()
-                        return false
-                    }
-                })
-            }
-            builder
-                .centerCrop()
-                .into(this)
-        }
+        val request = BookCover.loadRequest(
+            context = context,
+            path = path,
+            loadOnlyWifi = loadOnlyWifi,
+            sourceOrigin = sourceOrigin,
+        ).newBuilder()
+            .target(
+                onStart = { placeholder ->
+                    defaultCover = true
+                    setImageDrawable(placeholder?.asDrawable(context.resources))
+                    invalidate()
+                },
+                onSuccess = { result ->
+                    defaultCover = false
+                    setImageDrawable(result.asDrawable(context.resources))
+                    invalidate()
+                    onLoadFinish?.invoke()
+                },
+                onError = { error ->
+                    defaultCover = true
+                    setImageDrawable(error?.asDrawable(context.resources))
+                    invalidate()
+                    onLoadFinish?.invoke()
+                }
+            )
+            .build()
+        coil3.SingletonImageLoader.get(context).enqueue(request)
     }
 
 }

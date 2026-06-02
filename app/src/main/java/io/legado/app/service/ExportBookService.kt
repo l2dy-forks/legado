@@ -3,8 +3,13 @@ package io.legado.app.service
 import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.core.app.NotificationCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide
+import coil3.SingletonImageLoader
+import coil3.request.ImageResult
+import coil3.asDrawable
+import coil3.request.ImageRequest
+import coil3.toBitmap
 import io.legado.app.R
 import io.legado.app.base.BaseService
 import io.legado.app.constant.AppConst
@@ -502,15 +507,23 @@ class ExportBookService : BaseService() {
 
     private fun setCover(book: Book, epubBook: EpubBook) {
         kotlin.runCatching {
-            val file = Glide.with(this)
-                .asFile()
-                .load(book.getDisplayCover())
-                .submit()
-                .get()
-            val provider = LazyResourceProvider { _ ->
-                file.inputStream()
+            val request = ImageRequest.Builder(this)
+                .data(book.getDisplayCover())
+                .build()
+            val result = kotlinx.coroutines.runBlocking {
+                SingletonImageLoader.get(this@ExportBookService).execute(request)
             }
-            epubBook.coverImage = LazyResource(provider, "Images/cover.jpg")
+            val bitmap = result.image?.toBitmap()
+            if (bitmap != null) {
+                val file = java.io.File(cacheDir, "cover_${book.bookUrl.hashCode()}.jpg")
+                file.outputStream().use { out ->
+                    bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, out)
+                }
+                val provider = LazyResourceProvider { _ ->
+                    file.inputStream()
+                }
+                epubBook.coverImage = LazyResource(provider, "Images/cover.jpg")
+            }
         }.onFailure {
             AppLog.put("获取书籍封面出错\n${it.localizedMessage}", it)
         }

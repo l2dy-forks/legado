@@ -735,6 +735,12 @@
     <string name="sort_by_url">Ordenar por URL</string>
     <string name="backup_summary">Faça backup local e de WebDav simultaneamente</string>
     <string name="restore_summary">Primeiro restaurar de WebDAV, ao clicar longo restaurar do local backup</string>
+    <string name="local_backup_restore">Backup e restauração local</string>
+    <string name="web_dav_backup_restore">Backup e restauração WebDav</string>
+    <string name="local_backup_summary">Fazer backup no armazenamento local</string>
+    <string name="local_restore_summary">Restaurar a partir de arquivo de backup local</string>
+    <string name="web_dav_backup_summary">Fazer backup no servidor WebDav</string>
+    <string name="web_dav_restore_summary">Restaurar do servidor WebDav</string>
     <string name="import_old_summary">Selecione uma pasta Legado de Backup</string>
     <string name="enabled">Ativado</string>
     <string name="disabled">Desativado</string>

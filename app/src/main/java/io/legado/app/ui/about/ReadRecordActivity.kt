@@ -8,6 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.tabs.TabLayout
 import io.legado.app.R
 import io.legado.app.base.BaseActivity
@@ -17,6 +19,7 @@ import io.legado.app.data.appDb
 import io.legado.app.data.entities.ReadRecordShow
 import io.legado.app.databinding.ActivityReadRecordBinding
 import io.legado.app.databinding.ItemReadRecordBinding
+import io.legado.app.databinding.ItemReadRecordHeaderBinding
 import io.legado.app.constant.EventBus
 import io.legado.app.constant.PreferKey
 import io.legado.app.help.config.AppConfig
@@ -51,6 +54,10 @@ import java.util.Locale
 
 class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
 
+    companion object {
+        private const val PAGE_SIZE = 50
+    }
+
     private val adapter by lazy { RecordAdapter(this) }
     private var sortMode
         get() = LocalConfig.getInt("readRecordSort")
@@ -60,16 +67,26 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
     private val searchView: SearchView by lazy {
         binding.titleBar.findViewById(R.id.search_view)
     }
+    private var currentPage = 0
+    private var hasMore = true
+    private var isLoading = false
+    private var currentSearchKey: String? = null
+    private var headerBinding: ItemReadRecordHeaderBinding? = null
 
     override val binding by viewBinding(ActivityReadRecordBinding::inflate)
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         initView()
-        initAllTime()
         initData()
-        initChart()
         observeEvent<String>(EventBus.RECREATE) {
             recreate()
+        }
+        // Ensure header views are inflated before initializing chart/summary data
+        binding.recyclerView.post {
+            headerBinding?.let {
+                initAllTime()
+                initChart()
+            }
         }
     }
 
@@ -117,12 +134,35 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
 
     private fun initView() {
         initSearchView()
-        binding.tvBookName.setText(R.string.all_read_time)
-        // Hide the clear-all button from the summary row; clear is now per-item only
-        binding.tvRemove.visibility = android.view.View.GONE
+        // Add header (chart + summary cards) to RecyclerView adapter
+        adapter.addHeaderView { parent ->
+            val hBinding = ItemReadRecordHeaderBinding.inflate(layoutInflater, parent, false)
+            headerBinding = hBinding
+            hBinding.tvBookName.setText(R.string.all_read_time)
+            hBinding.tvRemove.visibility = android.view.View.GONE
+            applyHeaderTheme(hBinding)
+            hBinding
+        }
         binding.recyclerView.adapter = adapter
         binding.recyclerView.applyNavigationBarPadding()
-        // Card background colors from theme
+        binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                if (dy > 0) {
+                    val lm = recyclerView.layoutManager as LinearLayoutManager
+                    val visibleItemCount = lm.childCount
+                    val totalItemCount = lm.itemCount
+                    val pastVisibleItems = lm.findFirstVisibleItemPosition()
+                    if (!isLoading && hasMore &&
+                        (visibleItemCount + pastVisibleItems) >= totalItemCount - 5
+                    ) {
+                        loadMore()
+                    }
+                }
+            }
+        })
+    }
+
+    private fun applyHeaderTheme(hBinding: ItemReadRecordHeaderBinding) {
         val cardBg = cardBackgroundColor
         val isCardLight = ColorUtils.isColorLight(cardBg)
         val cardPrimaryText = if (isCardLight) {
@@ -135,31 +175,26 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
         } else {
             getCompatColor(R.color.md_dark_secondary)
         }
-        // Divider colors based on card background
         val dividerColor = if (isCardLight) {
-            0x1F000000 // 12% black for light cards
+            0x1F000000
         } else {
-            0x1FFFFFFF // 12% white for dark cards
+            0x1FFFFFFF
         }
-        binding.cardChartInclude.divider1.setBackgroundColor(dividerColor)
-        binding.cardChartInclude.divider2.setBackgroundColor(dividerColor)
-        binding.cardChartInclude.cardChart.setCardBackgroundColor(cardBg)
-        binding.cardSummary.setCardBackgroundColor(cardBg)
-        // TabLayout 背景色与卡片一致
-        binding.cardChartInclude.tabChartType.setBackgroundColor(cardBg)
-        // Tab 指示器颜色
-        binding.cardChartInclude.tabChartType.setSelectedTabIndicatorColor(accentColor)
-        // Stats text colors based on card background
-        binding.cardChartInclude.tvTodayTime.setTextColor(cardPrimaryText)
-        binding.cardChartInclude.tvTodayTimeLabel.setTextColor(cardSecondaryText)
-        binding.cardChartInclude.tvConsecutiveDays.setTextColor(cardPrimaryText)
-        binding.cardChartInclude.tvConsecutiveDaysLabel.setTextColor(cardSecondaryText)
-        binding.cardChartInclude.tvTotalBooks.setTextColor(cardPrimaryText)
-        binding.cardChartInclude.tvTotalBooksLabel.setTextColor(cardSecondaryText)
-        // Summary card text colors
-        binding.tvBookName.setTextColor(cardPrimaryText)
-        binding.tvReadingTime.setTextColor(cardPrimaryText)
-        binding.tvRemove.setTextColor(cardPrimaryText)
+        hBinding.cardChartInclude.divider1.setBackgroundColor(dividerColor)
+        hBinding.cardChartInclude.divider2.setBackgroundColor(dividerColor)
+        hBinding.cardChartInclude.cardChart.setCardBackgroundColor(cardBg)
+        hBinding.cardSummary.setCardBackgroundColor(cardBg)
+        hBinding.cardChartInclude.tabChartType.setBackgroundColor(cardBg)
+        hBinding.cardChartInclude.tabChartType.setSelectedTabIndicatorColor(accentColor)
+        hBinding.cardChartInclude.tvTodayTime.setTextColor(cardPrimaryText)
+        hBinding.cardChartInclude.tvTodayTimeLabel.setTextColor(cardSecondaryText)
+        hBinding.cardChartInclude.tvConsecutiveDays.setTextColor(cardPrimaryText)
+        hBinding.cardChartInclude.tvConsecutiveDaysLabel.setTextColor(cardSecondaryText)
+        hBinding.cardChartInclude.tvTotalBooks.setTextColor(cardPrimaryText)
+        hBinding.cardChartInclude.tvTotalBooksLabel.setTextColor(cardSecondaryText)
+        hBinding.tvBookName.setTextColor(cardPrimaryText)
+        hBinding.tvReadingTime.setTextColor(cardPrimaryText)
+        hBinding.tvRemove.setTextColor(cardPrimaryText)
     }
 
     private fun initSearchView() {
@@ -184,14 +219,18 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
             val allTime = withContext(IO) {
                 appDb.readRecordDao.allTime
             }
-            binding.tvReadingTime.text = formatDuring(allTime)
+            headerBinding?.tvReadingTime?.text = formatDuring(allTime)
         }
     }
 
     private fun initData(searchKey: String? = null) {
+        currentSearchKey = searchKey
+        currentPage = 0
+        hasMore = true
+        isLoading = true
         lifecycleScope.launch {
             val readRecords = withContext(IO) {
-                appDb.readRecordDao.search(searchKey ?: "").let { records ->
+                appDb.readRecordDao.searchPaged(searchKey ?: "", PAGE_SIZE, 0).let { records ->
                     when (sortMode) {
                         1 -> records.sortedByDescending { it.readTime }
                         2 -> records.sortedByDescending { it.lastRead }
@@ -202,6 +241,34 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
                 }
             }
             adapter.setItems(readRecords)
+            hasMore = readRecords.size >= PAGE_SIZE
+            currentPage = 1
+            isLoading = false
+        }
+    }
+
+    private fun loadMore() {
+        if (isLoading || !hasMore) return
+        isLoading = true
+        lifecycleScope.launch {
+            val offset = currentPage * PAGE_SIZE
+            val readRecords = withContext(IO) {
+                appDb.readRecordDao.searchPaged(
+                    currentSearchKey ?: "", PAGE_SIZE, offset
+                ).let { records ->
+                    when (sortMode) {
+                        1 -> records.sortedByDescending { it.readTime }
+                        2 -> records.sortedByDescending { it.lastRead }
+                        else -> records.sortedWith { o1, o2 ->
+                            o1.bookName.cnCompare(o2.bookName)
+                        }
+                    }
+                }
+            }
+            adapter.addItems(readRecords)
+            hasMore = readRecords.size >= PAGE_SIZE
+            currentPage++
+            isLoading = false
         }
     }
 
@@ -233,7 +300,7 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
             val todayTime = withContext(IO) {
                 appDb.dailyReadRecordDao.sumByDateRange(today, today)
             }
-            binding.cardChartInclude.tvTodayTime.text = formatDuring(todayTime)
+            headerBinding?.cardChartInclude?.tvTodayTime?.text = formatDuring(todayTime)
 
             // Consecutive days
             val consecutiveDays = withContext(IO) {
@@ -252,17 +319,17 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
                 }
                 count
             }
-            binding.cardChartInclude.tvConsecutiveDays.text = "${consecutiveDays}天"
+            headerBinding?.cardChartInclude?.tvConsecutiveDays?.text = "${consecutiveDays}天"
 
             // Total books count
             val totalBooks = withContext(IO) {
                 appDb.readRecordDao.allShow.size
             }
-            binding.cardChartInclude.tvTotalBooks.text = "${totalBooks}本"
+            headerBinding?.cardChartInclude?.tvTotalBooks?.text = "${totalBooks}本"
 
             // Heatmap
-            binding.cardChartInclude.heatmapView.setData(heatmapData)
-            binding.cardChartInclude.heatmapView.onDayClick = { date, readTime ->
+            headerBinding?.cardChartInclude?.heatmapView?.setData(heatmapData)
+            headerBinding?.cardChartInclude?.heatmapView?.onDayClick = { date, readTime ->
                 // Tooltip is shown by the view itself
             }
 
@@ -270,8 +337,8 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
             val barItems = topBooks.filter { it.bookName.isNotBlank() }.map {
                 ReadBarChartView.BarItem(it.bookName, it.readTime)
             }
-            binding.cardChartInclude.barChartView.setData(barItems)
-            binding.cardChartInclude.barChartView.onItemClick = { bookName ->
+            headerBinding?.cardChartInclude?.barChartView?.setData(barItems)
+            headerBinding?.cardChartInclude?.barChartView?.onItemClick = { bookName ->
                 lifecycleScope.launch {
                     val book = withContext(IO) {
                         appDb.bookDao.findByName(bookName).firstOrNull()
@@ -288,24 +355,24 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
             val textAccentKey = if (AppConfig.isNightTheme) PreferKey.cNTextAccent else PreferKey.cTextAccent
             val textAccentColor = getPrefInt(textAccentKey)
             if (textAccentColor != 0) {
-                binding.cardChartInclude.tabChartType.setTabTextColors(
+                headerBinding?.cardChartInclude?.tabChartType?.setTabTextColors(
                     textAccentColor and 0x99FFFFFF.toInt(),
                     textAccentColor
                 )
             }
 
             // Tab switch
-            binding.cardChartInclude.tabChartType.addOnTabSelectedListener(
+            headerBinding?.cardChartInclude?.tabChartType?.addOnTabSelectedListener(
                 object : TabLayout.OnTabSelectedListener {
                     override fun onTabSelected(tab: TabLayout.Tab?) {
                         when (tab?.position) {
                             0 -> {
-                                binding.cardChartInclude.heatmapView.visibility = View.VISIBLE
-                                binding.cardChartInclude.barChartView.visibility = View.GONE
+                                headerBinding?.cardChartInclude?.heatmapView?.visibility = View.VISIBLE
+                                headerBinding?.cardChartInclude?.barChartView?.visibility = View.GONE
                             }
                             1 -> {
-                                binding.cardChartInclude.heatmapView.visibility = View.GONE
-                                binding.cardChartInclude.barChartView.visibility = View.VISIBLE
+                                headerBinding?.cardChartInclude?.heatmapView?.visibility = View.GONE
+                                headerBinding?.cardChartInclude?.barChartView?.visibility = View.VISIBLE
                             }
                         }
                     }
@@ -369,7 +436,7 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
         override fun registerListener(holder: ItemViewHolder, binding: ItemReadRecordBinding) {
             binding.apply {
                 root.setOnClickListener {
-                    val item = getItem(holder.layoutPosition) ?: return@setOnClickListener
+                    val item = getItemByLayoutPosition(holder.layoutPosition) ?: return@setOnClickListener
                     lifecycleScope.launch {
                         val book = withContext(IO) {
                             appDb.bookDao.findByName(item.bookName).firstOrNull()
@@ -382,7 +449,7 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
                     }
                 }
                 root.setOnLongClickListener {
-                    val item = getItem(holder.layoutPosition) ?: return@setOnLongClickListener true
+                    val item = getItemByLayoutPosition(holder.layoutPosition) ?: return@setOnLongClickListener true
                     lifecycleScope.launch {
                         val book = withContext(IO) {
                             appDb.bookDao.findByName(item.bookName).firstOrNull()
@@ -401,7 +468,7 @@ class ReadRecordActivity : BaseActivity<ActivityReadRecordBinding>() {
                     true
                 }
                 tvRemove.setOnClickListener {
-                    getItem(holder.layoutPosition)?.let { item ->
+                    getItemByLayoutPosition(holder.layoutPosition)?.let { item ->
                         sureDelAlert(item)
                     }
                 }

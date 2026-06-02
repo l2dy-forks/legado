@@ -33,8 +33,8 @@ import io.legado.app.help.MediaHelp
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.help.exoplayer.ExoPlayerHelper
-import io.legado.app.help.glide.ImageLoader
 import io.legado.app.model.AudioPlay
+import io.legado.app.model.BookCover
 import io.legado.app.model.analyzeRule.AnalyzeUrl
 import io.legado.app.model.analyzeRule.AnalyzeUrl.Companion.getMediaItem
 import io.legado.app.receiver.MediaButtonReceiver
@@ -127,13 +127,13 @@ class AudioPlayService : BaseService(),
         upMediaSessionPlaybackState(PlaybackStateCompat.STATE_PLAYING)
         doDs()
         execute {
-            ImageLoader
-                .loadBitmap(this@AudioPlayService, AudioPlay.book?.getDisplayCover())
-                .submit()
-                .get()
-        }.onSuccess {
-            if (it.width > 16 && it.height > 16) {
-                cover = it
+            BookCover.executeCoverBitmap(
+                context = this@AudioPlayService,
+                path = AudioPlay.book?.getDisplayCover(),
+            )
+        }.onSuccess { bitmap ->
+            if (bitmap != null && bitmap.width > 16 && bitmap.height > 16) {
+                cover = bitmap
                 upMediaMetadata()
                 upAudioPlayNotification()
             }

@@ -2,19 +2,18 @@ package io.legado.app.ui.rss.article
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.view.ViewGroup
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.RequestOptions
-import com.bumptech.glide.request.target.Target
+import coil3.SingletonImageLoader
+import coil3.asDrawable
+import coil3.asImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.request.target
 import io.legado.app.R
 import io.legado.app.base.adapter.ItemViewHolder
 import io.legado.app.data.entities.RssArticle
 import io.legado.app.databinding.ItemRssArticle2Binding
-import io.legado.app.help.glide.ImageLoader
-import io.legado.app.help.glide.OkHttpModelLoader
+import io.legado.app.help.coil.LegadoFetcher
 import io.legado.app.utils.gone
 import io.legado.app.utils.visible
 import io.legado.app.lib.theme.primaryTextColor
@@ -41,37 +40,26 @@ class RssArticlesAdapter2(context: Context, callBack: CallBack) :
             if (item.image.isNullOrBlank() && !callBack.isGridLayout) {
                 imageView.gone()
             } else {
-                val options =
-                    RequestOptions().set(OkHttpModelLoader.sourceOriginOption, item.origin)
-                ImageLoader.load(context, item.image).apply(options).apply {
-                    if (callBack.isGridLayout) {
-                        placeholder(R.drawable.image_rss_article)
-                    } else {
-                        addListener(object : RequestListener<Drawable> {
-                            override fun onLoadFailed(
-                                e: GlideException?,
-                                model: Any?,
-                                target: Target<Drawable>,
-                                isFirstResource: Boolean
-                            ): Boolean {
-                                imageView.gone()
-                                return false
-                            }
-
-                            override fun onResourceReady(
-                                resource: Drawable,
-                                model: Any,
-                                target: Target<Drawable>?,
-                                dataSource: DataSource,
-                                isFirstResource: Boolean
-                            ): Boolean {
-                                imageView.visible()
-                                return false
-                            }
-
-                        })
+                val request = ImageRequest.Builder(context)
+                    .data(item.image)
+                    .apply {
+                        if (item.origin != null) {
+                            extras[LegadoFetcher.sourceOriginKey] = item.origin
+                        }
                     }
-                }.into(imageView)
+                    .crossfade(true)
+                    .placeholder(context.getDrawable(R.drawable.image_rss_article)?.asImage())
+                    .target(
+                        onSuccess = { result: coil3.Image ->
+                            imageView.visible()
+                            imageView.setImageDrawable(result.asDrawable(context.resources))
+                        },
+                        onError = { _: coil3.Image? ->
+                            imageView.gone()
+                        }
+                    )
+                    .build()
+                SingletonImageLoader.get(context).enqueue(request)
             }
             if (item.read) {
                 tvTitle.setTextColor(context.secondaryTextColor)

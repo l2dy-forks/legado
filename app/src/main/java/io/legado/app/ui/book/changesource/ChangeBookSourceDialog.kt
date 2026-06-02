@@ -25,6 +25,7 @@ import io.legado.app.data.entities.BookSource
 import io.legado.app.data.entities.SearchBook
 import io.legado.app.databinding.DialogBookChangeSourceBinding
 import io.legado.app.help.config.AppConfig
+import io.legado.app.help.book.isLocal
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.lib.theme.elevation
 import io.legado.app.lib.theme.getPrimaryTextColor
@@ -42,6 +43,7 @@ import io.legado.app.utils.getCompatDrawable
 import io.legado.app.utils.observeEvent
 import io.legado.app.utils.setLayout
 import io.legado.app.utils.startActivity
+import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.transaction
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.Dispatchers.IO

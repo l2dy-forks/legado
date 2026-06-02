@@ -1,9 +1,9 @@
 package io.legado.app.api.controller
 
 import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.core.graphics.drawable.toBitmap
-import com.bumptech.glide.Glide
 import io.legado.app.api.ReturnData
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
@@ -15,7 +15,6 @@ import io.legado.app.help.book.BookHelp
 import io.legado.app.help.book.ContentProcessor
 import io.legado.app.help.book.isLocal
 import io.legado.app.help.config.AppConfig
-import io.legado.app.help.glide.ImageLoader
 import io.legado.app.model.BookCover
 import io.legado.app.model.ImageProvider
 import io.legado.app.model.ReadBook
@@ -69,22 +68,22 @@ object BookController {
     fun getCover(parameters: Map<String, List<String>>): ReturnData {
         val returnData = ReturnData()
         val coverPath = parameters["path"]?.firstOrNull()
-        val ftBitmap = ImageLoader.loadBitmap(appCtx, coverPath)
-            .override(84, 112)
-            .centerCrop()
-            .submit()
         return try {
-            returnData.setData(ftBitmap.get(3, TimeUnit.SECONDS))
+            val bitmap = kotlinx.coroutines.runBlocking {
+                BookCover.executeCoverBitmap(appCtx, coverPath)
+            }
+            if (bitmap != null) {
+                val scaled = Bitmap.createScaledBitmap(bitmap, 84, 112, true)
+                returnData.setData(scaled)
+            } else {
+                returnData.setErrorMsg("getCover error")
+            }
         } catch (e: Exception) {
             try {
                 val defaultBitmap = defaultCoverCache.getOrPut(BookCover.defaultDrawable) {
-                    Glide.with(appCtx)
-                        .asBitmap()
-                        .load(BookCover.defaultDrawable.toBitmap())
-                        .override(84, 112)
-                        .centerCrop()
-                        .submit()
-                        .get()
+                    (BookCover.defaultDrawable as? BitmapDrawable)?.bitmap?.let {
+                        Bitmap.createScaledBitmap(it, 84, 112, true)
+                    } ?: throw Exception("Failed to load default cover")
                 }
                 returnData.setData(defaultBitmap)
             } catch (e: Exception) {

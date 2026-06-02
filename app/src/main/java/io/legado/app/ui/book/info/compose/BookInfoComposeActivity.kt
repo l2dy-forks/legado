@@ -227,6 +227,11 @@ class BookInfoComposeActivity :
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.upEditBook()
+    }
+
     private fun handleMenuAction(itemId: Int, book: Book) {
         when (itemId) {
             MENU_EDIT -> infoEditResult.launch {
@@ -264,9 +269,28 @@ class BookInfoComposeActivity :
             MENU_UPLOAD -> upLoadBook(book)
             MENU_DELETE -> deleteBook()
             MENU_CHANGE_SOURCE -> {
-                showDialogFragment(
-                    ChangeBookSourceDialog(book.name, book.author)
-                )
+                // 弹出查看源对话框，显示当前源名称
+                val sourceName = appDb.bookSourceDao.getBookSource(book.origin)?.bookSourceName
+                    ?: book.originName
+                alert(titleResource = R.string.change_origin) {
+                    if (!sourceName.isNullOrBlank()) {
+                        setMessage(sourceName)
+                    }
+                    neutralButton(R.string.view_source) {
+                        if (book.isLocal) return@neutralButton
+                        if (!appDb.bookSourceDao.has(book.origin)) {
+                            toastOnUi(R.string.error_no_source)
+                            return@neutralButton
+                        }
+                        editSourceResult.launch { putExtra("sourceUrl", book.origin) }
+                    }
+                    okButton {
+                        showDialogFragment(
+                            ChangeBookSourceDialog(book.name, book.author)
+                        )
+                    }
+                    cancelButton()
+                }
             }
             MENU_GROUP -> {
                 showDialogFragment(
