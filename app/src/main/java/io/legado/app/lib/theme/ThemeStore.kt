@@ -217,7 +217,19 @@ private constructor(private val mContext: Context) : ThemeStoreInterface {
 
     companion object {
 
-        var accentColor = accentColor()
+        @Volatile
+        private var _accentColor: Int? = null
+
+        var accentColor: Int
+            get() {
+                _accentColor?.let { return it }
+                val color = accentColor()
+                _accentColor = color
+                return color
+            }
+            set(value) {
+                _accentColor = value
+            }
 
         fun editTheme(context: Context): ThemeStore {
             return ThemeStore(context)

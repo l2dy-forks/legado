@@ -247,6 +247,8 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
     implementation(libs.coil.svg)
+    // 显式添加 coil-core 确保 Compose Preview 可找到 coil3.size.Dimension
+    // debugImplementation(libs.coil.core)
 
     //Svg
     implementation(libs.androidsvg)

@@ -23,24 +23,25 @@ import splitties.init.appCtx
 
 @Suppress("MemberVisibilityCanBePrivate", "ConstPropertyName")
 object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
-    val isCronet = appCtx.getPrefBoolean(PreferKey.cronet)
-    var useAntiAlias = appCtx.getPrefBoolean(PreferKey.antiAlias)
-    var userAgent: String = getPrefUserAgent()
-    var isEInkMode = appCtx.getPrefString(PreferKey.themeMode) == "3"
-    var clickActionTL = appCtx.getPrefInt(PreferKey.clickActionTL, 2)
-    var clickActionTC = appCtx.getPrefInt(PreferKey.clickActionTC, 2)
-    var clickActionTR = appCtx.getPrefInt(PreferKey.clickActionTR, 1)
-    var clickActionML = appCtx.getPrefInt(PreferKey.clickActionML, 2)
-    var clickActionMC = appCtx.getPrefInt(PreferKey.clickActionMC, 0)
-    var clickActionMR = appCtx.getPrefInt(PreferKey.clickActionMR, 1)
-    var clickActionBL = appCtx.getPrefInt(PreferKey.clickActionBL, 2)
-    var clickActionBC = appCtx.getPrefInt(PreferKey.clickActionBC, 1)
-    var clickActionBR = appCtx.getPrefInt(PreferKey.clickActionBR, 1)
-    var themeMode = appCtx.getPrefString(PreferKey.themeMode, "0")
-    var useDefaultCover = appCtx.getPrefBoolean(PreferKey.useDefaultCover, false)
-    var optimizeRender = CanvasRecorderFactory.isSupport
-            && appCtx.getPrefBoolean(PreferKey.optimizeRender, false)
-    var recordLog = appCtx.getPrefBoolean(PreferKey.recordLog)
+    val isCronet = try { appCtx.getPrefBoolean(PreferKey.cronet) } catch (_: Throwable) { false }
+    var useAntiAlias = try { appCtx.getPrefBoolean(PreferKey.antiAlias) } catch (_: Throwable) { true }
+    var userAgent: String = try { getPrefUserAgent() } catch (_: Throwable) { "" }
+    var isEInkMode = try { appCtx.getPrefString(PreferKey.themeMode) == "3" } catch (_: Throwable) { false }
+    var clickActionTL = try { appCtx.getPrefInt(PreferKey.clickActionTL, 2) } catch (_: Throwable) { 2 }
+    var clickActionTC = try { appCtx.getPrefInt(PreferKey.clickActionTC, 2) } catch (_: Throwable) { 2 }
+    var clickActionTR = try { appCtx.getPrefInt(PreferKey.clickActionTR, 1) } catch (_: Throwable) { 1 }
+    var clickActionML = try { appCtx.getPrefInt(PreferKey.clickActionML, 2) } catch (_: Throwable) { 2 }
+    var clickActionMC = try { appCtx.getPrefInt(PreferKey.clickActionMC, 0) } catch (_: Throwable) { 0 }
+    var clickActionMR = try { appCtx.getPrefInt(PreferKey.clickActionMR, 1) } catch (_: Throwable) { 1 }
+    var clickActionBL = try { appCtx.getPrefInt(PreferKey.clickActionBL, 2) } catch (_: Throwable) { 2 }
+    var clickActionBC = try { appCtx.getPrefInt(PreferKey.clickActionBC, 1) } catch (_: Throwable) { 1 }
+    var clickActionBR = try { appCtx.getPrefInt(PreferKey.clickActionBR, 1) } catch (_: Throwable) { 1 }
+    var themeMode = try { appCtx.getPrefString(PreferKey.themeMode, "0") } catch (_: Throwable) { "0" }
+    var useDefaultCover = try { appCtx.getPrefBoolean(PreferKey.useDefaultCover, false) } catch (_: Throwable) { false }
+    var optimizeRender = try {
+        CanvasRecorderFactory.isSupport && appCtx.getPrefBoolean(PreferKey.optimizeRender, false)
+    } catch (_: Throwable) { false }
+    var recordLog = try { appCtx.getPrefBoolean(PreferKey.recordLog) } catch (_: Throwable) { false }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         when (key) {

@@ -1,6 +1,7 @@
 package io.legado.app.ui.book.info.compose
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -28,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,12 +38,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.legado.app.R
 import io.legado.app.data.entities.Book
@@ -72,9 +77,14 @@ fun BookDetailScreen(
     val statusBarHeightDp = with(LocalDensity.current) {
         WindowInsets.statusBars.getTop(this).toDp()
     }
-    // 280dp 与 HeroHeader Box 高度一致，确保 Surface 圆角顶部对齐
-    val surfaceOverlap = 36.dp
-    val accent = Color(LocalContext.current.accentColor)
+    val context = LocalContext.current
+    val accent = remember {
+        try {
+            Color(context.accentColor)
+        } catch (_: Exception) {
+            Color(0xFF263238.toInt())
+        }
+    }
 
     BoxWithConstraints(
         modifier = Modifier
@@ -82,20 +92,30 @@ fun BookDetailScreen(
             .background(MaterialTheme.colorScheme.background),
     ) {
         val isLandscape = maxWidth > maxHeight
-        // 横屏时缩小 hero 区域，为内容滚动留出足够空间
-        val heroHeight = if (isLandscape) 160.dp + statusBarHeightDp
-            else 280.dp + statusBarHeightDp
+        // 【Hero 区域总高度】— 必须与 HeroHeader 中 heroTotalHeight 保持一致
+        // 竖屏：260dp + 状态栏（大封面展示）；横屏：220dp + 状态栏（加大模糊背景）
+        val heroHeight = if (isLandscape) 220.dp + statusBarHeightDp
+            else 260.dp + statusBarHeightDp
+        // 【Surface 与 Hero 的重叠量】— 控制下半部分内容区域的起始位置
+        // 横屏：30dp 重叠，避免覆盖过小的 Hero 区域
+        // 竖屏：根据 Chip 行数动态调整 —— 一行时抬高(52dp)，两行时降低(36dp)
+        val estimatedChipCount = book.getKindList().size + 3 // +3: 字数/进度/时间
+        val surfaceOverlap = when {
+            isLandscape -> 30.dp
+            estimatedChipCount > 5 -> 36.dp  // Chip 换两行时降低重叠
+            else -> 52.dp                     // Chip 一行时抬高重叠
+        }
 
-        // 顶部深色渐变，从状态栏顶部开始，确保模糊背景在状态栏区域可见
+        // 【顶部深色渐变遮罩】— 叠加在模糊背景上，确保文字与图标可读性
+        // 竖屏：160dp + 状态栏；横屏：140dp + 状态栏（配合更大的模糊背景）
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                // 横屏 100dp / 竖屏 160dp: 渐变可见区域；+statusBarHeightDp: 延伸到状态栏
-                .height(if (isLandscape) 100.dp + statusBarHeightDp else 160.dp + statusBarHeightDp)
+                .height(if (isLandscape) 140.dp + statusBarHeightDp else 160.dp + statusBarHeightDp)
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color.Black.copy(alpha = 0.55f),
+                            Color.Black.copy(alpha = 0.5f),
                             Color.Black.copy(alpha = 0.25f),
                             Color.Transparent,
                         ),
@@ -109,6 +129,8 @@ fun BookDetailScreen(
             isLandscape = isLandscape,
         )
 
+        // 【底部内容卡片】— 圆角 Surface 承载书籍信息、目录、操作按钮
+        // 高度 = 屏幕高度 - Hero高度 + 重叠量，surfaceOverlap 控制"抬高"效果
         Surface(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -119,12 +141,14 @@ fun BookDetailScreen(
             shadowElevation = 4.dp,
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
+                // 【可滚动内容区】— 信息标签、简介、目录
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .padding(top = 12.dp)
                         .verticalScroll(scrollState),
                 ) {
+                    // 【信息标签行】— 分类、字数、阅读进度、更新时间
                     InfoChipRow(
                         kindList = book.getKindList(),
                         wordCount = book.wordCount,
@@ -135,6 +159,7 @@ fun BookDetailScreen(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                     )
 
+                    // 【简介卡片】— 书籍内容简介
                     val intro = book.getDisplayIntro()
                     IntroCard(
                         intro = intro?.takeIf { it.isNotBlank() }
@@ -142,6 +167,7 @@ fun BookDetailScreen(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                     )
 
+                    // 【目录卡片】— 最新章节 + 总章节数，点击进入目录
                     ChapterCard(
                         latestChapterTitle = latestChapterTitle ?: stringResource(R.string.no_last_chapter),
                         totalChapterNum = totalChapterNum,
@@ -150,6 +176,7 @@ fun BookDetailScreen(
                     )
                 }
 
+                // 【底部操作栏】— 加入书架 / 开始阅读按钮
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -202,6 +229,7 @@ fun BookDetailScreen(
             }
         }
 
+        // 【顶部导航栏】— 返回、编辑、更多菜单，透明背景叠加在 Hero 上
         TopAppBar(
             modifier = Modifier.statusBarsPadding(),
             title = {},
@@ -247,6 +275,38 @@ fun BookDetailScreen(
                 containerColor = Color.Transparent,
                 scrolledContainerColor = Color.Transparent,
             ),
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF1C1B1F)
+@Composable
+private fun BookDetailScreenPreview() {
+    val sampleBook = Book(
+        name = "凡人修仙传",
+        author = "忘语",
+        kind = "仙侠, 奇幻, 修仙",
+        intro = "一个普通的山村少年，偶然进入一个神秘的修仙世界...",
+        latestChapterTitle = "第一千三百章 仙界风云",
+        latestChapterTime = System.currentTimeMillis(),
+        durChapterIndex = 500,
+        durChapterPos = 0,
+        durChapterTitle = "第五百章 大乘之战",
+        totalChapterNum = 1300,
+        wordCount = "523.4万",
+    )
+    MaterialTheme {
+        BookDetailScreen(
+            book = sampleBook,
+            latestChapterTitle = "第一千三百章 仙界风云",
+            totalChapterNum = 1300,
+            onBack = {},
+            onReadClick = {},
+            onShelfClick = {},
+            inBookshelf = true,
+            onTocClick = {},
+            onEditClick = {},
+            onMenuAction = {},
         )
     }
 }

@@ -57,7 +57,14 @@ object BookCover {
 
 
     init {
-        upDefaultCover()
+        try {
+            upDefaultCover()
+        } catch (_: Throwable) {
+            // Preview / test environment without Application context
+            defaultDrawable = android.graphics.drawable.ColorDrawable(
+                android.graphics.Color.parseColor("#263238")
+            )
+        }
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
@@ -84,6 +91,13 @@ object BookCover {
         }.getOrDefault(appCtx.resources.getDrawable(R.drawable.image_cover_default, null))
     }
 
+    /** Safe access to AppConfig.useDefaultCover (Preview-compatible) */
+    private fun useDefaultCover(): Boolean = try {
+        AppConfig.useDefaultCover
+    } catch (_: Throwable) {
+        false
+    }
+
     /**
      * 构建封面加载 ImageRequest（Coil 版）
      */
@@ -93,7 +107,7 @@ object BookCover {
         loadOnlyWifi: Boolean = false,
         sourceOrigin: String? = null,
     ): ImageRequest {
-        if (AppConfig.useDefaultCover) {
+        if (useDefaultCover()) {
             return ImageRequest.Builder(context)
                 .data(defaultDrawable)
                 .build()
@@ -121,10 +135,12 @@ object BookCover {
         loadOnlyWifi: Boolean = false,
         sourceOrigin: String? = null,
     ): ImageRequest {
-        if (AppConfig.useDefaultCover) {
+        // 启用默认封面 或 无封面路径时，使用默认封面并模糊
+        if (useDefaultCover() || path.isNullOrBlank()) {
             return ImageRequest.Builder(context)
                 .data(defaultDrawable)
                 .transformations(BlurTransformation(25))
+                .crossfade(1500)
                 .build()
         }
         return ImageRequest.Builder(context)
@@ -135,6 +151,7 @@ object BookCover {
                     extras[LegadoFetcher.sourceOriginKey] = sourceOrigin
                 }
             }
+            .error(defaultDrawable.asImage())
             .transformations(BlurTransformation(25))
             .crossfade(1500)
             .build()

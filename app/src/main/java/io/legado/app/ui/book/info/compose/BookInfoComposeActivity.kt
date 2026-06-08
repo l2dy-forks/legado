@@ -2,6 +2,7 @@ package io.legado.app.ui.book.info.compose
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -21,9 +22,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.Observer
+import androidx.preference.PreferenceManager
 import androidx.lifecycle.lifecycleScope
 import io.legado.app.R
 import io.legado.app.constant.BookType
+import io.legado.app.constant.PreferKey
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookChapter
@@ -177,6 +180,21 @@ class BookInfoComposeActivity :
                     onDispose {
                         viewModel.bookData.removeObserver(bookObserver)
                         viewModel.chapterListData.removeObserver(chObserver)
+                    }
+                }
+
+                // 监听 useDefaultCover 设置变更，强制重组以切换默认封面背景
+                DisposableEffect(Unit) {
+                    val prefs = PreferenceManager.getDefaultSharedPreferences(this@BookInfoComposeActivity)
+                    val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+                        if (key == PreferKey.useDefaultCover) {
+                            AppConfig.useDefaultCover = prefs.getBoolean(PreferKey.useDefaultCover, false)
+                            refreshTrigger++
+                        }
+                    }
+                    prefs.registerOnSharedPreferenceChangeListener(listener)
+                    onDispose {
+                        prefs.unregisterOnSharedPreferenceChangeListener(listener)
                     }
                 }
 

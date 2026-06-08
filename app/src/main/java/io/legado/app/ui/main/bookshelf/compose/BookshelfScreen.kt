@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
@@ -37,11 +38,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 //import androidx.compose.material3.PullToRefreshBox
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -58,6 +55,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
@@ -67,6 +65,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import io.legado.app.R
@@ -324,67 +323,80 @@ fun BookshelfScreen(
             .padding(paddingValues)
         val content: @Composable () -> Unit = {
             Column(modifier = Modifier.fillMaxSize()) {
-                // 分组 Tab 行（仅 Tab 分组模式）
+                // 分组 Tab 行（仅 Tab 分组模式）— 自定义 LazyRow 实现「底块透出」效果
                 if (bookGroupStyle == 0 && groups.isNotEmpty()) {
-                    val tabSelectedIndex = if (usePager && pagerState != null) {
-                        groups.indexOfFirst { it.groupId == selectedGroupId }
-                            .coerceAtLeast(0)
+                    val tabSelectedIndex = groups.indexOfFirst { it.groupId == selectedGroupId }
+                        .coerceAtLeast(0)
+                    val isEInk = AppConfig.isEInkMode
+                    val accentColor = if (isEInk) {
+                        MaterialTheme.colorScheme.onSurface
                     } else {
-                        groups.indexOfFirst { it.groupId == selectedGroupId }
-                            .coerceAtLeast(0)
+                        MaterialTheme.colorScheme.primary
                     }
-                    @Suppress("DEPRECATION")
-                    ScrollableTabRow(
-                        selectedTabIndex = tabSelectedIndex,
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                        edgePadding = 8.dp,
-                        indicator = { tabPositions ->
-                            if (tabSelectedIndex in tabPositions.indices) {
-                                @Suppress("DEPRECATION")
-                                TabRowDefaults.SecondaryIndicator(
-                                    Modifier.tabIndicatorOffset(tabPositions[tabSelectedIndex]),
-                                    color = if (AppConfig.isEInkMode) {
-                                        MaterialTheme.colorScheme.onSurface
-                                    } else {
-                                        MaterialTheme.colorScheme.primary
-                                    },
-                                    height = 2.dp,
-                                )
-                            }
-                        },
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surface),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
-                        groups.forEachIndexed { index, group ->
-                            Tab(
-                                selected = index == tabSelectedIndex,
-                                onClick = {
-                                    onGroupSelected(group.groupId)
-                                    if (pagerState != null && index != pagerState.currentPage) {
-                                        coroutineScope.launch {
-                                            pagerState.animateScrollToPage(index)
+                        items(
+                            count = groups.size,
+                            key = { groups[it].groupId },
+                        ) { index ->
+                            val group = groups[index]
+                            val isSelected = index == tabSelectedIndex
+                            Box(
+                                modifier = Modifier
+                                    .clickable {
+                                        onGroupSelected(group.groupId)
+                                        if (pagerState != null && index != pagerState.currentPage) {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(index)
+                                            }
                                         }
                                     }
-                                },
-                                selectedContentColor = if (AppConfig.isEInkMode) {
-                                    MaterialTheme.colorScheme.onSurface
-                                } else {
-                                    MaterialTheme.colorScheme.primary
-                                },
-                                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                text = {
-                                    Text(
-                                        text = group.groupName.ifEmpty {
-                                            group.getManageName(context)
-                                        },
-                                        style = if (index == tabSelectedIndex) {
-                                            MaterialTheme.typography.labelLarge
-                                        } else {
-                                            MaterialTheme.typography.labelMedium
-                                        },
-                                        maxLines = 1,
+                                    .padding(horizontal = 8.dp, vertical = 12.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                // 底层：选中时在文字下方透出的颜色块（左→右渐变淡出）
+                                if (isSelected && !isEInk) {
+                                    Box(
+                                        modifier = Modifier
+                                            .matchParentSize()
+                                            .align(Alignment.Center)
+                                            .offset(y = 6.dp)
+                                            .height(3.dp)
+                                            .background(
+                                                brush = Brush.horizontalGradient(
+                                                    colors = listOf(
+                                                        accentColor.copy(alpha = 0.35f),
+                                                        Color.Transparent,
+                                                    ),
+                                                ),
+                                                shape = MaterialTheme.shapes.extraSmall,
+                                            ),
                                     )
-                                },
-                            )
+                                }
+                                // 顶层：文字
+                                Text(
+                                    text = group.groupName.ifEmpty {
+                                        group.getManageName(context)
+                                    },
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = if (isSelected) {
+                                        FontWeight.ExtraBold
+                                    } else {
+                                        FontWeight.Normal
+                                    },
+                                    color = if (isSelected) {
+                                        accentColor
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                    maxLines = 1,
+                                )
+                            }
                         }
                     }
                 }
