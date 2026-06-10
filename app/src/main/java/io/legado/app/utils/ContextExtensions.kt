@@ -56,9 +56,17 @@ import kotlin.system.exitProcess
 
 inline fun <reified A : Activity> Context.startActivity(configIntent: Intent.() -> Unit = {}) {
     val intent = Intent(this, A::class.java)
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    // Only add NEW_TASK if we're not already in an Activity context
+    if (this !is Activity) {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
     intent.apply(configIntent)
     startActivity(intent)
+    // Slide+fade transition animation
+    (this as? Activity)?.overridePendingTransition(
+        R.anim.slide_in_right,
+        R.anim.slide_out_left
+    )
 }
 
 fun Context.startActivityForBook(

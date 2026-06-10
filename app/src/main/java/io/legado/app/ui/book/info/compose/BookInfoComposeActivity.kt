@@ -1,6 +1,7 @@
 package io.legado.app.ui.book.info.compose
 
 import android.annotation.SuppressLint
+import android.app.ActivityOptions
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
@@ -14,6 +15,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.core.view.WindowCompat
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -162,7 +169,15 @@ class BookInfoComposeActivity :
             io.legado.app.lib.theme.ThemeStore.backgroundColor(this)
         )
 
+        // Enable shared element transitions for cover animation
+        window.requestFeature(android.view.Window.FEATURE_ACTIVITY_TRANSITIONS)
+        window.sharedElementEnterTransition = android.transition.ChangeTransform()
+        window.sharedElementReturnTransition = android.transition.ChangeTransform()
+
         viewModel.initData(intent)
+
+        // Extract cover shared element transition name from intent
+        val coverTransitionName = intent.getStringExtra("coverTransitionName")
         viewModel.waitDialogData.observe(this) { upWaitDialogStatus(it) }
 
         setContent {
@@ -257,6 +272,7 @@ class BookInfoComposeActivity :
                             isLoginVisible = !viewModel.bookSource?.loginUrl.isNullOrBlank(),
                             isSourceVariableVisible = viewModel.bookSource != null,
                             isBookVariableVisible = viewModel.bookSource != null,
+                            coverTransitionName = coverTransitionName,
                         )
                     }
                 }

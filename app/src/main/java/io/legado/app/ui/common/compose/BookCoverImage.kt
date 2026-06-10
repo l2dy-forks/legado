@@ -9,12 +9,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.ViewCompat
 import io.legado.app.ui.widget.image.CoverImageView
 
 /**
  * 书籍封面图片组件，5:7 比例，圆角。
  * 使用 CoverImageView（原版自定义 View），支持在默认封面上绘制书名/作者。
  * @param compact 是否紧凑模式（网格用），不强制 aspectRatio，由调用方控制尺寸
+ * @param transitionName 共享元素过渡动画名称（书架→详情页封面飞入效果）
  */
 @Composable
 fun BookCoverImage(
@@ -24,6 +26,7 @@ fun BookCoverImage(
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop,
     compact: Boolean = false,
+    transitionName: String? = null,
 ) {
     AndroidView(
         factory = { ctx ->
@@ -36,6 +39,13 @@ fun BookCoverImage(
         },
         update = { coverView ->
             coverView.load(coverUrl, name, author, false, null)
+            transitionName?.let { tn ->
+                ViewCompat.setTransitionName(coverView, tn)
+                coverView.tag = tn
+            } ?: run {
+                ViewCompat.setTransitionName(coverView, null)
+                coverView.tag = null
+            }
         },
         modifier = if (compact) {
             modifier.clip(RoundedCornerShape(4.dp))

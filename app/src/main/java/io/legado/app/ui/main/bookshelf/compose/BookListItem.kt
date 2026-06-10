@@ -50,6 +50,7 @@ fun BookListItem(
     lastUpdateVersion: Int = 0,
     showUnread: Boolean = true,
     showLastUpdateTime: Boolean = false,
+    coverTransitionName: String? = null,
 ) {
     val context = LocalContext.current
     // 30 秒版本号变化时重新计算时间文本
@@ -80,6 +81,7 @@ fun BookListItem(
                 modifier = Modifier
                     .width(72.dp)
                     .height(102.dp),
+                transitionName = coverTransitionName,
             )
 
             Spacer(modifier = Modifier.width(16.dp))

@@ -2,7 +2,10 @@ package io.legado.app.ui.common.compose
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -163,16 +166,22 @@ private val AppShapes = Shapes(
     extraLarge = RoundedCornerShape(24.dp),
 )
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LegadoTheme(content: @Composable () -> Unit) {
     val colorScheme = rememberLegadoColorScheme()
+    val motionScheme = if (AppConfig.isEInkMode) MotionScheme.standard() else MotionScheme.expressive()
     CompositionLocalProvider(
         LocalAnimationsEnabled provides !AppConfig.isEInkMode
     ) {
-        MaterialTheme(
+        // 使用 MaterialExpressiveTheme 而非 MaterialTheme，
+        // 设置内部 LocalUsingExpressiveTheme 标志位，
+        // 使 ModalBottomSheet 使用 expressive spring 动画（收窄下滑退场）
+        MaterialExpressiveTheme(
             colorScheme = colorScheme,
             typography = AppTypography,
             shapes = AppShapes,
+            motionScheme = motionScheme,
             content = content,
         )
     }

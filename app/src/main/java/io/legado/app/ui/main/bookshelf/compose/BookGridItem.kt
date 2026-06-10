@@ -32,6 +32,7 @@ fun BookGridItem(
     onLongClick: () -> Unit,
     showTitle: Boolean = true,
     modifier: Modifier = Modifier,
+    coverTransitionName: String? = null,
 ) {
     Card(
         modifier = modifier
@@ -56,6 +57,7 @@ fun BookGridItem(
                     .fillMaxWidth()
                     .aspectRatio(5f / 7f),
                 compact = true,
+                transitionName = coverTransitionName,
             )
 
             if (showTitle) {

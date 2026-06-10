@@ -71,6 +71,7 @@ fun BookDetailScreen(
     isLoginVisible: Boolean = false,
     isSourceVariableVisible: Boolean = false,
     isBookVariableVisible: Boolean = false,
+    coverTransitionName: String? = null,
 ) {
     val scrollState = rememberScrollState()
     // 状态栏高度，用于让模糊背景延伸到状态栏区域
@@ -127,6 +128,7 @@ fun BookDetailScreen(
             book = book,
             modifier = Modifier.align(Alignment.TopCenter),
             isLandscape = isLandscape,
+            coverTransitionName = coverTransitionName,
         )
 
         // 【底部内容卡片】— 圆角 Surface 承载书籍信息、目录、操作按钮

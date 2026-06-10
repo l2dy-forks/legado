@@ -15,7 +15,7 @@ import io.legado.app.help.CrashHandler
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.help.update.AppUpdate
-import io.legado.app.ui.widget.dialog.TextDialog
+import io.legado.app.ui.widget.dialog.MarkdownBottomSheetDialog
 import io.legado.app.ui.widget.dialog.WaitDialog
 import io.legado.app.utils.FileDoc
 import io.legado.app.utils.compress.ZipUtils
@@ -80,7 +80,7 @@ class AboutFragment : PreferenceFragmentCompat() {
      */
     private fun showMdFile(title: String, fileName: String) {
         val mdText = String(requireContext().assets.open(fileName).readBytes())
-        showDialogFragment(TextDialog(title, mdText, TextDialog.Mode.MD))
+        showDialogFragment(MarkdownBottomSheetDialog.newInstance(title, mdText))
     }
 
     /**

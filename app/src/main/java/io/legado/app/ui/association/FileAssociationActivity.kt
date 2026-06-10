@@ -24,6 +24,7 @@ import io.legado.app.utils.getFile
 import io.legado.app.utils.isContentScheme
 import io.legado.app.utils.readUri
 import io.legado.app.utils.showDialogFragment
+import io.legado.app.ui.widget.dialog.MarkdownBottomSheetDialog
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.startActivityForBook
 import io.legado.app.utils.toastOnUi
@@ -45,7 +46,8 @@ class FileAssociationActivity :
                 importBook(treeUri, uri)
             } ?: let {
                 val storageHelp = String(assets.open("storageHelp.md").readBytes())
-                toastOnUi(storageHelp)
+                showDialogFragment(MarkdownBottomSheetDialog.newInstance(
+                    "存储权限帮助", storageHelp))
                 importBook(null, uri)
             }
         }

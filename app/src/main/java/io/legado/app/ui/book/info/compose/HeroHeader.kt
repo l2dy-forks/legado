@@ -46,6 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.ViewCompat
 import coil3.compose.AsyncImage
 import io.legado.app.R
 import io.legado.app.data.entities.Book
@@ -61,6 +62,7 @@ fun HeroHeader(
     book: Book,
     modifier: Modifier = Modifier,
     isLandscape: Boolean = false,
+    coverTransitionName: String? = null,
 ) {
     val context = LocalContext.current
     val coverUrl = book.getDisplayCover()
@@ -159,6 +161,10 @@ fun HeroHeader(
                 },
                 update = { coverView ->
                     coverView.load(coverUrl, book.name, book.getRealAuthor(), false, null)
+                    coverTransitionName?.let { tn ->
+                        ViewCompat.setTransitionName(coverView, tn)
+                        coverView.tag = tn
+                    }
                 },
                 modifier = Modifier
                     .size(width = coverWidth, height = coverHeight)

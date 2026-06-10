@@ -232,5 +232,7 @@ abstract class BaseActivity<VB : ViewBinding>(
     override fun finish() {
         currentFocus?.hideSoftInput()
         super.finish()
+        // Slide+fade return animation
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }
 }

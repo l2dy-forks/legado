@@ -42,6 +42,7 @@ import io.legado.app.ui.main.my.MyFragment
 import io.legado.app.ui.main.rss.RssFragment
 import io.legado.app.ui.widget.dialog.TextDialog
 import io.legado.app.ui.widget.text.BadgeView
+import io.legado.app.ui.widget.SmoothSlidePageTransformer
 import io.legado.app.utils.isCreated
 import io.legado.app.utils.navigationBarHeight
 import io.legado.app.utils.observeEvent
@@ -174,6 +175,7 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         viewPagerMain.setEdgeEffectColor(primaryColor)
         viewPagerMain.offscreenPageLimit = 3
         viewPagerMain.adapter = adapter
+        viewPagerMain.setPageTransformer(false, SmoothSlidePageTransformer())
         viewPagerMain.addOnPageChangeListener(PageChangeCallback())
         bottomNavigationView.elevation = elevation
         bottomNavigationView.setOnNavigationItemSelectedListener(this@MainActivity)

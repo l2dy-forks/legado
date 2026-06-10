@@ -48,6 +48,9 @@ import io.legado.app.utils.observeEvent
 import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.toastOnUi
+import io.legado.app.ui.main.bookCoverSharedElementKey
+import io.legado.app.ui.main.findViewByTransitionName
+import android.app.ActivityOptions
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -194,8 +197,20 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
                             }
                         },
                         onBookLongClick = { book ->
-                            startActivity<BookInfoComposeActivity> {
+                            val transitionName = bookCoverSharedElementKey(book.bookUrl)
+                            val intent = android.content.Intent(requireContext(), BookInfoComposeActivity::class.java).apply {
                                 putExtra("bookUrl", book.bookUrl)
+                                putExtra("coverTransitionName", transitionName)
+                            }
+                            val decorView = activity?.window?.decorView
+                            val coverView = decorView?.findViewByTransitionName(transitionName)
+                            if (coverView != null && !AppConfig.isEInkMode) {
+                                val bundle = ActivityOptions
+                                    .makeSceneTransitionAnimation(requireActivity(), coverView, transitionName)
+                                    .toBundle()
+                                startActivity(intent, bundle!!)
+                            } else {
+                                startActivity(intent)
                             }
                         },
                         onBookDelete = { book ->

@@ -77,6 +77,7 @@ import io.legado.app.ui.common.compose.EmptyStateView
 import io.legado.app.ui.common.compose.LocalAnimationsEnabled
 import io.legado.app.ui.common.compose.legadoPopupBackgroundColor
 import io.legado.app.ui.common.compose.legadoPopupPrimaryTextColor
+import io.legado.app.ui.main.bookCoverSharedElementKey
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -631,6 +632,7 @@ private fun BookListContent(
                         lastUpdateVersion = lastUpdateVersion,
                         showUnread = showUnread,
                         showLastUpdateTime = showLastUpdateTime,
+                        coverTransitionName = bookCoverSharedElementKey(book.bookUrl),
                     )
                 } else {
                     SwipeToDeleteItem(
@@ -645,6 +647,7 @@ private fun BookListContent(
                             lastUpdateVersion = lastUpdateVersion,
                             showUnread = showUnread,
                             showLastUpdateTime = showLastUpdateTime,
+                            coverTransitionName = bookCoverSharedElementKey(book.bookUrl),
                         )
                     }
                 }
@@ -790,6 +793,7 @@ private fun BookGridContent(
                             onLongClick = { onBookLongClick(book) },
                             showTitle = columns < 5,
                             modifier = Modifier.weight(1f),
+                            coverTransitionName = bookCoverSharedElementKey(book.bookUrl),
                         )
                     }
                     // 补齐不满一行的空位
@@ -910,6 +914,7 @@ private fun BookGroupMixedContent(
                                         onLongClick = { onBookLongClick(book) },
                                         showTitle = gridColumns < 5,
                                         modifier = Modifier.weight(1f),
+                                        coverTransitionName = bookCoverSharedElementKey(book.bookUrl),
                                     )
                                 }
                                 repeat(gridColumns - rowItems.size) {
@@ -926,6 +931,7 @@ private fun BookGroupMixedContent(
                                 book = book,
                                 onClick = { onBookClick(book) },
                                 onLongClick = { onBookLongClick(book) },
+                                coverTransitionName = bookCoverSharedElementKey(book.bookUrl),
                                 modifier = Modifier.padding(vertical = 2.dp),
                             )
                         }
