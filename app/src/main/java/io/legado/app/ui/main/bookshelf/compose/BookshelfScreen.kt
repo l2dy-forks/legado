@@ -30,8 +30,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -75,8 +73,8 @@ import io.legado.app.data.entities.BookGroup
 import io.legado.app.help.config.AppConfig
 import io.legado.app.ui.common.compose.EmptyStateView
 import io.legado.app.ui.common.compose.LocalAnimationsEnabled
-import io.legado.app.ui.common.compose.legadoPopupBackgroundColor
-import io.legado.app.ui.common.compose.legadoPopupPrimaryTextColor
+import io.legado.app.ui.common.compose.RoundDropdownMenu
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
 import io.legado.app.ui.main.bookCoverSharedElementKey
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -226,92 +224,75 @@ fun BookshelfScreen(
                             tint = iconTint,
                         )
                     }
-                    DropdownMenu(
+                    RoundDropdownMenu(
                         expanded = menuExpanded,
                         onDismissRequest = { menuExpanded = false },
                         modifier = Modifier.widthIn(min = 200.dp, max = 300.dp),
-                        containerColor = legadoPopupBackgroundColor(),
-                    ) {
-                        val c = legadoPopupPrimaryTextColor()
-                        // 排序
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.sort), color = c) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_sort), null, tint = c) },
-                            onClick = { menuExpanded = false; onSort() },
+                    ) { dismiss ->
+                        RoundDropdownMenuItem(
+                            text = stringResource(R.string.sort),
+                            onClick = { dismiss(); onSort() },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_sort), null) },
                         )
-                        // 书架布局设置
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.bookshelf_layout), color = c) },
-                            leadingIcon = {
-                                Icon(painterResource(R.drawable.ic_view_quilt), null, tint = c)
-                            },
-                            onClick = { menuExpanded = false; onConfigBookshelf() },
+                        RoundDropdownMenuItem(
+                            text = stringResource(R.string.bookshelf_layout),
+                            onClick = { dismiss(); onConfigBookshelf() },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_view_quilt), null) },
                         )
-                        // 更新目录
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.update_toc), color = c) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_refresh_black_24dp), null, tint = c) },
-                            onClick = { menuExpanded = false; onUpdateToc() },
+                        RoundDropdownMenuItem(
+                            text = stringResource(R.string.update_toc),
+                            onClick = { dismiss(); onUpdateToc() },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_refresh_black_24dp), null) },
                         )
-                        // 本地书籍
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.book_local), color = c) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_add), null, tint = c) },
-                            onClick = { menuExpanded = false; onAddLocal() },
+                        RoundDropdownMenuItem(
+                            text = stringResource(R.string.book_local),
+                            onClick = { dismiss(); onAddLocal() },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_add), null) },
                         )
-                        // 添加远程书籍
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.add_remote_book), color = c) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_add), null, tint = c) },
-                            onClick = { menuExpanded = false; onAddRemote() },
+                        RoundDropdownMenuItem(
+                            text = stringResource(R.string.add_remote_book),
+                            onClick = { dismiss(); onAddRemote() },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_add), null) },
                         )
-                        // 添加URL
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.add_url), color = c) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_add_online), null, tint = c) },
-                            onClick = { menuExpanded = false; onAddUrl() },
+                        RoundDropdownMenuItem(
+                            text = stringResource(R.string.add_url),
+                            onClick = { dismiss(); onAddUrl() },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_add_online), null) },
                         )
-                        // 书架管理
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.bookshelf_management), color = c) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_arrange), null, tint = c) },
-                            onClick = { menuExpanded = false; onManageBookshelf() },
+                        RoundDropdownMenuItem(
+                            text = stringResource(R.string.bookshelf_management),
+                            onClick = { dismiss(); onManageBookshelf() },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_arrange), null) },
                         )
-                        // 缓存导出
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.cache_export), color = c) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_download_line), null, tint = c) },
-                            onClick = { menuExpanded = false; onDownload() },
+                        RoundDropdownMenuItem(
+                            text = stringResource(R.string.cache_export),
+                            onClick = { dismiss(); onDownload() },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_download_line), null) },
                         )
-                        // 分组管理
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.group_manage), color = c) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_groups), null, tint = c) },
-                            onClick = { menuExpanded = false; onManageGroup() },
+                        RoundDropdownMenuItem(
+                            text = stringResource(R.string.group_manage),
+                            onClick = { dismiss(); onManageGroup() },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_groups), null) },
                         )
-                        // 导出书架
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.export_bookshelf), color = c) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_export), null, tint = c) },
-                            onClick = { menuExpanded = false; onExportBookshelf() },
+                        RoundDropdownMenuItem(
+                            text = stringResource(R.string.export_bookshelf),
+                            onClick = { dismiss(); onExportBookshelf() },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_export), null) },
                         )
-                        // 导入书架
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.import_bookshelf), color = c) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_import), null, tint = c) },
-                            onClick = { menuExpanded = false; onImportBookshelf() },
+                        RoundDropdownMenuItem(
+                            text = stringResource(R.string.import_bookshelf),
+                            onClick = { dismiss(); onImportBookshelf() },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_import), null) },
                         )
-                        // Web 服务
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.web_service), color = c) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_web_outline), null, tint = c) },
-                            onClick = { menuExpanded = false; onWebService() },
+                        RoundDropdownMenuItem(
+                            text = stringResource(R.string.web_service),
+                            onClick = { dismiss(); onWebService() },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_web_outline), null) },
                         )
-                        // 日志
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.log), color = c) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_cfg_about), null, tint = c) },
-                            onClick = { menuExpanded = false; onLog() },
+                        RoundDropdownMenuItem(
+                            text = stringResource(R.string.log),
+                            onClick = { dismiss(); onLog() },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_cfg_about), null) },
                         )
                     }
                 },

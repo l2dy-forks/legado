@@ -24,8 +24,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,6 +55,8 @@ import androidx.compose.ui.zIndex
 import io.legado.app.R
 import io.legado.app.help.config.AppConfig
 import io.legado.app.ui.common.compose.BookCoverImage
+import io.legado.app.ui.common.compose.RoundDropdownMenu
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
 import io.legado.app.ui.common.compose.legadoCardBackgroundColor
 import kotlinx.coroutines.flow.Flow
 
@@ -117,13 +117,17 @@ fun ReadRecordScreen(
                         }) { Icon(painterResource(R.drawable.ic_baseline_sort_24), "切换视图") }
                         IconButton(onClick = { showSearch = !showSearch }) { Icon(painterResource(R.drawable.ic_search), "搜索") }
                         IconButton(onClick = { showMenu = true }) { Icon(painterResource(R.drawable.ic_more_vert), "菜单") }
-                        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                        RoundDropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) { dismiss ->
                             DisplayMode.entries.forEach { m ->
-                                DropdownMenuItem(text = { Text(m.label) }, onClick = { showMenu = false; onIntent(ReadRecordIntent.SetMode(m)) })
+                                RoundDropdownMenuItem(
+                                    text = m.label,
+                                    onClick = { dismiss(); onIntent(ReadRecordIntent.SetMode(m)) },
+                                )
                             }
-                            DropdownMenuItem(
-                                text = { Text(if (state.enableRecord) "关闭阅读记录" else "开启阅读记录") },
-                                onClick = { showMenu = false; onIntent(ReadRecordIntent.ToggleEnableRecord) })
+                            RoundDropdownMenuItem(
+                                text = if (state.enableRecord) "关闭阅读记录" else "开启阅读记录",
+                                onClick = { dismiss(); onIntent(ReadRecordIntent.ToggleEnableRecord) },
+                            )
                         }
                     },
                     scrollBehavior = scrollBehavior,

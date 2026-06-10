@@ -1,18 +1,12 @@
 package io.legado.app.ui.book.info.compose
 
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import io.legado.app.R
-import io.legado.app.ui.common.compose.legadoPopupBackgroundColor
-import io.legado.app.ui.common.compose.legadoPopupPrimaryTextColor
+import io.legado.app.ui.common.compose.RoundDropdownMenu
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
 
 /**
  * 详情页更多操作菜单 — 完整复用原 book_info.xml 中的所有菜单项。
@@ -31,120 +25,85 @@ fun BookDetailMenu(
     isLocal: Boolean = false,
     deleteAlert: Boolean = true,
 ) {
-    DropdownMenu(
+    RoundDropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
-        modifier = Modifier.widthIn(min = 200.dp, max = 300.dp),
-        containerColor = legadoPopupBackgroundColor(),
-    ) {
-        val textColor = legadoPopupPrimaryTextColor()
-        // 分享
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.share), color = textColor) },
-            onClick = { onDismiss(); onAction(MENU_SHARE) },
+    ) { dismiss ->
+        RoundDropdownMenuItem(
+            text = stringResource(R.string.share),
+            onClick = { dismiss(); onAction(MENU_SHARE) },
         )
-        // 刷新
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.refresh), color = textColor) },
-            onClick = { onDismiss(); onAction(MENU_REFRESH) },
+        RoundDropdownMenuItem(
+            text = stringResource(R.string.refresh),
+            onClick = { dismiss(); onAction(MENU_REFRESH) },
         )
-        // 查看源
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.view_source), color = textColor) },
-            onClick = { onDismiss(); onAction(MENU_CHANGE_SOURCE) },
+        RoundDropdownMenuItem(
+            text = stringResource(R.string.view_source),
+            onClick = { dismiss(); onAction(MENU_CHANGE_SOURCE) },
         )
-        // 分组
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.group), color = textColor) },
-            onClick = { onDismiss(); onAction(MENU_GROUP) },
+        RoundDropdownMenuItem(
+            text = stringResource(R.string.group),
+            onClick = { dismiss(); onAction(MENU_GROUP) },
         )
-        // 置顶
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.to_top), color = textColor) },
-            onClick = { onDismiss(); onAction(MENU_TOP) },
+        RoundDropdownMenuItem(
+            text = stringResource(R.string.to_top),
+            onClick = { dismiss(); onAction(MENU_TOP) },
         )
-        // 登录（条件显示）
         if (isLoginVisible) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.login), color = textColor) },
-                onClick = { onDismiss(); onAction(MENU_LOGIN) },
+            RoundDropdownMenuItem(
+                text = stringResource(R.string.login),
+                onClick = { dismiss(); onAction(MENU_LOGIN) },
             )
         }
-        // 源变量（条件显示）
         if (isSourceVariableVisible) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.set_source_variable), color = textColor) },
-                onClick = { onDismiss(); onAction(MENU_SET_SOURCE_VARIABLE) },
+            RoundDropdownMenuItem(
+                text = stringResource(R.string.set_source_variable),
+                onClick = { dismiss(); onAction(MENU_SET_SOURCE_VARIABLE) },
             )
         }
-        // 书籍变量（条件显示）
         if (isBookVariableVisible) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.set_book_variable), color = textColor) },
-                onClick = { onDismiss(); onAction(MENU_SET_BOOK_VARIABLE) },
+            RoundDropdownMenuItem(
+                text = stringResource(R.string.set_book_variable),
+                onClick = { dismiss(); onAction(MENU_SET_BOOK_VARIABLE) },
             )
         }
-        // 复制书源 URL
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.copy_book_url), color = textColor) },
-            onClick = { onDismiss(); onAction(MENU_COPY_BOOK_URL) },
+        RoundDropdownMenuItem(
+            text = stringResource(R.string.copy_book_url),
+            onClick = { dismiss(); onAction(MENU_COPY_BOOK_URL) },
         )
-        // 复制目录 URL
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.copy_toc_url), color = textColor) },
-            onClick = { onDismiss(); onAction(MENU_COPY_TOC_URL) },
+        RoundDropdownMenuItem(
+            text = stringResource(R.string.copy_toc_url),
+            onClick = { dismiss(); onAction(MENU_COPY_TOC_URL) },
         )
-        // 允许更新
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.allow_update), color = textColor) },
-            trailingIcon = {
-                if (canUpdate) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_check),
-                        contentDescription = null,
-                        tint = textColor,
-                    )
-                }
-            },
-            onClick = { onDismiss(); onAction(MENU_CAN_UPDATE) },
+        RoundDropdownMenuItem(
+            text = stringResource(R.string.allow_update),
+            onClick = { dismiss(); onAction(MENU_CAN_UPDATE) },
+            isSelected = canUpdate,
         )
-        // 拆分长章节（仅 TXT 本地书）
         if (isLocalTxt) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.split_long_chapter), color = textColor) },
-                trailingIcon = {
-                    if (splitLongChapter) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_check),
-                            contentDescription = null,
-                            tint = textColor,
-                        )
-                    }
-                },
-                onClick = { onDismiss(); onAction(MENU_SPLIT_LONG_CHAPTER) },
+            RoundDropdownMenuItem(
+                text = stringResource(R.string.split_long_chapter),
+                onClick = { dismiss(); onAction(MENU_SPLIT_LONG_CHAPTER) },
+                isSelected = splitLongChapter,
             )
         }
-        // 上传到远程（仅本地书）
         if (isLocal) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.upload_to_remote), color = textColor) },
-                onClick = { onDismiss(); onAction(MENU_UPLOAD) },
+            RoundDropdownMenuItem(
+                text = stringResource(R.string.upload_to_remote),
+                onClick = { dismiss(); onAction(MENU_UPLOAD) },
             )
         }
-        // 清除缓存
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.clear_cache), color = textColor) },
-            onClick = { onDismiss(); onAction(MENU_CLEAR_CACHE) },
+        RoundDropdownMenuItem(
+            text = stringResource(R.string.clear_cache),
+            onClick = { dismiss(); onAction(MENU_CLEAR_CACHE) },
         )
-        // 日志
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.log), color = textColor) },
-            onClick = { onDismiss(); onAction(MENU_LOG) },
+        RoundDropdownMenuItem(
+            text = stringResource(R.string.log),
+            onClick = { dismiss(); onAction(MENU_LOG) },
         )
-        // 删除
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.delete), color = textColor) },
-            onClick = { onDismiss(); onAction(MENU_DELETE) },
+        RoundDropdownMenuItem(
+            text = stringResource(R.string.delete),
+            onClick = { dismiss(); onAction(MENU_DELETE) },
         )
     }
 }
