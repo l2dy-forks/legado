@@ -13,7 +13,7 @@ data class ReadRecordUiState(
     val consecutiveDays: Int = 0,
     val totalBooks: Int = 0,
     val searchKey: String? = null,
-    val displayMode: DisplayMode = DisplayMode.SUMMARY,
+    val displayMode: DisplayMode = DisplayMode.BY_TIME,
     val enableRecord: Boolean = true,
     val summaryCovers: List<BookReadRecordItem> = emptyList(),
 )

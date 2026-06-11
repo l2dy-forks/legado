@@ -40,7 +40,7 @@ import io.legado.app.ui.main.bookshelf.compose.BookshelfComposeFragment
 import io.legado.app.ui.main.explore.ExploreFragment
 import io.legado.app.ui.main.my.MyFragment
 import io.legado.app.ui.main.rss.RssFragment
-import io.legado.app.ui.widget.dialog.TextDialog
+import io.legado.app.ui.widget.dialog.MarkdownBottomSheetDialog
 import io.legado.app.ui.widget.text.BadgeView
 import io.legado.app.ui.widget.SmoothSlidePageTransformer
 import io.legado.app.utils.isCreated
@@ -227,7 +227,7 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
                 String(assets.open("web/help/md/appHelp.md").readBytes())
             }
             suspendCancellableCoroutine<Unit> { block ->
-                val dialog = TextDialog(getString(R.string.help), help, TextDialog.Mode.MD)
+                val dialog = MarkdownBottomSheetDialog.newInstance(getString(R.string.help), help)
                 dialog.setOnDismissListener {
                     block.resume(Unit)
                 }
@@ -238,7 +238,7 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
                 String(assets.open("updateLog.md").readBytes())
             }
             suspendCancellableCoroutine<Unit> { block ->
-                val dialog = TextDialog(getString(R.string.update_log), log, TextDialog.Mode.MD)
+                val dialog = MarkdownBottomSheetDialog.newInstance(getString(R.string.update_log), log)
                 dialog.setOnDismissListener {
                     block.resume(Unit)
                 }

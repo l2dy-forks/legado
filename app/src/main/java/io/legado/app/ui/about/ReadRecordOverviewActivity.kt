@@ -2,12 +2,15 @@ package io.legado.app.ui.about
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import io.legado.app.R
 import io.legado.app.data.appDb
 import io.legado.app.ui.book.readRecord.ReadPeriod
 import io.legado.app.ui.book.readRecord.ReadRecordOverviewScreen
@@ -15,6 +18,7 @@ import io.legado.app.ui.book.readRecord.ReadRecordOverviewState
 import io.legado.app.ui.book.search.SearchActivity
 import io.legado.app.ui.common.compose.LegadoTheme
 import io.legado.app.ui.widget.ReadBarChartView
+import io.legado.app.ui.widget.ReadVerticalBarChartView
 import io.legado.app.utils.startActivityForBook
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
@@ -28,6 +32,8 @@ class ReadRecordOverviewActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        window.statusBarColor = ContextCompat.getColor(this, R.color.primary)
 
         setContent {
             LegadoTheme {
@@ -63,11 +69,12 @@ class ReadRecordOverviewActivity : AppCompatActivity() {
                             var count = 0; val c = Calendar.getInstance(); val f = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                             while (true) { val d = f.format(c.time); if (appDb.dailyReadRecordDao.sumByDateRange(d, d) > 0) { count++; c.add(Calendar.DAY_OF_YEAR, -1) } else break }; count
                         }
-                        val barItems = dailyRecords.filter { it.readTime > 0 }.map { ReadBarChartView.BarItem(it.date.takeLast(5), it.readTime) }
+                        val dailyBarItems = dailyRecords.filter { it.readTime > 0 }.map { ReadVerticalBarChartView.BarItem(it.date.takeLast(5), it.readTime) }
                         val topBooks = showRecords.sortedByDescending { it.readTime }.take(20)
+                        val topBookBarItems = topBooks.map { ReadBarChartView.BarItem(it.bookName, it.readTime) }
 
                         state = state.copy(totalTime = totalTime, readingDays = readingDays, totalBooks = showRecords.size,
-                            todayTime = todayTime, topBooks = topBooks, dailyBarItems = barItems, heatmapData = dailyRecords.associate { it.date to it.readTime })
+                            todayTime = todayTime, topBooks = topBooks, dailyBarItems = dailyBarItems, topBookBarItems = topBookBarItems, heatmapData = dailyRecords.associate { it.date to it.readTime })
                     }
                 }
 

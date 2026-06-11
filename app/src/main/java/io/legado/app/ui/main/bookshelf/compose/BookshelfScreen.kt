@@ -229,66 +229,79 @@ fun BookshelfScreen(
                         onDismissRequest = { menuExpanded = false },
                         modifier = Modifier.widthIn(min = 200.dp, max = 300.dp),
                     ) { dismiss ->
+                        // 排序
                         RoundDropdownMenuItem(
                             text = stringResource(R.string.sort),
                             onClick = { dismiss(); onSort() },
                             leadingIcon = { Icon(painterResource(R.drawable.ic_sort), null) },
                         )
+                        // 书架布局设置
                         RoundDropdownMenuItem(
                             text = stringResource(R.string.bookshelf_layout),
                             onClick = { dismiss(); onConfigBookshelf() },
                             leadingIcon = { Icon(painterResource(R.drawable.ic_view_quilt), null) },
                         )
+                        // 更新目录
                         RoundDropdownMenuItem(
                             text = stringResource(R.string.update_toc),
                             onClick = { dismiss(); onUpdateToc() },
                             leadingIcon = { Icon(painterResource(R.drawable.ic_refresh_black_24dp), null) },
                         )
+                        // 本地书籍
                         RoundDropdownMenuItem(
                             text = stringResource(R.string.book_local),
                             onClick = { dismiss(); onAddLocal() },
                             leadingIcon = { Icon(painterResource(R.drawable.ic_add), null) },
                         )
+                        // 添加远程书籍
                         RoundDropdownMenuItem(
                             text = stringResource(R.string.add_remote_book),
                             onClick = { dismiss(); onAddRemote() },
                             leadingIcon = { Icon(painterResource(R.drawable.ic_add), null) },
                         )
+                        // 添加URL
                         RoundDropdownMenuItem(
                             text = stringResource(R.string.add_url),
                             onClick = { dismiss(); onAddUrl() },
                             leadingIcon = { Icon(painterResource(R.drawable.ic_add_online), null) },
                         )
+                        // 书架管理
                         RoundDropdownMenuItem(
                             text = stringResource(R.string.bookshelf_management),
                             onClick = { dismiss(); onManageBookshelf() },
                             leadingIcon = { Icon(painterResource(R.drawable.ic_arrange), null) },
                         )
+                        // 缓存导出
                         RoundDropdownMenuItem(
                             text = stringResource(R.string.cache_export),
                             onClick = { dismiss(); onDownload() },
                             leadingIcon = { Icon(painterResource(R.drawable.ic_download_line), null) },
                         )
+                        // 分组管理
                         RoundDropdownMenuItem(
                             text = stringResource(R.string.group_manage),
                             onClick = { dismiss(); onManageGroup() },
                             leadingIcon = { Icon(painterResource(R.drawable.ic_groups), null) },
                         )
+                        // 导出书架
                         RoundDropdownMenuItem(
                             text = stringResource(R.string.export_bookshelf),
                             onClick = { dismiss(); onExportBookshelf() },
                             leadingIcon = { Icon(painterResource(R.drawable.ic_export), null) },
                         )
+                        // 导入书架
                         RoundDropdownMenuItem(
                             text = stringResource(R.string.import_bookshelf),
                             onClick = { dismiss(); onImportBookshelf() },
                             leadingIcon = { Icon(painterResource(R.drawable.ic_import), null) },
                         )
+                        // Web 服务
                         RoundDropdownMenuItem(
                             text = stringResource(R.string.web_service),
                             onClick = { dismiss(); onWebService() },
                             leadingIcon = { Icon(painterResource(R.drawable.ic_web_outline), null) },
                         )
+                        // 日志
                         RoundDropdownMenuItem(
                             text = stringResource(R.string.log),
                             onClick = { dismiss(); onLog() },

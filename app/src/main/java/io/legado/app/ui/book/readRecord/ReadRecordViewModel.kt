@@ -70,7 +70,7 @@ class ReadRecordViewModel : ViewModel() {
                 // top 5 covers
                 val top5 = showRecords.sortedByDescending { it.readTime }.take(5).map { it.bookName }
                 val top5Map = withContext(Dispatchers.IO) { top5.mapNotNull { n -> appDb.bookDao.findByName(n).firstOrNull()?.let { it.name to it } }.toMap() }
-                val covers = top5.mapNotNull { n -> val b = top5Map[n]; val r = showRecords.firstOrNull { it.bookName == n }; if (b != null && r != null) BookReadRecordItem(r.bookName, b.author, r.readTime, r.lastRead, b.getDisplayCover()) else null }
+                val covers = top5.mapNotNull { n -> val b = top5Map[n]; val r = showRecords.firstOrNull { it.bookName == n } ?: return@mapNotNull null; BookReadRecordItem(r.bookName, b?.author ?: "", r.readTime, r.lastRead, b?.getDisplayCover()) }
 
                 _uiState.update { it.copy(isLoading = false, books = items, totalReadTime = allTime, todayReadTime = todayTime, consecutiveDays = consecutiveDays, totalBooks = showRecords.size, summaryCovers = covers, enableRecord = AppConfig.enableReadRecord) }
             } catch (e: Exception) { _uiState.update { it.copy(isLoading = false) }; _effects.tryEmit(ReadRecordEffect.ShowToast("加载失败: ${e.message}")) }

@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -226,20 +227,29 @@ private fun ReadingSummaryCard(state: ReadRecordUiState, onClick: () -> Unit) {
     }
 }
 
-// ── BookStackView — MD3 exact: shadow 4dp, zIndex stacking, 44dp covers, 12dp left offset ──
+// ── BookStackView — 不整齐堆叠效果：旋转 + 偏移 ──
 
 @Composable
 private fun BookStackView(covers: List<BookReadRecordItem>) {
-    val step = 12.dp
-    val stackWidth = 44.dp + (step * (covers.size - 1).coerceAtLeast(0))
+    // 每本书的旋转角度（交替 ±）
+    val rotations = listOf(-8f, 6f, -5f, 10f, -3f)
+    // 垂直偏移
+    val offsetsY = listOf(0f, 4f, -2f, 6f, -4f)
 
     Box(
-        modifier = Modifier.width(stackWidth).height(64.dp),
-        contentAlignment = Alignment.CenterStart,
+        modifier = Modifier.width(56.dp).height(72.dp),
+        contentAlignment = Alignment.Center,
     ) {
         covers.forEachIndexed { i, item ->
+            val rot = rotations[i % rotations.size]
+            val offY = offsetsY[i % offsetsY.size]
             Surface(
-                modifier = Modifier.padding(start = step * i).zIndex(i.toFloat()),
+                modifier = Modifier
+                    .zIndex(i.toFloat())
+                    .graphicsLayer {
+                        rotationZ = rot
+                        translationY = offY * density
+                    },
                 shadowElevation = 4.dp,
                 shape = RoundedCornerShape(4.dp),
                 color = Color.Transparent,

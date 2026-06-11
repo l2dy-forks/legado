@@ -1,15 +1,10 @@
 package io.legado.app.ui.book.readRecord
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -42,13 +35,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import io.legado.app.R
@@ -57,6 +46,7 @@ import io.legado.app.help.config.AppConfig
 import io.legado.app.ui.common.compose.legadoCardBackgroundColor
 import io.legado.app.ui.widget.ReadBarChartView
 import io.legado.app.ui.widget.ReadHeatmapView
+import io.legado.app.ui.widget.ReadVerticalBarChartView
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -111,12 +101,12 @@ fun ReadRecordOverviewScreen(
                 }
             }
 
-            // Daily bar chart
+            // Daily vertical bar chart — 竖柱状图
             if (state.dailyBarItems.isNotEmpty()) {
                 item(key = "bar_chart") {
-                    ChartCard("每日阅读时长") {
+                    ChartCard("阅读时长分布") {
                         AndroidView(
-                            factory = { ctx -> ReadBarChartView(ctx).apply { setData(state.dailyBarItems) } },
+                            factory = { ctx -> ReadVerticalBarChartView(ctx).apply { setData(state.dailyBarItems) } },
                             update = { it.setData(state.dailyBarItems) },
                             modifier = Modifier.fillMaxWidth().height(200.dp),
                         )
@@ -142,14 +132,15 @@ fun ReadRecordOverviewScreen(
                 }
             }
 
-            // Top books
-            if (state.topBooks.isNotEmpty()) {
-                item(key = "top_header") {
-                    Text("阅读时长榜 Top ${state.topBooks.size}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
-                }
-                state.topBooks.forEachIndexed { i, book ->
-                    item(key = "top_${book.bookName}") {
-                        RankBookItem(rank = i + 1, book = book, onClick = { onBookClick(book.bookName, "") })
+            // Top books horizontal bar chart — 横柱状图
+            if (state.topBookBarItems.isNotEmpty()) {
+                item(key = "top_chart") {
+                    ChartCard("阅读时长榜 Top ${state.topBookBarItems.size}") {
+                        AndroidView(
+                            factory = { ctx -> ReadBarChartView(ctx).apply { setData(state.topBookBarItems); onItemClick = { name -> onBookClick(name, "") } } },
+                            update = { it.setData(state.topBookBarItems); it.onItemClick = { name -> onBookClick(name, "") } },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     }
                 }
             }
@@ -230,22 +221,6 @@ private fun StatsGridCard(state: ReadRecordOverviewState) {
     }
 }
 
-@Composable private fun RankBookItem(rank: Int, book: ReadRecordShow, onClick: () -> Unit) {
-    val cardBg = legadoCardBackgroundColor()
-    val rankColor = when { rank == 1 -> MaterialTheme.colorScheme.primary; rank <= 3 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f); else -> MaterialTheme.colorScheme.onSurfaceVariant }
-    Surface(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp).clip(RoundedCornerShape(12.dp)).clickable(remember { MutableInteractionSource() }, null, onClick = onClick),
-        shape = RoundedCornerShape(12.dp), color = cardBg, shadowElevation = 0.dp) {
-        Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("$rank", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = rankColor, modifier = Modifier.width(28.dp))
-            Spacer(Modifier.width(8.dp))
-            Column(Modifier.weight(1f)) {
-                Text(book.bookName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(ReadRecordFormatter.formatDuring(book.readTime), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-            }
-        }
-    }
-}
-
 // ── State ──
 
 data class ReadRecordOverviewState(
@@ -256,6 +231,7 @@ data class ReadRecordOverviewState(
     val totalBooks: Int = 0,
     val todayTime: Long = 0L,
     val topBooks: List<ReadRecordShow> = emptyList(),
-    val dailyBarItems: List<ReadBarChartView.BarItem> = emptyList(),
+    val dailyBarItems: List<ReadVerticalBarChartView.BarItem> = emptyList(),
+    val topBookBarItems: List<ReadBarChartView.BarItem> = emptyList(),
     val heatmapData: Map<String, Long> = emptyMap(),
 )

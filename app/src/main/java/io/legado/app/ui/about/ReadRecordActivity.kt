@@ -2,11 +2,14 @@ package io.legado.app.ui.about
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import io.legado.app.R
 import io.legado.app.constant.EventBus
 import io.legado.app.data.appDb
 import io.legado.app.ui.book.readRecord.ReadRecordEffect
@@ -31,6 +34,8 @@ class ReadRecordActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        window.statusBarColor = ContextCompat.getColor(this, R.color.primary)
 
         observeEvent<String>(EventBus.RECREATE) {
             recreate()
