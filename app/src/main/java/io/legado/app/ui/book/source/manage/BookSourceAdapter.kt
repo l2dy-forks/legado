@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -20,10 +19,11 @@ import io.legado.app.model.Debug
 import io.legado.app.ui.login.SourceLoginActivity
 import io.legado.app.ui.widget.recycler.DragSelectTouchHelper
 import io.legado.app.ui.widget.recycler.ItemTouchCallback
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
+import io.legado.app.ui.common.compose.showComposeDropdownMenu
 import io.legado.app.utils.buildMainHandler
 import io.legado.app.utils.gone
 import io.legado.app.utils.invisible
-import io.legado.app.utils.showThemed
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.visible
 import java.util.Collections
@@ -163,46 +163,58 @@ class BookSourceAdapter(
 
     private fun showMenu(view: View, position: Int) {
         val source = getItem(position) ?: return
-        val popupMenu = PopupMenu(context, view)
-        popupMenu.inflate(R.menu.book_source_item)
-        popupMenu.menu.findItem(R.id.menu_top).isVisible = callBack.sort == BookSourceSort.Default
-        popupMenu.menu.findItem(R.id.menu_bottom).isVisible =
-            callBack.sort == BookSourceSort.Default
-        val qyMenu = popupMenu.menu.findItem(R.id.menu_enable_explore)
-        if (!source.hasExploreUrl) {
-            qyMenu.isVisible = false
-        } else {
-            if (source.enabledExplore) {
-                qyMenu.setTitle(R.string.disable_explore)
-            } else {
-                qyMenu.setTitle(R.string.enable_explore)
+        showComposeDropdownMenu(context, view) { dismiss ->
+            if (callBack.sort == BookSourceSort.Default) {
+                RoundDropdownMenuItem(
+                    text = context.getString(R.string.to_top),
+                    onClick = { dismiss(); callBack.toTop(source) },
+                )
+                RoundDropdownMenuItem(
+                    text = context.getString(R.string.to_bottom),
+                    onClick = { dismiss(); callBack.toBottom(source) },
+                )
             }
-        }
-        val loginMenu = popupMenu.menu.findItem(R.id.menu_login)
-        loginMenu.isVisible = source.hasLoginUrl
-        popupMenu.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.menu_top -> callBack.toTop(source)
-                R.id.menu_bottom -> callBack.toBottom(source)
-                R.id.menu_login -> context.startActivity<SourceLoginActivity> {
-                    putExtra("type", "bookSource")
-                    putExtra("key", source.bookSourceUrl)
-                }
-
-                R.id.menu_search -> callBack.searchBook(source)
-                R.id.menu_debug_source -> callBack.debug(source)
-                R.id.menu_del -> {
+            if (source.hasLoginUrl) {
+                RoundDropdownMenuItem(
+                    text = context.getString(R.string.login),
+                    onClick = {
+                        dismiss()
+                        context.startActivity<SourceLoginActivity> {
+                            putExtra("type", "bookSource")
+                            putExtra("key", source.bookSourceUrl)
+                        }
+                    },
+                )
+            }
+            if (source.hasExploreUrl) {
+                RoundDropdownMenuItem(
+                    text = if (source.enabledExplore)
+                        context.getString(R.string.disable_explore)
+                    else
+                        context.getString(R.string.enable_explore),
+                    onClick = {
+                        dismiss()
+                        callBack.enableExplore(!source.enabledExplore, source)
+                    },
+                )
+            }
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.search),
+                onClick = { dismiss(); callBack.searchBook(source) },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.debug),
+                onClick = { dismiss(); callBack.debug(source) },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.delete),
+                onClick = {
+                    dismiss()
                     callBack.del(source)
                     selected.remove(source)
-                }
-
-                R.id.menu_enable_explore -> {
-                    callBack.enableExplore(!source.enabledExplore, source)
-                }
-            }
-            true
+                },
+            )
         }
-        popupMenu.showThemed()
     }
 
     private fun upShowExplore(iv: ImageView, source: BookSourcePart) {

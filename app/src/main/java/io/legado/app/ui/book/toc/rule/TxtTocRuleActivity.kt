@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.widget.PopupMenu
 import androidx.lifecycle.lifecycleScope
@@ -33,6 +34,8 @@ import io.legado.app.utils.sendToClip
 import io.legado.app.utils.setEdgeEffectColor
 import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.showHelp
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
+import io.legado.app.ui.common.compose.createOverflowMenuView
 import io.legado.app.utils.splitNotBlank
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.Dispatchers.IO
@@ -119,23 +122,51 @@ class TxtTocRuleActivity : VMBaseActivity<ActivityTxtTocRuleBinding, TxtTocRuleV
     }
 
     override fun onCompatCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.txt_toc_rule, menu)
+        // Always-visible: Add button
+        menu.add(0, R.id.menu_add, 0, getString(R.string.add)).also {
+            it.setIcon(R.drawable.ic_add)
+            it.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        }
+        // Overflow items via Compose RoundDropdownMenu with spring bounce
+        val overflowView = createOverflowMenuView { dismiss ->
+            RoundDropdownMenuItem(
+                text = getString(R.string.import_local),
+                onClick = {
+                    dismiss()
+                    importDoc.launch {
+                        mode = HandleFileContract.FILE
+                        allowExtensions = arrayOf("txt", "json")
+                    }
+                },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.import_on_line),
+                onClick = { dismiss(); showImportDialog() },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.import_by_qr_code),
+                onClick = { dismiss(); qrCodeResult.launch() },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.import_default_rule),
+                onClick = { dismiss(); viewModel.importDefault() },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.help),
+                onClick = { dismiss(); showHelp("txtTocRuleHelp") },
+            )
+        }
+        val overflowId = View.generateViewId()
+        menu.add(0, overflowId, 99, "").also {
+            it.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+            it.actionView = overflowView
+        }
         return super.onCompatCreateOptionsMenu(menu)
     }
 
     override fun onCompatOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_add -> showDialogFragment(TxtTocRuleEditDialog())
-            R.id.menu_import_local -> importDoc.launch {
-                mode = HandleFileContract.FILE
-                allowExtensions = arrayOf("txt", "json")
-            }
-
-            R.id.menu_import_onLine -> showImportDialog()
-            R.id.menu_import_qr -> qrCodeResult.launch()
-            R.id.menu_import_default -> viewModel.importDefault()
-            R.id.menu_help -> showHelp("txtTocRuleHelp")
-
         }
         return super.onCompatOptionsItemSelected(item)
     }

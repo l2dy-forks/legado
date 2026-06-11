@@ -16,15 +16,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.legado.app.data.entities.Book
-import io.legado.app.ui.common.compose.BookCoverImage
+import io.legado.app.ui.common.compose.BookCoverCompose
 import io.legado.app.ui.common.compose.legadoCardBackgroundColor
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 
 /**
  * 书架网格模式卡片。
  *
  * 结构：封面 + 书名
  */
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun BookGridItem(
     book: Book,
@@ -33,6 +36,9 @@ fun BookGridItem(
     showTitle: Boolean = true,
     modifier: Modifier = Modifier,
     coverTransitionName: String? = null,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    sharedCoverKey: String? = null,
 ) {
     Card(
         modifier = modifier
@@ -49,7 +55,7 @@ fun BookGridItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column {
-            BookCoverImage(
+            BookCoverCompose(
                 coverUrl = book.getDisplayCover(),
                 name = book.name,
                 author = book.getRealAuthor(),
@@ -57,7 +63,9 @@ fun BookGridItem(
                     .fillMaxWidth()
                     .aspectRatio(5f / 7f),
                 compact = true,
-                transitionName = coverTransitionName,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+                sharedCoverKey = sharedCoverKey,
             )
 
             if (showTitle) {

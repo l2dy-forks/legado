@@ -4,7 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.PopupMenu
+
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
@@ -15,6 +15,8 @@ import io.legado.app.data.entities.SearchBook
 import io.legado.app.databinding.ItemChangeSourceBinding
 import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.dialogs.alert
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
+import io.legado.app.ui.common.compose.showComposeDropdownMenu
 import io.legado.app.utils.getCompatColor
 import io.legado.app.utils.gone
 import io.legado.app.utils.invisible
@@ -188,38 +190,38 @@ class ChangeBookSourceAdapter(
 
     private fun showMenu(view: View, searchBook: SearchBook?) {
         searchBook ?: return
-        val popupMenu = PopupMenu(context, view)
-        popupMenu.inflate(R.menu.change_source_item)
-        popupMenu.setOnMenuItemClickListener {
-            when (it.itemId) {
-                R.id.menu_top_source -> {
-                    callBack.topSource(searchBook)
-                }
-
-                R.id.menu_bottom_source -> {
-                    callBack.bottomSource(searchBook)
-                }
-
-                R.id.menu_edit_source -> {
-                    callBack.editSource(searchBook)
-                }
-
-                R.id.menu_disable_source -> {
-                    callBack.disableSource(searchBook)
-                }
-
-                R.id.menu_delete_source -> context.alert(R.string.draw) {
-                    setMessage(context.getString(R.string.sure_del) + "\n" + searchBook.originName)
-                    noButton()
-                    yesButton {
-                        callBack.deleteSource(searchBook)
-                        updateItems(0, itemCount, listOf<Int>())
+        showComposeDropdownMenu(context, view) { dismiss ->
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.to_top),
+                onClick = { dismiss(); callBack.topSource(searchBook) },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.to_bottom),
+                onClick = { dismiss(); callBack.bottomSource(searchBook) },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.edit_source),
+                onClick = { dismiss(); callBack.editSource(searchBook) },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.disable_source),
+                onClick = { dismiss(); callBack.disableSource(searchBook) },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.delete_source),
+                onClick = {
+                    dismiss()
+                    context.alert(R.string.draw) {
+                        setMessage(context.getString(R.string.sure_del) + "\n" + searchBook.originName)
+                        noButton()
+                        yesButton {
+                            callBack.deleteSource(searchBook)
+                            updateItems(0, itemCount, listOf<Int>())
+                        }
                     }
-                }
-            }
-            true
+                },
+            )
         }
-        popupMenu.show()
     }
 
     interface CallBack {

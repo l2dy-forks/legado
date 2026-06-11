@@ -36,6 +36,8 @@ import io.legado.app.model.CacheBook
 import io.legado.app.service.ExportBookService
 import io.legado.app.ui.about.AppLogDialog
 import io.legado.app.ui.file.HandleFileContract
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
+import io.legado.app.ui.common.compose.createOverflowMenuView
 import io.legado.app.utils.ACache
 import io.legado.app.utils.FileDoc
 import io.legado.app.utils.applyNavigationBarPadding
@@ -124,35 +126,131 @@ class CacheActivity : VMBaseActivity<ActivityCacheBookBinding, CacheViewModel>()
     }
 
     override fun onCompatCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.book_cache, menu)
-        menu.iconItemOnLongClick(R.id.menu_download) {
-            PopupMenu(this, it).apply {
-                inflate(R.menu.book_cache_download)
-                this.menu.applyOpenTint(this@CacheActivity)
-                setOnMenuItemClickListener(this@CacheActivity)
-            }.show()
+        // Download button (always visible)
+        menu.add(0, R.id.menu_download, 0, getString(R.string.action_download)).also {
+            it.setIcon(R.drawable.ic_play_24dp)
+            it.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        }
+        // Group icon with dynamic submenu via Compose RoundDropdownMenu (spring bounce)
+        val groupView = createOverflowMenuView(
+            iconContentDescriptionId = R.string.group
+        ) { dismiss ->
+            groupList.forEach { bookGroup ->
+                RoundDropdownMenuItem(
+                    text = bookGroup.groupName,
+                    onClick = {
+                        dismiss()
+                        binding.titleBar.subtitle = bookGroup.groupName
+                        groupId = bookGroup.groupId
+                        initBookData()
+                    },
+                )
+            }
+        }
+        val groupId2 = View.generateViewId()
+        menu.add(0, groupId2, 1, getString(R.string.group)).also {
+            it.setIcon(R.drawable.ic_groups)
+            it.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+            it.actionView = groupView
+        }
+        // Overflow items via Compose RoundDropdownMenu
+        val overflowView = createOverflowMenuView { dismiss ->
+            RoundDropdownMenuItem(
+                text = getString(R.string.menu_download_after),
+                onClick = {
+                    dismiss()
+                    if (!CacheBook.isRun) sureCacheBook {
+                        adapter.getItems().forEach { book ->
+                            CacheBook.start(this@CacheActivity, book, book.durChapterIndex, book.lastChapterIndex)
+                        }
+                    } else {
+                        CacheBook.stop(this@CacheActivity)
+                    }
+                },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.menu_download_all),
+                onClick = {
+                    dismiss()
+                    if (!CacheBook.isRun) sureCacheBook {
+                        adapter.getItems().forEach { book ->
+                            CacheBook.start(this@CacheActivity, book, 0, book.lastChapterIndex)
+                        }
+                    } else {
+                        CacheBook.stop(this@CacheActivity)
+                    }
+                },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.export_all),
+                onClick = { dismiss(); exportAll() },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.export_folder),
+                onClick = { dismiss(); selectExportFolder(-1) },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.export_file_name),
+                onClick = { dismiss(); alertExportFileName() },
+            )
+            RoundDropdownMenuItem(
+                text = "${getString(R.string.export_type)}(${getTypeName()})",
+                onClick = { dismiss(); showExportTypeConfig() },
+            )
+            RoundDropdownMenuItem(
+                text = "${getString(R.string.export_charset)}(${AppConfig.exportCharset})",
+                onClick = { dismiss(); showCharsetConfig() },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.replace_purify),
+                onClick = { dismiss(); AppConfig.exportUseReplace = !AppConfig.exportUseReplace },
+                isSelected = AppConfig.exportUseReplace,
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.custom_export_section),
+                onClick = { dismiss(); AppConfig.enableCustomExport = !AppConfig.enableCustomExport },
+                isSelected = AppConfig.enableCustomExport,
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.export_to_web_dav),
+                onClick = { dismiss(); AppConfig.exportToWebDav = !AppConfig.exportToWebDav },
+                isSelected = AppConfig.exportToWebDav,
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.export_no_chapter_name),
+                onClick = { dismiss(); AppConfig.exportNoChapterName = !AppConfig.exportNoChapterName },
+                isSelected = AppConfig.exportNoChapterName,
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.export_pics_file),
+                onClick = { dismiss(); AppConfig.exportPictureFile = !AppConfig.exportPictureFile },
+                isSelected = AppConfig.exportPictureFile,
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.parallel_export_book),
+                onClick = { dismiss(); AppConfig.parallelExportBook = !AppConfig.parallelExportBook },
+                isSelected = AppConfig.parallelExportBook,
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.log),
+                onClick = { dismiss(); showDialogFragment<AppLogDialog>() },
+            )
+        }
+        val overflowId = View.generateViewId()
+        menu.add(0, overflowId, 99, "").also {
+            it.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+            it.actionView = overflowView
         }
         return super.onCompatCreateOptionsMenu(menu)
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        this.menu = menu
-        upMenu()
+        // No longer needed — menus handled by ComposeView
         return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onMenuOpened(featureId: Int, menu: Menu): Boolean {
-        menu.findItem(R.id.menu_enable_replace)?.isChecked = AppConfig.exportUseReplace
-        // 菜单打开时读取状态[enableCustomExport]
-        menu.findItem(R.id.menu_enable_custom_export)?.isChecked = AppConfig.enableCustomExport
-        menu.findItem(R.id.menu_export_no_chapter_name)?.isChecked = AppConfig.exportNoChapterName
-        menu.findItem(R.id.menu_export_web_dav)?.isChecked = AppConfig.exportToWebDav
-        menu.findItem(R.id.menu_export_pics_file)?.isChecked = AppConfig.exportPictureFile
-        menu.findItem(R.id.menu_parallel_export)?.isChecked = AppConfig.parallelExportBook
-        menu.findItem(R.id.menu_export_type)?.title =
-            "${getString(R.string.export_type)}(${getTypeName()})"
-        menu.findItem(R.id.menu_export_charset)?.title =
-            "${getString(R.string.export_charset)}(${AppConfig.exportCharset})"
+        // No longer needed — check states handled by Compose isSelected
         return super.onMenuOpened(featureId, menu)
     }
 

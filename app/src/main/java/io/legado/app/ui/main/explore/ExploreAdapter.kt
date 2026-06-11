@@ -3,7 +3,7 @@ package io.legado.app.ui.main.explore
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.PopupMenu
+
 import android.widget.TextView
 import androidx.core.view.children
 import com.google.android.flexbox.FlexboxLayout
@@ -25,7 +25,8 @@ import io.legado.app.utils.dpToPx
 import io.legado.app.utils.gone
 import io.legado.app.utils.removeLastElement
 import io.legado.app.utils.showDialogFragment
-import io.legado.app.utils.showThemed
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
+import io.legado.app.ui.common.compose.showComposeDropdownMenu
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.visible
 import kotlinx.coroutines.CoroutineScope
@@ -155,30 +156,47 @@ class ExploreAdapter(context: Context, val callBack: CallBack) :
 
     private fun showMenu(view: View, position: Int): Boolean {
         val source = getItem(position) ?: return true
-        val popupMenu = PopupMenu(context, view)
-        popupMenu.inflate(R.menu.explore_item)
-        popupMenu.menu.findItem(R.id.menu_login).isVisible = source.hasLoginUrl
-        popupMenu.setOnMenuItemClickListener {
-            when (it.itemId) {
-                R.id.menu_edit -> callBack.editSource(source.bookSourceUrl)
-                R.id.menu_top -> callBack.toTop(source)
-                R.id.menu_search -> callBack.searchBook(source)
-                R.id.menu_login -> context.startActivity<SourceLoginActivity> {
-                    putExtra("type", "bookSource")
-                    putExtra("key", source.bookSourceUrl)
-                }
-
-                R.id.menu_refresh -> Coroutine.async(callBack.scope) {
-                    source.clearExploreKindsCache()
-                }.onSuccess {
-                    notifyItemChanged(position)
-                }
-
-                R.id.menu_del -> callBack.deleteSource(source)
+        showComposeDropdownMenu(context, view) { dismiss ->
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.edit),
+                onClick = { dismiss(); callBack.editSource(source.bookSourceUrl) },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.to_top),
+                onClick = { dismiss(); callBack.toTop(source) },
+            )
+            if (source.hasLoginUrl) {
+                RoundDropdownMenuItem(
+                    text = context.getString(R.string.login),
+                    onClick = {
+                        dismiss()
+                        context.startActivity<SourceLoginActivity> {
+                            putExtra("type", "bookSource")
+                            putExtra("key", source.bookSourceUrl)
+                        }
+                    },
+                )
             }
-            true
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.search),
+                onClick = { dismiss(); callBack.searchBook(source) },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.refresh),
+                onClick = {
+                    dismiss()
+                    Coroutine.async(callBack.scope) {
+                        source.clearExploreKindsCache()
+                    }.onSuccess {
+                        notifyItemChanged(position)
+                    }
+                },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.delete),
+                onClick = { dismiss(); callBack.deleteSource(source) },
+            )
         }
-        popupMenu.showThemed()
         return true
     }
 

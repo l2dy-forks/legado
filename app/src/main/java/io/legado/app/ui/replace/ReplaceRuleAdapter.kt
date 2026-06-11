@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import io.legado.app.R
@@ -16,7 +15,8 @@ import io.legado.app.lib.theme.backgroundColor
 import io.legado.app.ui.widget.recycler.DragSelectTouchHelper
 import io.legado.app.ui.widget.recycler.ItemTouchCallback
 import io.legado.app.utils.ColorUtils
-import io.legado.app.utils.showThemed
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
+import io.legado.app.ui.common.compose.showComposeDropdownMenu
 
 
 class ReplaceRuleAdapter(context: Context, var callBack: CallBack) :
@@ -154,20 +154,24 @@ class ReplaceRuleAdapter(context: Context, var callBack: CallBack) :
 
     private fun showMenu(view: View, position: Int) {
         val item = getItem(position) ?: return
-        val popupMenu = PopupMenu(context, view)
-        popupMenu.inflate(R.menu.replace_rule_item)
-        popupMenu.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.menu_top -> callBack.toTop(item)
-                R.id.menu_bottom -> callBack.toBottom(item)
-                R.id.menu_del -> {
+        showComposeDropdownMenu(context, view) { dismiss ->
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.to_top),
+                onClick = { dismiss(); callBack.toTop(item) },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.to_bottom),
+                onClick = { dismiss(); callBack.toBottom(item) },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.delete),
+                onClick = {
+                    dismiss()
                     callBack.delete(item)
                     selected.remove(item)
-                }
-            }
-            true
+                },
+            )
         }
-        popupMenu.showThemed()
     }
 
     override fun swap(srcPosition: Int, targetPosition: Int): Boolean {

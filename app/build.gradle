@@ -12,6 +12,7 @@ plugins {
     alias libs.plugins.room
     alias libs.plugins.ksp
     alias libs.plugins.google.services
+    alias libs.plugins.kotlin.serialization
 }
 apply from: 'download.gradle'
 
@@ -298,6 +299,9 @@ dependencies {
     implementation libs.activity.compose
     implementation libs.lifecycle.viewmodel.compose
     implementation libs.lifecycle.runtime.compose
+    implementation libs.androidx.navigation3.runtime
+    implementation libs.androidx.navigation3.ui
+    implementation libs.kotlinx.serialization.json
     debugImplementation libs.compose.ui.tooling
 
     //LeakCanary, 内存泄露检测

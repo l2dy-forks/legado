@@ -76,6 +76,9 @@ import io.legado.app.ui.common.compose.LocalAnimationsEnabled
 import io.legado.app.ui.common.compose.RoundDropdownMenu
 import io.legado.app.ui.common.compose.RoundDropdownMenuItem
 import io.legado.app.ui.main.bookCoverSharedElementKey
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -93,7 +96,7 @@ import kotlin.math.roundToInt
  * @param bookGroupStyle 0 = Tab 分组, 1 = 文件布局
  * @param onGroupSelected 分组切换回调
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun BookshelfScreen(
     books: List<Book>,
@@ -127,6 +130,8 @@ fun BookshelfScreen(
     showUnread: Boolean = true,
     showLastUpdateTime: Boolean = false,
     showFastScroller: Boolean = false,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val context = LocalContext.current
@@ -450,6 +455,8 @@ fun BookshelfScreen(
                                 showLastUpdateTime = showLastUpdateTime,
                                 showFastScroller = showFastScroller,
                                 modifier = Modifier.fillMaxSize(),
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = animatedVisibilityScope,
                             )
                         }
                     }
@@ -468,6 +475,8 @@ fun BookshelfScreen(
                             onGroupClick = onGroupSelected,
                             showFastScroller = showFastScroller,
                             modifier = Modifier.fillMaxSize(),
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
                         )
                     } else if (gridColumns > 0) {
                         BookGridContent(
@@ -477,6 +486,8 @@ fun BookshelfScreen(
                             onBookLongClick = onBookLongClick,
                             showFastScroller = showFastScroller,
                             modifier = Modifier.fillMaxSize(),
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
                         )
                     } else {
                         BookListContent(
@@ -490,6 +501,8 @@ fun BookshelfScreen(
                             showLastUpdateTime = showLastUpdateTime,
                             showFastScroller = showFastScroller,
                             modifier = Modifier.fillMaxSize(),
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
                         )
                     }
                 }
@@ -523,6 +536,8 @@ private fun GroupPageContent(
     showLastUpdateTime: Boolean = false,
     showFastScroller: Boolean = false,
     modifier: Modifier = Modifier,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
 ) {
     if (books.isEmpty()) {
         EmptyStateView()
@@ -534,6 +549,8 @@ private fun GroupPageContent(
             onBookLongClick = onBookLongClick,
             showFastScroller = showFastScroller,
             modifier = modifier,
+            sharedTransitionScope = sharedTransitionScope,
+            animatedVisibilityScope = animatedVisibilityScope,
         )
     } else {
         BookListContent(
@@ -547,6 +564,8 @@ private fun GroupPageContent(
             showLastUpdateTime = showLastUpdateTime,
             showFastScroller = showFastScroller,
             modifier = modifier,
+            sharedTransitionScope = sharedTransitionScope,
+            animatedVisibilityScope = animatedVisibilityScope,
         )
     }
 }
@@ -601,6 +620,8 @@ private fun BookListContent(
     showLastUpdateTime: Boolean = false,
     showFastScroller: Boolean = false,
     modifier: Modifier = Modifier,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
 ) {
     val animationsEnabled = LocalAnimationsEnabled.current
     val listState = rememberLazyListState()
@@ -615,6 +636,7 @@ private fun BookListContent(
                 key = { it.bookUrl },
             ) { book ->
                 val isUpdatingBook = isUpdating(book.bookUrl)
+                val sharedKey = bookCoverSharedElementKey(book.bookUrl)
                 if (!animationsEnabled) {
                     // E-Ink 模式：直接显示，无滑动删除
                     BookListItem(
@@ -626,7 +648,10 @@ private fun BookListContent(
                         lastUpdateVersion = lastUpdateVersion,
                         showUnread = showUnread,
                         showLastUpdateTime = showLastUpdateTime,
-                        coverTransitionName = bookCoverSharedElementKey(book.bookUrl),
+                        coverTransitionName = sharedKey,
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        sharedCoverKey = sharedKey,
                     )
                 } else {
                     SwipeToDeleteItem(
@@ -641,7 +666,10 @@ private fun BookListContent(
                             lastUpdateVersion = lastUpdateVersion,
                             showUnread = showUnread,
                             showLastUpdateTime = showLastUpdateTime,
-                            coverTransitionName = bookCoverSharedElementKey(book.bookUrl),
+                            coverTransitionName = sharedKey,
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            sharedCoverKey = sharedKey,
                         )
                     }
                 }
@@ -760,6 +788,8 @@ private fun BookGridContent(
     onBookLongClick: (Book) -> Unit,
     showFastScroller: Boolean = false,
     modifier: Modifier = Modifier,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
 ) {
     val rows = books.chunked(columns)
     val spacing = 4.dp
@@ -781,13 +811,17 @@ private fun BookGridContent(
                     horizontalArrangement = Arrangement.spacedBy(spacing),
                 ) {
                     rowItems.forEach { book ->
+                        val sharedKey = bookCoverSharedElementKey(book.bookUrl)
                         BookGridItem(
                             book = book,
                             onClick = { onBookClick(book) },
                             onLongClick = { onBookLongClick(book) },
                             showTitle = columns < 5,
                             modifier = Modifier.weight(1f),
-                            coverTransitionName = bookCoverSharedElementKey(book.bookUrl),
+                            coverTransitionName = sharedKey,
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            sharedCoverKey = sharedKey,
                         )
                     }
                     // 补齐不满一行的空位
@@ -821,6 +855,8 @@ private fun BookGroupMixedContent(
     onGroupClick: (Long) -> Unit,
     showFastScroller: Boolean = false,
     modifier: Modifier = Modifier,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
 ) {
     // 仅保留用户自定义分组（groupId > 0），过滤掉系统分组（IdAll/IdLocal/IdAudio 等）
     val userGroups = remember(groups) { groups.filter { it.groupId > 0 } }
@@ -902,13 +938,17 @@ private fun BookGroupMixedContent(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 rowItems.forEach { book ->
+                                    val sharedKey = bookCoverSharedElementKey(book.bookUrl)
                                     BookGridItem(
                                         book = book,
                                         onClick = { onBookClick(book) },
                                         onLongClick = { onBookLongClick(book) },
                                         showTitle = gridColumns < 5,
                                         modifier = Modifier.weight(1f),
-                                        coverTransitionName = bookCoverSharedElementKey(book.bookUrl),
+                                        coverTransitionName = sharedKey,
+                                        sharedTransitionScope = sharedTransitionScope,
+                                        animatedVisibilityScope = animatedVisibilityScope,
+                                        sharedCoverKey = sharedKey,
                                     )
                                 }
                                 repeat(gridColumns - rowItems.size) {
@@ -921,12 +961,16 @@ private fun BookGroupMixedContent(
                             items = groupBooks,
                             key = { "list_${it.bookUrl}" },
                         ) { book ->
+                            val sharedKey = bookCoverSharedElementKey(book.bookUrl)
                             BookListItem(
                                 book = book,
                                 onClick = { onBookClick(book) },
                                 onLongClick = { onBookLongClick(book) },
-                                coverTransitionName = bookCoverSharedElementKey(book.bookUrl),
+                                coverTransitionName = sharedKey,
                                 modifier = Modifier.padding(vertical = 2.dp),
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                sharedCoverKey = sharedKey,
                             )
                         }
                     }

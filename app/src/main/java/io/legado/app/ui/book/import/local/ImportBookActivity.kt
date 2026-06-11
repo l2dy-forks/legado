@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.activity.addCallback
 import androidx.activity.viewModels
 import androidx.appcompat.widget.PopupMenu
@@ -31,6 +32,8 @@ import io.legado.app.utils.isContentScheme
 import io.legado.app.utils.isUri
 import io.legado.app.utils.launch
 import io.legado.app.utils.putPrefInt
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
+import io.legado.app.ui.common.compose.createOverflowMenuView
 import io.legado.app.utils.visible
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -77,25 +80,59 @@ class ImportBookActivity : BaseImportBookActivity<ImportBookViewModel>(),
     }
 
     override fun onCompatCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.import_book, menu)
+        // Always-visible: select folder button
+        menu.add(0, R.id.menu_select_folder, 0, getString(R.string.select_folder)).also {
+            it.setIcon(R.drawable.ic_folder_open)
+            it.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        }
+        // Sort icon with Compose RoundDropdownMenu (spring bounce)
+        val sortView = createOverflowMenuView(
+            iconContentDescriptionId = R.string.sort
+        ) { dismiss ->
+            RoundDropdownMenuItem(
+                text = getString(R.string.sort_by_name),
+                onClick = { dismiss(); upSort(0) },
+                isSelected = viewModel.sort == 0,
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.sort_by_size),
+                onClick = { dismiss(); upSort(1) },
+                isSelected = viewModel.sort == 1,
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.sort_by_time),
+                onClick = { dismiss(); upSort(2) },
+                isSelected = viewModel.sort == 2,
+            )
+        }
+        val sortId = View.generateViewId()
+        menu.add(0, sortId, 1, getString(R.string.sort)).also {
+            it.setIcon(R.drawable.ic_sort)
+            it.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+            it.actionView = sortView
+        }
+        // Overflow: other items via Compose RoundDropdownMenu
+        val overflowView = createOverflowMenuView { dismiss ->
+            RoundDropdownMenuItem(
+                text = getString(R.string.scan_folder),
+                onClick = { dismiss(); scanFolder() },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.import_file_name),
+                onClick = { dismiss(); alertImportFileName() },
+            )
+        }
+        val overflowId = View.generateViewId()
+        menu.add(0, overflowId, 99, "").also {
+            it.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+            it.actionView = overflowView
+        }
         return super.onCompatCreateOptionsMenu(menu)
-    }
-
-    override fun onMenuOpened(featureId: Int, menu: Menu): Boolean {
-        menu.findItem(R.id.menu_sort_name)?.isChecked = viewModel.sort == 0
-        menu.findItem(R.id.menu_sort_size)?.isChecked = viewModel.sort == 1
-        menu.findItem(R.id.menu_sort_time)?.isChecked = viewModel.sort == 2
-        return super.onMenuOpened(featureId, menu)
     }
 
     override fun onCompatOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_select_folder -> selectFolder.launch()
-            R.id.menu_scan_folder -> scanFolder()
-            R.id.menu_import_file_name -> alertImportFileName()
-            R.id.menu_sort_name -> upSort(0)
-            R.id.menu_sort_size -> upSort(1)
-            R.id.menu_sort_time -> upSort(2)
         }
         return super.onCompatOptionsItemSelected(item)
     }

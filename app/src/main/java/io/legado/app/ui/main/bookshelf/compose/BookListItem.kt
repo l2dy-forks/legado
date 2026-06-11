@@ -25,9 +25,12 @@ import androidx.compose.ui.unit.dp
 import io.legado.app.R
 import io.legado.app.data.entities.Book
 import io.legado.app.help.book.isLocal
-import io.legado.app.ui.common.compose.BookCoverImage
+import io.legado.app.ui.common.compose.BookCoverCompose
 import io.legado.app.ui.common.compose.SectionCard
 import io.legado.app.utils.toTimeAgo
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 
 /**
  * 书架列表模式卡片。
@@ -39,7 +42,7 @@ import io.legado.app.utils.toTimeAgo
  * @param showUnread      是否显示未读标志
  * @param showLastUpdateTime 是否显示上次更新时间
  */
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun BookListItem(
     book: Book,
@@ -51,6 +54,9 @@ fun BookListItem(
     showUnread: Boolean = true,
     showLastUpdateTime: Boolean = false,
     coverTransitionName: String? = null,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    sharedCoverKey: String? = null,
 ) {
     val context = LocalContext.current
     // 30 秒版本号变化时重新计算时间文本
@@ -74,14 +80,17 @@ fun BookListItem(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top,
         ) {
-            BookCoverImage(
+            BookCoverCompose(
                 coverUrl = book.getDisplayCover(),
                 name = book.name,
                 author = book.getRealAuthor(),
                 modifier = Modifier
                     .width(72.dp)
                     .height(102.dp),
-                transitionName = coverTransitionName,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+                sharedCoverKey = sharedCoverKey,
+                compact = true,
             )
 
             Spacer(modifier = Modifier.width(16.dp))

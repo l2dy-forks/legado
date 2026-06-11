@@ -72,6 +72,9 @@ fun BookDetailScreen(
     isSourceVariableVisible: Boolean = false,
     isBookVariableVisible: Boolean = false,
     coverTransitionName: String? = null,
+    sharedTransitionScope: androidx.compose.animation.SharedTransitionScope? = null,
+    animatedVisibilityScope: androidx.compose.animation.AnimatedVisibilityScope? = null,
+    sharedCoverKey: String? = null,
 ) {
     val scrollState = rememberScrollState()
     // 状态栏高度，用于让模糊背景延伸到状态栏区域
@@ -129,6 +132,9 @@ fun BookDetailScreen(
             modifier = Modifier.align(Alignment.TopCenter),
             isLandscape = isLandscape,
             coverTransitionName = coverTransitionName,
+            sharedTransitionScope = sharedTransitionScope,
+            animatedVisibilityScope = animatedVisibilityScope,
+            sharedCoverKey = sharedCoverKey,
         )
 
         // 【底部内容卡片】— 圆角 Surface 承载书籍信息、目录、操作按钮

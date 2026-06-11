@@ -3,7 +3,6 @@ package io.legado.app.ui.main.rss
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import coil3.SingletonImageLoader
@@ -21,7 +20,8 @@ import io.legado.app.data.entities.RssSource
 import io.legado.app.databinding.ItemRssBinding
 import io.legado.app.help.coil.LegadoFetcher
 import io.legado.app.lib.theme.colorSurfaceContainer
-import io.legado.app.utils.showThemed
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
+import io.legado.app.ui.common.compose.showComposeDropdownMenu
 import splitties.views.onLongClick
 
 class RssAdapter(
@@ -78,18 +78,24 @@ class RssAdapter(
     }
 
     private fun showMenu(view: View, rssSource: RssSource) {
-        val popupMenu = PopupMenu(context, view)
-        popupMenu.inflate(R.menu.rss_main_item)
-        popupMenu.setOnMenuItemClickListener {
-            when (it.itemId) {
-                R.id.menu_top -> callBack.toTop(rssSource)
-                R.id.menu_edit -> callBack.edit(rssSource)
-                R.id.menu_del -> callBack.del(rssSource)
-                R.id.menu_disable -> callBack.disable(rssSource)
-            }
-            true
+        showComposeDropdownMenu(context, view) { dismiss ->
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.to_top),
+                onClick = { dismiss(); callBack.toTop(rssSource) },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.edit),
+                onClick = { dismiss(); callBack.edit(rssSource) },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.disable_source),
+                onClick = { dismiss(); callBack.disable(rssSource) },
+            )
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.delete),
+                onClick = { dismiss(); callBack.del(rssSource) },
+            )
         }
-        popupMenu.showThemed()
     }
 
     interface CallBack {

@@ -226,24 +226,16 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
             val help = withContext(IO) {
                 String(assets.open("web/help/md/appHelp.md").readBytes())
             }
-            suspendCancellableCoroutine<Unit> { block ->
-                val dialog = MarkdownBottomSheetDialog.newInstance(getString(R.string.help), help)
-                dialog.setOnDismissListener {
-                    block.resume(Unit)
-                }
-                showDialogFragment(dialog)
-            }
+            showDialogFragment(
+                MarkdownBottomSheetDialog.newInstance(getString(R.string.help), help)
+            )
         } else if (!BuildConfig.DEBUG) {
             val log = withContext(IO) {
                 String(assets.open("updateLog.md").readBytes())
             }
-            suspendCancellableCoroutine<Unit> { block ->
-                val dialog = MarkdownBottomSheetDialog.newInstance(getString(R.string.update_log), log)
-                dialog.setOnDismissListener {
-                    block.resume(Unit)
-                }
-                showDialogFragment(dialog)
-            }
+            showDialogFragment(
+                MarkdownBottomSheetDialog.newInstance(getString(R.string.update_log), log)
+            )
         }
     }
 

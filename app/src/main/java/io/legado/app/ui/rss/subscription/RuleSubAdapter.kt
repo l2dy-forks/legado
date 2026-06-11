@@ -3,7 +3,6 @@ package io.legado.app.ui.rss.subscription
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.RecyclerView
 import io.legado.app.R
 import io.legado.app.base.adapter.ItemViewHolder
@@ -12,7 +11,8 @@ import io.legado.app.data.entities.RuleSub
 import io.legado.app.databinding.ItemRuleSubBinding
 import io.legado.app.lib.theme.cardBackgroundColor
 import io.legado.app.ui.widget.recycler.ItemTouchCallback
-import io.legado.app.utils.showThemed
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
+import io.legado.app.ui.common.compose.showComposeDropdownMenu
 
 
 class RuleSubAdapter(context: Context, val callBack: Callback) :
@@ -48,15 +48,12 @@ class RuleSubAdapter(context: Context, val callBack: Callback) :
 
     private fun showMenu(view: View, position: Int) {
         val source = getItem(position) ?: return
-        val popupMenu = PopupMenu(context, view)
-        popupMenu.inflate(R.menu.source_sub_item)
-        popupMenu.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.menu_del -> callBack.delSubscription(source)
-            }
-            true
+        showComposeDropdownMenu(context, view) { dismiss ->
+            RoundDropdownMenuItem(
+                text = context.getString(R.string.delete),
+                onClick = { dismiss(); callBack.delSubscription(source) },
+            )
         }
-        popupMenu.showThemed()
     }
 
     override fun getViewBinding(parent: ViewGroup): ItemRuleSubBinding {

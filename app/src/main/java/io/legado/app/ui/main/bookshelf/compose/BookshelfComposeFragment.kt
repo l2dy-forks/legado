@@ -3,11 +3,21 @@
 package io.legado.app.ui.main.bookshelf.compose
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.widget.SearchView
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.view.indices
 import androidx.lifecycle.Observer
@@ -24,15 +35,16 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import io.legado.app.R
+import io.legado.app.constant.EventBus
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookGroup
 import io.legado.app.help.config.AppConfig
-import io.legado.app.constant.EventBus
+import io.legado.app.lib.dialogs.alert
 import io.legado.app.service.WebService
 import io.legado.app.ui.book.cache.CacheActivity
 import io.legado.app.ui.book.group.GroupManageDialog
-import io.legado.app.ui.book.info.compose.BookInfoComposeActivity
+import io.legado.app.ui.book.info.compose.BookInfoRouteScreen
 import io.legado.app.ui.book.import.local.ImportBookActivity
 import io.legado.app.ui.book.import.remote.RemoteBookActivity
 import io.legado.app.ui.book.manage.BookshelfManageActivity
@@ -40,19 +52,16 @@ import io.legado.app.ui.book.read.ReadBookActivity
 import io.legado.app.ui.book.search.SearchActivity
 import io.legado.app.ui.common.compose.LegadoTheme
 import io.legado.app.ui.file.HandleFileContract
+import io.legado.app.ui.main.bookCoverSharedElementKey
 import io.legado.app.ui.main.bookshelf.BaseBookshelfFragment
-import io.legado.app.lib.dialogs.alert
 import io.legado.app.utils.checkByIndex
 import io.legado.app.utils.getCheckedIndex
 import io.legado.app.utils.observeEvent
 import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.toastOnUi
-import io.legado.app.ui.main.bookCoverSharedElementKey
-import io.legado.app.ui.main.findViewByTransitionName
-import android.app.ActivityOptions
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -80,6 +89,11 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
     private val groupStyleVersionFlow = MutableStateFlow(0)
     private val lastUpdateVersionFlow = MutableStateFlow(0)
     private val isRefreshingFlow = MutableStateFlow(false)
+    private val readBookResult = registerForActivityResult(StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // Book read, refresh bookshelf data on next resume
+        }
+    }
     override val groupId: Long get() = selectedGroupId
 
     override val books: List<Book>
@@ -103,6 +117,7 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
         else -> 0
     }
 
+    @OptIn(ExperimentalSharedTransitionApi::class)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -111,202 +126,263 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
         return ComposeView(requireContext()).apply {
             setContent {
                 LegadoTheme {
-                    var groups by remember { mutableStateOf(emptyList<BookGroup>()) }
-                    var currentGroupId by remember { mutableStateOf(selectedGroupId) }
-                    val sortVersion by sortVersionFlow.collectAsState()
-                    val refreshVersion by refreshVersionFlow.collectAsState()
-                    val gridVersion by gridVersionFlow.collectAsState()
-                    val groupStyleVersion by groupStyleVersionFlow.collectAsState()
-                    val isRefreshing by isRefreshingFlow.collectAsState()
-                    val lastUpdateVersion by lastUpdateVersionFlow.collectAsState()
-                    // gridVersion 变化时重新读取 AppConfig.bookshelfLayout
-                    val gridColumns = remember(gridVersion) { gridColumns() }
-                    // refreshVersion 变化时重新读取显示相关开关
-                    val showUnread = remember(refreshVersion) { AppConfig.showUnread }
-                    val showLastUpdateTime = remember(refreshVersion) { AppConfig.showLastUpdateTime }
-                    val showFastScroller = remember(refreshVersion) { AppConfig.showBookshelfFastScroller }
-                    // groupStyleVersion 变化时重新读取 AppConfig.bookGroupStyle
-                    val bookGroupStyle = remember(groupStyleVersion) { AppConfig.bookGroupStyle }
-
-                    // Tab 分组模式和文件布局模式都需要全量书籍以便按分组归类
-                    val queryGroupId = if (bookGroupStyle == 1 || bookGroupStyle == 0) BookGroup.IdAll else currentGroupId
-
-                    // Book.equals() 仅比较 bookUrl，默认结构相等策略会吞掉名称/作者等字段更新。
-                    // 这里使用 neverEqualPolicy()，确保 Room 每次发射的新列表都会触发 Compose 更新。
-                    var books by remember(refreshVersion) {
-                        mutableStateOf(emptyList<Book>(), neverEqualPolicy())
-                    }
-                    LaunchedEffect(refreshVersion) {
-                        appDb.bookDao.flowByGroup(BookGroup.IdAll).collect { latestBooks ->
-                            books = latestBooks
+                    SharedTransitionLayout {
+                        var activeBookInfoRoute by remember {
+                            mutableStateOf<io.legado.app.ui.main.MainRouteBookInfo?>(null)
                         }
-                    }
-                    val sortedBooks = remember(books, sortVersion) { sortBooks(books) }
-
-                    DisposableEffect(Unit) {
-                        val groupsObserver = Observer<List<BookGroup>> { groups = it }
-                        appDb.bookGroupDao.show.observeForever(groupsObserver)
-                        onDispose {
-                            appDb.bookGroupDao.show.removeObserver(groupsObserver)
+                        var bookInfoAnimatedScope by remember {
+                            mutableStateOf<AnimatedVisibilityScope?>(null)
                         }
-                    }
 
-                    // 每次从后台返回时强制递增 refreshVersion，触发 key() 重组
-                    val lifecycleOwner = LocalLifecycleOwner.current
-                    LaunchedEffect(lifecycleOwner) {
-                        lifecycleOwner.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
-                            refreshVersionFlow.value++
-                        }
-                    }
+                        // Callback for showing book info overlay with shared element
+                        val showBookInfo: (String, String, String, String?, String?) -> Unit =
+                            { name, author, bookUrl, origin, coverPath ->
+                                activeBookInfoRoute = io.legado.app.ui.main.MainRouteBookInfo(
+                                    name = name,
+                                    author = author,
+                                    bookUrl = bookUrl,
+                                    origin = origin,
+                                    coverPath = coverPath,
+                                    sharedCoverKey = bookCoverSharedElementKey(bookUrl),
+                                )
+                            }
 
-                    // 计算当前分组是否允许下拉刷新
-                    // 根分组（IdAll / IdRoot）始终允许
-                    val currentGroupBooks = remember(sortedBooks, currentGroupId, groups, bookGroupStyle) {
-                        if (bookGroupStyle == 0) {
-                            filterBooksForGroup(sortedBooks, currentGroupId, groups)
-                        } else {
-                            sortedBooks
-                        }
-                    }
-                    val enableRefresh = remember(currentGroupId, groups, currentGroupBooks.isNotEmpty()) {
-                        when {
-                            !currentGroupBooks.isNotEmpty() -> false
-                            currentGroupId == BookGroup.IdAll || currentGroupId == BookGroup.IdRoot -> true
-                            else -> groups.firstOrNull { it.groupId == currentGroupId }?.enableRefresh != false
-                        }
-                    }
+                        Box(Modifier.fillMaxSize()) {
+                            // ── Bookshelf content ──
+                            BookshelfFragmentContent(
+                                sharedTransitionScope = this@SharedTransitionLayout,
+                                animatedVisibilityScope = bookInfoAnimatedScope,
+                                onShowBookInfo = showBookInfo,
+                            )
 
-                    // key(refreshVersion) 强制每次 BOOKSHELF_REFRESH 事件后重组
-                    key(refreshVersion) {
-                    BookshelfScreen(
-                        books = sortedBooks,
-                        groups = groups,
-                        selectedGroupId = currentGroupId,
-                        gridColumns = gridColumns,
-                        bookGroupStyle = bookGroupStyle,
-                        onGroupSelected = {
-                            currentGroupId = it
-                            selectedGroupId = it
-                        },
-                        onConfigBookshelf = {
-                            configBookshelfCompose()
-                        },
-                        onBookClick = { book ->
-                            startActivity<ReadBookActivity> {
-                                putExtra("bookUrl", book.bookUrl)
-                            }
-                        },
-                        onBookLongClick = { book ->
-                            val transitionName = bookCoverSharedElementKey(book.bookUrl)
-                            val intent = android.content.Intent(requireContext(), BookInfoComposeActivity::class.java).apply {
-                                putExtra("bookUrl", book.bookUrl)
-                                putExtra("coverTransitionName", transitionName)
-                            }
-                            val decorView = activity?.window?.decorView
-                            val coverView = decorView?.findViewByTransitionName(transitionName)
-                            if (coverView != null && !AppConfig.isEInkMode) {
-                                val bundle = ActivityOptions
-                                    .makeSceneTransitionAnimation(requireActivity(), coverView, transitionName)
-                                    .toBundle()
-                                startActivity(intent, bundle!!)
-                            } else {
-                                startActivity(intent)
-                            }
-                        },
-                        onBookDelete = { book ->
-                            appDb.bookDao.delete(book)
-                        },
-                        onSearchClick = {
-                            startActivity<SearchActivity>()
-                        },
-                        onSort = {
-                            // 循环切换排序方式，递增版本号触发重新订阅 Flow
-                            val newSort = (AppConfig.bookshelfSort + 1) % 4
-                            AppConfig.bookshelfSort = newSort
-                            sortVersionFlow.value++
-                        },
-                        onUpdateToc = {
-                            val booksToUpdate = if (bookGroupStyle == 0) {
-                                filterBooksForGroup(sortedBooks, selectedGroupId, groups)
-                            } else {
-                                sortedBooks
-                            }
-                            activityViewModel.upToc(booksToUpdate)
-                        },
-                        onAddLocal = {
-                            startActivity<ImportBookActivity>()
-                        },
-                        onAddRemote = {
-                            startActivity<RemoteBookActivity>()
-                        },
-                        onAddUrl = {
-                            showAddBookByUrlAlert()
-                        },
-                        onManageBookshelf = {
-                            startActivity<BookshelfManageActivity> {
-                                putExtra("groupId", currentGroupId)
-                            }
-                        },
-                        onDownload = {
-                            startActivity<CacheActivity> {
-                                putExtra("groupId", currentGroupId)
-                            }
-                        },
-                        onManageGroup = {
-                            showDialogFragment<GroupManageDialog>()
-                        },
-                        onExportBookshelf = {
-                            val booksToExport = if (bookGroupStyle == 0) {
-                                filterBooksForGroup(sortedBooks, selectedGroupId, groups)
-                            } else {
-                                sortedBooks
-                            }
-                            viewModel.exportBookshelf(booksToExport) { file ->
-                                exportResult.launch {
-                                    mode = HandleFileContract.EXPORT
-                                    fileData = HandleFileContract.FileData(
-                                        "bookshelf.json", file, "application/json"
+                            // ── Book info overlay ──
+                            activeBookInfoRoute?.let { route ->
+                                AnimatedVisibility(
+                                    visible = true,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    bookInfoAnimatedScope = this
+                                    BookInfoRouteScreen(
+                                        bookUrl = route.bookUrl,
+                                        name = route.name,
+                                        author = route.author,
+                                        onBack = {
+                                            activeBookInfoRoute = null
+                                            bookInfoAnimatedScope = null
+                                        },
+                                        onReadBook = { url, inShelf, chChanged ->
+                                            activeBookInfoRoute = null
+                                            bookInfoAnimatedScope = null
+                                            val intent = android.content.Intent(
+                                                requireContext(),
+                                                ReadBookActivity::class.java
+                                            ).apply {
+                                                putExtra("bookUrl", url)
+                                                putExtra("inBookshelf", inShelf)
+                                            }
+                                            readBookResult.launch(intent)
+                                        },
+                                        sharedTransitionScope = this@SharedTransitionLayout,
+                                        animatedVisibilityScope = this,
+                                        sharedCoverKey = route.sharedCoverKey,
                                     )
                                 }
                             }
-                        },
-                        onImportBookshelf = {
-                            importBookshelfAlert(currentGroupId)
-                        },
-                        onWebService = {
-                            if (WebService.isRun) {
-                                WebService.stop(requireContext())
-                            } else {
-                                WebService.start(requireContext())
-                            }
-                        },
-                        onLog = {
-                            showDialogFragment<io.legado.app.ui.about.AppLogDialog>()
-                        },
-                        enableRefresh = enableRefresh,
-                        isRefreshing = isRefreshing,
-                        onRefresh = {
-                            isRefreshingFlow.value = true
-                            val booksToUpdate = if (bookGroupStyle == 0) {
-                                filterBooksForGroup(sortedBooks, selectedGroupId, groups)
-                            } else {
-                                sortedBooks
-                            }
-                            activityViewModel.upToc(booksToUpdate)
-                            // upToc 是异步操作，刷新完成后通过 EventBus 或手动延迟关闭指示器
-                            // 使用短延迟模拟完成反馈（与旧版 SwipeRefreshLayout 行为一致：立即停止动画）
-                            isRefreshingFlow.value = false
-                        },
-                        isUpdating = activityViewModel::isUpdate,
-                        lastUpdateVersion = lastUpdateVersion,
-                        showUnread = showUnread,
-                        showLastUpdateTime = showLastUpdateTime,
-                        showFastScroller = showFastScroller,
-                    )
-                    } // key(refreshVersion)
+                        }
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * Inner composable for bookshelf data loading + [BookshelfScreen].
+     */
+    @OptIn(ExperimentalSharedTransitionApi::class)
+    @Composable
+    private fun BookshelfFragmentContent(
+        sharedTransitionScope: SharedTransitionScope?,
+        animatedVisibilityScope: AnimatedVisibilityScope?,
+        onShowBookInfo: (String, String, String, String?, String?) -> Unit,
+    ) {
+        var groups by remember { mutableStateOf(emptyList<BookGroup>()) }
+        var currentGroupId by remember { mutableStateOf(selectedGroupId) }
+        val sortVersion by sortVersionFlow.collectAsState()
+        val refreshVersion by refreshVersionFlow.collectAsState()
+        val gridVersion by gridVersionFlow.collectAsState()
+        val groupStyleVersion by groupStyleVersionFlow.collectAsState()
+        val isRefreshing by isRefreshingFlow.collectAsState()
+        val lastUpdateVersion by lastUpdateVersionFlow.collectAsState()
+        val gridColumns = remember(gridVersion) { gridColumns() }
+        val showUnread = remember(refreshVersion) { AppConfig.showUnread }
+        val showLastUpdateTime = remember(refreshVersion) { AppConfig.showLastUpdateTime }
+        val showFastScroller = remember(refreshVersion) { AppConfig.showBookshelfFastScroller }
+        val bookGroupStyle = remember(groupStyleVersion) { AppConfig.bookGroupStyle }
+
+        var books by remember(refreshVersion) {
+            mutableStateOf(emptyList<Book>(), neverEqualPolicy())
+        }
+        LaunchedEffect(refreshVersion) {
+            appDb.bookDao.flowByGroup(BookGroup.IdAll).collect { latestBooks ->
+                books = latestBooks
+            }
+        }
+        val sortedBooks = remember(books, sortVersion) { sortBooks(books) }
+
+        DisposableEffect(Unit) {
+            val groupsObserver = Observer<List<BookGroup>> { groups = it }
+            appDb.bookGroupDao.show.observeForever(groupsObserver)
+            onDispose {
+                appDb.bookGroupDao.show.removeObserver(groupsObserver)
+            }
+        }
+
+        val lifecycleOwner = LocalLifecycleOwner.current
+        LaunchedEffect(lifecycleOwner) {
+            lifecycleOwner.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+                refreshVersionFlow.value++
+            }
+        }
+
+        val currentGroupBooks = remember(sortedBooks, currentGroupId, groups, bookGroupStyle) {
+            if (bookGroupStyle == 0) {
+                filterBooksForGroup(sortedBooks, currentGroupId, groups)
+            } else {
+                sortedBooks
+            }
+        }
+        val enableRefresh = remember(currentGroupId, groups, currentGroupBooks.isNotEmpty()) {
+            when {
+                !currentGroupBooks.isNotEmpty() -> false
+                currentGroupId == BookGroup.IdAll || currentGroupId == BookGroup.IdRoot -> true
+                else -> groups.firstOrNull { it.groupId == currentGroupId }?.enableRefresh != false
+            }
+        }
+
+        key(refreshVersion) {
+        BookshelfScreen(
+            books = sortedBooks,
+            groups = groups,
+            selectedGroupId = currentGroupId,
+            gridColumns = gridColumns,
+            bookGroupStyle = bookGroupStyle,
+            onGroupSelected = {
+                currentGroupId = it
+                selectedGroupId = it
+            },
+            onConfigBookshelf = {
+                configBookshelfCompose()
+            },
+            onBookClick = { book ->
+                // Click → go directly to reading (existing behavior)
+                val intent = android.content.Intent(
+                    requireContext(),
+                    ReadBookActivity::class.java
+                ).apply {
+                    putExtra("bookUrl", book.bookUrl)
+                }
+                startActivity(intent)
+            },
+            onBookLongClick = { book ->
+                // Long click → open book info with shared element animation
+                onShowBookInfo(
+                    book.name,
+                    book.author,
+                    book.bookUrl,
+                    book.origin,
+                    book.getDisplayCover(),
+                )
+            },
+            onBookDelete = { book ->
+                appDb.bookDao.delete(book)
+            },
+            onSearchClick = {
+                startActivity<SearchActivity>()
+            },
+            onSort = {
+                val newSort = (AppConfig.bookshelfSort + 1) % 4
+                AppConfig.bookshelfSort = newSort
+                sortVersionFlow.value++
+            },
+            onUpdateToc = {
+                val booksToUpdate = if (bookGroupStyle == 0) {
+                    filterBooksForGroup(sortedBooks, selectedGroupId, groups)
+                } else {
+                    sortedBooks
+                }
+                activityViewModel.upToc(booksToUpdate)
+            },
+            onAddLocal = {
+                startActivity<ImportBookActivity>()
+            },
+            onAddRemote = {
+                startActivity<RemoteBookActivity>()
+            },
+            onAddUrl = {
+                showAddBookByUrlAlert()
+            },
+            onManageBookshelf = {
+                startActivity<BookshelfManageActivity> {
+                    putExtra("groupId", currentGroupId)
+                }
+            },
+            onDownload = {
+                startActivity<CacheActivity> {
+                    putExtra("groupId", currentGroupId)
+                }
+            },
+            onManageGroup = {
+                showDialogFragment<GroupManageDialog>()
+            },
+            onExportBookshelf = {
+                val booksToExport = if (bookGroupStyle == 0) {
+                    filterBooksForGroup(sortedBooks, selectedGroupId, groups)
+                } else {
+                    sortedBooks
+                }
+                viewModel.exportBookshelf(booksToExport) { file ->
+                    exportResult.launch {
+                        mode = HandleFileContract.EXPORT
+                        fileData = HandleFileContract.FileData(
+                            "bookshelf.json", file, "application/json"
+                        )
+                    }
+                }
+            },
+            onImportBookshelf = {
+                importBookshelfAlert(currentGroupId)
+            },
+            onWebService = {
+                if (WebService.isRun) {
+                    WebService.stop(requireContext())
+                } else {
+                    WebService.start(requireContext())
+                }
+            },
+            onLog = {
+                showDialogFragment<io.legado.app.ui.about.AppLogDialog>()
+            },
+            enableRefresh = enableRefresh,
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshingFlow.value = true
+                val booksToUpdate = if (bookGroupStyle == 0) {
+                    filterBooksForGroup(sortedBooks, selectedGroupId, groups)
+                } else {
+                    sortedBooks
+                }
+                activityViewModel.upToc(booksToUpdate)
+                isRefreshingFlow.value = false
+            },
+            isUpdating = activityViewModel::isUpdate,
+            lastUpdateVersion = lastUpdateVersion,
+            showUnread = showUnread,
+            showLastUpdateTime = showLastUpdateTime,
+            showFastScroller = showFastScroller,
+            sharedTransitionScope = sharedTransitionScope,
+            animatedVisibilityScope = animatedVisibilityScope,
+        )
+        } // key(refreshVersion)
     }
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) {

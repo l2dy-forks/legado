@@ -52,7 +52,10 @@ import io.legado.app.R
 import io.legado.app.data.entities.Book
 import io.legado.app.help.config.AppConfig
 import io.legado.app.model.BookCover
-import io.legado.app.ui.widget.image.CoverImageView
+import io.legado.app.ui.common.compose.BookCoverCompose
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 
 /**
  * 详情页 Hero Header：模糊封面背景 + 大封面 + 书名 + 作者。
@@ -63,6 +66,9 @@ fun HeroHeader(
     modifier: Modifier = Modifier,
     isLandscape: Boolean = false,
     coverTransitionName: String? = null,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    sharedCoverKey: String? = null,
 ) {
     val context = LocalContext.current
     val coverUrl = book.getDisplayCover()
@@ -149,26 +155,17 @@ fun HeroHeader(
                 .padding(top = topPadding, start = 20.dp, end = 20.dp),
             verticalAlignment = Alignment.Top,
         ) {
-            // 【封面组件】— CoverImageView，支持在默认封面上绘制书名/作者
-            AndroidView(
-                factory = { ctx ->
-                    CoverImageView(ctx).apply {
-                        layoutParams = ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
-                        )
-                    }
-                },
-                update = { coverView ->
-                    coverView.load(coverUrl, book.name, book.getRealAuthor(), false, null)
-                    coverTransitionName?.let { tn ->
-                        ViewCompat.setTransitionName(coverView, tn)
-                        coverView.tag = tn
-                    }
-                },
+            // 【封面组件】— Compose 原生封面，支持共享元素过渡动画
+            BookCoverCompose(
+                coverUrl = coverUrl,
+                name = book.name,
+                author = book.getRealAuthor(),
                 modifier = Modifier
-                    .size(width = coverWidth, height = coverHeight)
-                    .clip(RoundedCornerShape(10.dp)),
+                    .size(width = coverWidth, height = coverHeight),
+                radius = 10.dp,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+                sharedCoverKey = sharedCoverKey,
             )
 
             Spacer(modifier = Modifier.width(16.dp))

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.SubMenu
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.widget.PopupMenu
@@ -44,6 +45,8 @@ import io.legado.app.utils.setEdgeEffectColor
 import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.showHelp
 import io.legado.app.utils.splitNotBlank
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
+import io.legado.app.ui.common.compose.createOverflowMenuView
 import io.legado.app.utils.transaction
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.Dispatchers.IO
@@ -115,13 +118,70 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
     }
 
     override fun onCompatCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.replace_rule, menu)
+        // Group icon with dynamic submenu via Compose RoundDropdownMenu (spring bounce)
+        val groupView = createOverflowMenuView(
+            iconContentDescriptionId = R.string.menu_action_group
+        ) { dismiss ->
+            RoundDropdownMenuItem(
+                text = getString(R.string.group_manage),
+                onClick = { dismiss(); showDialogFragment<GroupManageDialog>() },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.no_group),
+                onClick = { dismiss(); searchView.setQuery(getString(R.string.no_group), true) },
+            )
+            groups.forEach { groupName ->
+                RoundDropdownMenuItem(
+                    text = groupName,
+                    onClick = { dismiss(); searchView.setQuery("group:$groupName", true) },
+                )
+            }
+        }
+        val groupId = View.generateViewId()
+        menu.add(0, groupId, 0, getString(R.string.menu_action_group)).also {
+            it.setIcon(R.drawable.ic_groups)
+            it.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+            it.actionView = groupView
+        }
+        // Overflow items via Compose RoundDropdownMenu
+        val overflowView = createOverflowMenuView { dismiss ->
+            RoundDropdownMenuItem(
+                text = getString(R.string.add_replace_rule),
+                onClick = { dismiss(); editActivity.launch(ReplaceEditActivity.startIntent(this@ReplaceRuleActivity)) },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.import_local),
+                onClick = {
+                    dismiss()
+                    importDoc.launch {
+                        mode = HandleFileContract.FILE
+                        allowExtensions = arrayOf("txt", "json")
+                    }
+                },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.import_on_line),
+                onClick = { dismiss(); showImportDialog() },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.import_by_qr_code),
+                onClick = { dismiss(); qrCodeResult.launch() },
+            )
+            RoundDropdownMenuItem(
+                text = getString(R.string.help),
+                onClick = { dismiss(); showHelp("replaceRuleHelp") },
+            )
+        }
+        val overflowId = View.generateViewId()
+        menu.add(0, overflowId, 99, "").also {
+            it.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+            it.actionView = overflowView
+        }
         return super.onCompatCreateOptionsMenu(menu)
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        groupMenu = menu.findItem(R.id.menu_group)?.subMenu
-        upGroupMenu()
+        // No longer needed — group menu handled by ComposeView
         return super.onPrepareOptionsMenu(menu)
     }
 
