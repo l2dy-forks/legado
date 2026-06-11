@@ -2,6 +2,7 @@
 
 package io.legado.app.ui.common.compose
 
+import android.view.ViewGroup
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -29,9 +30,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.ViewCompat
 import coil3.compose.AsyncImage
 import io.legado.app.help.config.AppConfig
 import io.legado.app.model.BookCover
+import io.legado.app.ui.widget.image.CoverImageView
 
 private const val SharedCoverRadiusCacheMaxSize = 256
 private val sharedCoverRadiusCache = mutableStateMapOf<String, Dp>()
@@ -117,9 +121,20 @@ fun BookCoverCompose(
             )
         }
 
-        // Default placeholder: simple colored background
-        if (showLoadingPlaceholder && !isOnlineCoverLoaded) {
-            // No icon, just the surface background already set on the Box
+        // Default cover: use legacy CoverImageView (draws name/author on default bg)
+        if (!isOnlineCoverLoaded) {
+            AndroidView(
+                factory = { ctx ->
+                    CoverImageView(ctx).apply {
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                        )
+                    }
+                },
+                update = { it.load(null, name, author) },
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 }

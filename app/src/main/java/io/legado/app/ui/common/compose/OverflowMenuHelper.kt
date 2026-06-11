@@ -38,30 +38,42 @@ fun Context.createOverflowMenuView(
     content: @Composable ColumnScope.(dismiss: () -> Unit) -> Unit
 ): View {
     return ComposeView(this).apply {
-        setContent {
-            LegadoTheme {
-                val iconTint = if (AppConfig.isEInkMode) {
-                    MaterialTheme.colorScheme.onSurface
-                } else {
-                    MaterialTheme.colorScheme.onPrimary
-                }
-                var expanded by remember { mutableStateOf(false) }
+        // Defer setContent until attached to window to avoid crash when
+        // the menu system measures this action view before it's in the view tree.
+        var contentSet = false
+        addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) {
+                if (!contentSet) {
+                    contentSet = true
+                    setContent {
+                        LegadoTheme {
+                            val iconTint = if (AppConfig.isEInkMode) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                MaterialTheme.colorScheme.onPrimary
+                            }
+                            var expanded by remember { mutableStateOf(false) }
 
-                Box(modifier = modifier) {
-                    IconButton(onClick = { expanded = true }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_more_vert),
-                            contentDescription = stringResource(iconContentDescriptionId),
-                            tint = iconTint,
-                        )
+                            Box(modifier = modifier) {
+                                IconButton(onClick = { expanded = true }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_more_vert),
+                                        contentDescription = stringResource(iconContentDescriptionId),
+                                        tint = iconTint,
+                                    )
+                                }
+                                RoundDropdownMenu(
+                                    expanded = expanded,
+                                    onDismissRequest = { expanded = false },
+                                    content = content,
+                                )
+                            }
+                        }
                     }
-                    RoundDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                        content = content,
-                    )
                 }
             }
-        }
+
+            override fun onViewDetachedFromWindow(v: View) {}
+        })
     }
 }

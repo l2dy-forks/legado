@@ -15,6 +15,9 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -130,62 +133,70 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
                         var activeBookInfoRoute by remember {
                             mutableStateOf<io.legado.app.ui.main.MainRouteBookInfo?>(null)
                         }
-                        var bookInfoAnimatedScope by remember {
-                            mutableStateOf<AnimatedVisibilityScope?>(null)
+
+                        // Hide bottom nav when book info overlay is active
+                        LaunchedEffect(activeBookInfoRoute) {
+                            val nav = (activity as? io.legado.app.ui.main.MainActivity)
+                                ?.findViewById<android.view.View>(R.id.bottom_navigation_view)
+                            nav?.visibility = if (activeBookInfoRoute != null)
+                                android.view.View.GONE else android.view.View.VISIBLE
                         }
 
-                        // Callback for showing book info overlay with shared element
+                        // Callback for showing book info overlay
                         val showBookInfo: (String, String, String, String?, String?) -> Unit =
                             { name, author, bookUrl, origin, coverPath ->
                                 activeBookInfoRoute = io.legado.app.ui.main.MainRouteBookInfo(
-                                    name = name,
-                                    author = author,
-                                    bookUrl = bookUrl,
-                                    origin = origin,
-                                    coverPath = coverPath,
+                                    name = name, author = author, bookUrl = bookUrl,
+                                    origin = origin, coverPath = coverPath,
                                     sharedCoverKey = bookCoverSharedElementKey(bookUrl),
                                 )
                             }
 
-                        Box(Modifier.fillMaxSize()) {
-                            // ── Bookshelf content ──
-                            BookshelfFragmentContent(
-                                sharedTransitionScope = this@SharedTransitionLayout,
-                                animatedVisibilityScope = bookInfoAnimatedScope,
-                                onShowBookInfo = showBookInfo,
-                            )
+                        // ── WRAP in always-visible AnimatedVisibility for persistent shared scope ──
+                        AnimatedVisibility(
+                            visible = true,
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            val sharedAvs = this // persistent AnimatedVisibilityScope
 
-                            // ── Book info overlay ──
-                            activeBookInfoRoute?.let { route ->
+                            Box(Modifier.fillMaxSize()) {
+                                // ── Bookshelf: always alive underneath (no flicker on back) ──
+                                BookshelfFragmentContent(
+                                    sharedTransitionScope = this@SharedTransitionLayout,
+                                    animatedVisibilityScope = sharedAvs,
+                                    onShowBookInfo = showBookInfo,
+                                )
+
+                                // ── Book info: overlay with fade ──
                                 AnimatedVisibility(
-                                    visible = true,
-                                    modifier = Modifier.fillMaxSize()
+                                    visible = activeBookInfoRoute != null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    enter = fadeIn(animationSpec = tween(300)),
+                                    exit = fadeOut(animationSpec = tween(200)),
                                 ) {
-                                    bookInfoAnimatedScope = this
-                                    BookInfoRouteScreen(
-                                        bookUrl = route.bookUrl,
-                                        name = route.name,
-                                        author = route.author,
-                                        onBack = {
-                                            activeBookInfoRoute = null
-                                            bookInfoAnimatedScope = null
-                                        },
-                                        onReadBook = { url, inShelf, chChanged ->
-                                            activeBookInfoRoute = null
-                                            bookInfoAnimatedScope = null
-                                            val intent = android.content.Intent(
-                                                requireContext(),
-                                                ReadBookActivity::class.java
-                                            ).apply {
-                                                putExtra("bookUrl", url)
-                                                putExtra("inBookshelf", inShelf)
-                                            }
-                                            readBookResult.launch(intent)
-                                        },
-                                        sharedTransitionScope = this@SharedTransitionLayout,
-                                        animatedVisibilityScope = this,
-                                        sharedCoverKey = route.sharedCoverKey,
-                                    )
+                                    activeBookInfoRoute?.let { route ->
+                                        key(route.bookUrl) {
+                                            BookInfoRouteScreen(
+                                                bookUrl = route.bookUrl,
+                                                name = route.name,
+                                                author = route.author,
+                                                onBack = { activeBookInfoRoute = null },
+                                                onReadBook = { url, inShelf, _ ->
+                                                    activeBookInfoRoute = null
+                                                    val intent = android.content.Intent(
+                                                        requireContext(), ReadBookActivity::class.java
+                                                    ).apply {
+                                                        putExtra("bookUrl", url)
+                                                        putExtra("inBookshelf", inShelf)
+                                                    }
+                                                    readBookResult.launch(intent)
+                                                },
+                                                sharedTransitionScope = this@SharedTransitionLayout,
+                                                animatedVisibilityScope = sharedAvs, // parent scope for shared element matching
+                                                sharedCoverKey = route.sharedCoverKey,
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -238,9 +249,10 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
         }
 
         val lifecycleOwner = LocalLifecycleOwner.current
+        // On resume, only bump lastUpdateVersion for time display — no full recomposition
         LaunchedEffect(lifecycleOwner) {
             lifecycleOwner.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
-                refreshVersionFlow.value++
+                lastUpdateVersionFlow.value++
             }
         }
 

@@ -1,5 +1,6 @@
 package io.legado.app.ui.book.readRecord
 
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -30,6 +31,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,6 +49,7 @@ import io.legado.app.ui.common.compose.legadoCardBackgroundColor
 import io.legado.app.ui.widget.ReadBarChartView
 import io.legado.app.ui.widget.ReadHeatmapView
 import io.legado.app.ui.widget.ReadVerticalBarChartView
+import kotlinx.coroutines.CancellationException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -64,7 +67,28 @@ fun ReadRecordOverviewScreen(
 ) {
     var selectedTab by remember { mutableIntStateOf(ReadPeriod.entries.indexOf(state.period)) }
 
+    // 预测性返回手势：页面跟手缩小淡出
+    var backProgress by remember { mutableFloatStateOf(0f) }
+    PredictiveBackHandler { progress ->
+        try {
+            progress.collect { event ->
+                backProgress = event.progress
+            }
+            onBack()
+        } catch (_: CancellationException) {
+            // 手势取消，恢复原状
+        } finally {
+            backProgress = 0f
+        }
+    }
+
     Scaffold(
+        modifier = Modifier.graphicsLayer {
+            val scale = 1f - (backProgress * 0.08f)
+            scaleX = scale
+            scaleY = scale
+            alpha = 1f - (backProgress * 0.1f)
+        },
         topBar = {
             TopAppBar(
                 title = { Text("阅读总览", 

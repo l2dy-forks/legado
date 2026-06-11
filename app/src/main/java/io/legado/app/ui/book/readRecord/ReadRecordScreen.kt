@@ -1,5 +1,7 @@
 package io.legado.app.ui.book.readRecord
 
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -24,6 +26,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,7 +40,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,6 +64,7 @@ import io.legado.app.ui.common.compose.BookCoverImage
 import io.legado.app.ui.common.compose.RoundDropdownMenu
 import io.legado.app.ui.common.compose.RoundDropdownMenuItem
 import io.legado.app.ui.common.compose.legadoCardBackgroundColor
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,8 +95,40 @@ fun ReadRecordScreen(
         }
     }
 
+    // 返回键拦截：搜索栏打开时关闭搜索栏，菜单打开时关闭菜单
+    BackHandler(enabled = showSearch) {
+        showSearch = false
+        searchText = ""
+        onIntent(ReadRecordIntent.Search(null))
+    }
+    BackHandler(enabled = showMenu) {
+        showMenu = false
+    }
+
+    // 预测性返回手势：无子状态时整个页面跟手缩小淡出
+    var backProgress by remember { mutableFloatStateOf(0f) }
+    PredictiveBackHandler(enabled = !showSearch && !showMenu) { progress ->
+        try {
+            progress.collect { event ->
+                backProgress = event.progress
+            }
+            onBack()
+        } catch (_: CancellationException) {
+            // 手势取消，恢复原状
+        } finally {
+            backProgress = 0f
+        }
+    }
+
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier
+            .nestedScroll(scrollBehavior.nestedScrollConnection)
+            .graphicsLayer {
+                val scale = 1f - (backProgress * 0.08f)
+                scaleX = scale
+                scaleY = scale
+                alpha = 1f - (backProgress * 0.1f)
+            },
         topBar = {
             Column {
                 TopAppBar(
@@ -156,19 +194,40 @@ fun ReadRecordScreen(
                         Text("开始阅读后这里将会显示你的阅读记录", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                "content" -> LazyColumn(
-                    state = listState, modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding() + 16.dp),
-                ) {
-                    // 1. Summary — 整个卡片可点击进入二级总览页
-                    item(key = "summary") { ReadingSummaryCard(state, onOverviewClick) }
-                    // 2. Section title
-                    item(key = "list_header") { Text("${state.displayMode.label}（${state.books.size}）", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) }
-                    // 3. Book list
-                    items(state.books, key = { "book_${it.bookName}" }) { item ->
-                        BookItem(item, onClick = { onIntent(ReadRecordIntent.ClickBook(item.bookName, item.author)) }, onDelete = { onIntent(ReadRecordIntent.DeleteBook(item.bookName)) })
+                "content" -> {
+                    // 滚动到底部附近时自动加载更多
+                    val shouldLoadMore by remember {
+                        derivedStateOf {
+                            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+                            val totalItems = listState.layoutInfo.totalItemsCount
+                            !state.isLoadingMore && state.hasMore && lastVisible >= totalItems - 4
+                        }
                     }
-                    item { Spacer(Modifier.height(16.dp)) }
+                    LaunchedEffect(shouldLoadMore) {
+                        if (shouldLoadMore) onIntent(ReadRecordIntent.LoadMore)
+                    }
+                    LazyColumn(
+                        state = listState, modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding() + 16.dp),
+                    ) {
+                        // 1. Summary — 整个卡片可点击进入二级总览页
+                        item(key = "summary") { ReadingSummaryCard(state, onOverviewClick) }
+                        // 2. Section title
+                        item(key = "list_header") { Text("${state.displayMode.label}（${state.totalBooks}）", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) }
+                        // 3. Book list
+                        items(state.books, key = { "book_${it.bookName}" }) { item ->
+                            BookItem(item, onClick = { onIntent(ReadRecordIntent.ClickBook(item.bookName, item.author)) }, onDelete = { onIntent(ReadRecordIntent.DeleteBook(item.bookName)) })
+                        }
+                        // 4. Load more indicator
+                        if (state.isLoadingMore) {
+                            item(key = "loading_more") {
+                                Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                                }
+                            }
+                        }
+                        item { Spacer(Modifier.height(16.dp)) }
+                    }
                 }
             }
         }
@@ -227,29 +286,25 @@ private fun ReadingSummaryCard(state: ReadRecordUiState, onClick: () -> Unit) {
     }
 }
 
-// ── BookStackView — 不整齐堆叠效果：旋转 + 偏移 ──
+// ── BookStackView — 水平偏移堆叠 + 交替旋转角度 ──
 
 @Composable
 private fun BookStackView(covers: List<BookReadRecordItem>) {
-    // 每本书的旋转角度（交替 ±）
-    val rotations = listOf(-8f, 6f, -5f, 10f, -3f)
-    // 垂直偏移
-    val offsetsY = listOf(0f, 4f, -2f, 6f, -4f)
+    val step = 12.dp
+    val stackWidth = 44.dp + (step * (covers.size - 1).coerceAtLeast(0))
+    val rotations = listOf(-8f, 0f, -3f, 3f, 5f)
 
     Box(
-        modifier = Modifier.width(56.dp).height(72.dp),
-        contentAlignment = Alignment.Center,
+        modifier = Modifier.width(stackWidth).height(64.dp),
+        contentAlignment = Alignment.CenterStart,
     ) {
         covers.forEachIndexed { i, item ->
             val rot = rotations[i % rotations.size]
-            val offY = offsetsY[i % offsetsY.size]
             Surface(
                 modifier = Modifier
+                    .padding(start = step * i)
                     .zIndex(i.toFloat())
-                    .graphicsLayer {
-                        rotationZ = rot
-                        translationY = offY * density
-                    },
+                    .graphicsLayer { rotationZ = rot },
                 shadowElevation = 4.dp,
                 shape = RoundedCornerShape(4.dp),
                 color = Color.Transparent,

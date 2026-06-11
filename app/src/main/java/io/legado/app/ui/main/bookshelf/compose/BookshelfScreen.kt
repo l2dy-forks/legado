@@ -1,6 +1,7 @@
 package io.legado.app.ui.main.bookshelf.compose
 
 import android.view.View as AndroidView
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -186,6 +187,11 @@ fun BookshelfScreen(
                     }
                 }
         }
+    }
+
+    // 返回键拦截：菜单展开时关闭菜单
+    BackHandler(enabled = menuExpanded) {
+        menuExpanded = false
     }
 
     Scaffold(

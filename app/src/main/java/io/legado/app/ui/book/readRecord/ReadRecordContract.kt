@@ -7,6 +7,7 @@ enum class DisplayMode(val label: String) { SUMMARY("汇总"), LATEST("最近阅
 @Stable
 data class ReadRecordUiState(
     val isLoading: Boolean = false,
+    val isLoadingMore: Boolean = false,
     val books: List<BookReadRecordItem> = emptyList(),
     val totalReadTime: Long = 0L,
     val todayReadTime: Long = 0L,
@@ -16,6 +17,7 @@ data class ReadRecordUiState(
     val displayMode: DisplayMode = DisplayMode.BY_TIME,
     val enableRecord: Boolean = true,
     val summaryCovers: List<BookReadRecordItem> = emptyList(),
+    val hasMore: Boolean = false,
 )
 
 @Stable
@@ -33,6 +35,7 @@ sealed interface ReadRecordIntent {
     data class DeleteBook(val bookName: String) : ReadRecordIntent
     data class ClickBook(val bookName: String, val author: String) : ReadRecordIntent
     data object ToggleEnableRecord : ReadRecordIntent
+    data object LoadMore : ReadRecordIntent
 }
 
 sealed interface ReadRecordEffect {

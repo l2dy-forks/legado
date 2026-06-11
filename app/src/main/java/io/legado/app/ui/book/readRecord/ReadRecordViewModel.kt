@@ -26,10 +26,15 @@ class ReadRecordViewModel : ViewModel() {
     private val _effects = MutableSharedFlow<ReadRecordEffect>(extraBufferCapacity = 16)
     val effects = _effects.asSharedFlow()
 
+    /** 缓存全量排序后的数据，分页时从这里切片 */
+    private var allItems: List<BookReadRecordItem> = emptyList()
+    private val pageSize = 30
+
     fun onIntent(intent: ReadRecordIntent) {
         when (intent) {
             is ReadRecordIntent.Load -> loadData()
             is ReadRecordIntent.Refresh -> loadData()
+            is ReadRecordIntent.LoadMore -> loadMore()
             is ReadRecordIntent.Search -> search(intent.key)
             is ReadRecordIntent.SetMode -> setMode(intent.mode)
             is ReadRecordIntent.DeleteBook -> deleteBook(intent.bookName)
@@ -65,16 +70,27 @@ class ReadRecordViewModel : ViewModel() {
 
                 val bookNames = filtered.map { it.bookName }.distinct()
                 val booksMap = withContext(Dispatchers.IO) { bookNames.mapNotNull { n -> appDb.bookDao.findByName(n).firstOrNull()?.let { it.name to it } }.toMap() }
-                val items = filtered.map { r -> val b = booksMap[r.bookName]; BookReadRecordItem(r.bookName, b?.author ?: "", r.readTime, r.lastRead, b?.getDisplayCover()) }
+                allItems = filtered.map { r -> val b = booksMap[r.bookName]; BookReadRecordItem(r.bookName, b?.author ?: "", r.readTime, r.lastRead, b?.getDisplayCover()) }
 
                 // top 5 covers
                 val top5 = showRecords.sortedByDescending { it.readTime }.take(5).map { it.bookName }
                 val top5Map = withContext(Dispatchers.IO) { top5.mapNotNull { n -> appDb.bookDao.findByName(n).firstOrNull()?.let { it.name to it } }.toMap() }
                 val covers = top5.mapNotNull { n -> val b = top5Map[n]; val r = showRecords.firstOrNull { it.bookName == n } ?: return@mapNotNull null; BookReadRecordItem(r.bookName, b?.author ?: "", r.readTime, r.lastRead, b?.getDisplayCover()) }
 
-                _uiState.update { it.copy(isLoading = false, books = items, totalReadTime = allTime, todayReadTime = todayTime, consecutiveDays = consecutiveDays, totalBooks = showRecords.size, summaryCovers = covers, enableRecord = AppConfig.enableReadRecord) }
+                val page = allItems.take(pageSize)
+                _uiState.update { it.copy(isLoading = false, books = page, totalReadTime = allTime, todayReadTime = todayTime, consecutiveDays = consecutiveDays, totalBooks = showRecords.size, summaryCovers = covers, enableRecord = AppConfig.enableReadRecord, hasMore = allItems.size > pageSize) }
             } catch (e: Exception) { _uiState.update { it.copy(isLoading = false) }; _effects.tryEmit(ReadRecordEffect.ShowToast("加载失败: ${e.message}")) }
         }
+    }
+
+    private fun loadMore() {
+        val current = _uiState.value
+        if (current.isLoadingMore || !current.hasMore) return
+        _uiState.update { it.copy(isLoadingMore = true) }
+        val currentSize = current.books.size
+        val nextPage = allItems.drop(currentSize).take(pageSize)
+        val newBooks = current.books + nextPage
+        _uiState.update { it.copy(isLoadingMore = false, books = newBooks, hasMore = newBooks.size < allItems.size) }
     }
 
     private fun search(key: String?) { _uiState.update { it.copy(searchKey = key?.trim()?.takeIf { it.isNotEmpty() }) }; loadData() }

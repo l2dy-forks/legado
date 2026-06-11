@@ -8,10 +8,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import io.legado.app.R
 import io.legado.app.data.appDb
+import io.legado.app.lib.theme.ThemeStore
 import io.legado.app.ui.book.readRecord.ReadPeriod
 import io.legado.app.ui.book.readRecord.ReadRecordOverviewScreen
 import io.legado.app.ui.book.readRecord.ReadRecordOverviewState
@@ -33,7 +32,7 @@ class ReadRecordOverviewActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        window.statusBarColor = ContextCompat.getColor(this, R.color.primary)
+        window.statusBarColor = ThemeStore.primaryColor(this)
 
         setContent {
             LegadoTheme {
