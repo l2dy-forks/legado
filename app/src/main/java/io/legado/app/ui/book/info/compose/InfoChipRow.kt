@@ -1,9 +1,10 @@
 package io.legado.app.ui.book.info.compose
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -11,12 +12,10 @@ import io.legado.app.ui.common.compose.InfoChip
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlin.math.roundToInt
 
 /**
- * Chip 信息行：来源标签 + 字数 + 已读进度 + 更新时间。
+ * Chip 信息行：单行左右滑动，始终不换行。
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun InfoChipRow(
     kindList: List<String>,
@@ -25,10 +24,11 @@ fun InfoChipRow(
     lastUpdateTime: Long,
     modifier: Modifier = Modifier,
 ) {
-    FlowRow(
-        modifier = modifier.fillMaxWidth(),
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         // 来源/分类标签（如"玄幻""完结"等）
         kindList.forEach { kind ->

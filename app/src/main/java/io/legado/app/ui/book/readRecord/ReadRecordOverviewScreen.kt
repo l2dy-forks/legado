@@ -67,7 +67,7 @@ fun ReadRecordOverviewScreen(
 ) {
     var selectedTab by remember { mutableIntStateOf(ReadPeriod.entries.indexOf(state.period)) }
 
-    // 预测性返回手势：页面跟手缩小淡出
+    // 预测性返回手势：页面跟手右滑（标准 Android 平移动画）
     var backProgress by remember { mutableFloatStateOf(0f) }
     PredictiveBackHandler { progress ->
         try {
@@ -84,16 +84,18 @@ fun ReadRecordOverviewScreen(
 
     Scaffold(
         modifier = Modifier.graphicsLayer {
-            val scale = 1f - (backProgress * 0.08f)
-            scaleX = scale
-            scaleY = scale
-            alpha = 1f - (backProgress * 0.1f)
+            translationX = size.width * backProgress
+            alpha = 1f - (backProgress * 0.3f)
         },
         topBar = {
             TopAppBar(
-                title = { Text("阅读总览", 
-                color = MaterialTheme.colorScheme.onSurface) 
-                },
+                title = { Text("阅读总览",
+                    color = if (AppConfig.isEInkMode) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onPrimary
+                    },
+                )},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = if (AppConfig.isEInkMode) {
                         MaterialTheme.colorScheme.surface
@@ -101,7 +103,7 @@ fun ReadRecordOverviewScreen(
                         MaterialTheme.colorScheme.primary
                     },
                 ),
-                navigationIcon = { IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_arrow_back), "返回") } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = "返回", tint = if (AppConfig.isEInkMode) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary) } },
             )
         },
     ) { padding ->
@@ -179,7 +181,7 @@ private fun DateNavigator(period: ReadPeriod, referenceDate: LocalDate, onPrev: 
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         TextButton(onClick = onPrev) {
-            Icon(painterResource(R.drawable.ic_arrow_right), "前", modifier = Modifier.size(24.dp).graphicsLayer { scaleX = -1f } )
+            Icon(painterResource(R.drawable.ic_arrow_right), contentDescription = "前", modifier = Modifier.size(24.dp).graphicsLayer { scaleX = -1f } )
         }
         AnimatedContent(
             targetState = referenceDate,
@@ -200,7 +202,7 @@ private fun DateNavigator(period: ReadPeriod, referenceDate: LocalDate, onPrev: 
             Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
         }
         TextButton(onClick = onNext) {
-            Icon(painterResource(R.drawable.ic_arrow_right), "后", modifier = Modifier.size(24.dp))
+            Icon(painterResource(R.drawable.ic_arrow_right), contentDescription = "后", modifier = Modifier.size(24.dp))
         }
     }
 }

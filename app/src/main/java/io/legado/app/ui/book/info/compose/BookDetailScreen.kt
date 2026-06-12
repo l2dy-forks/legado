@@ -100,14 +100,10 @@ fun BookDetailScreen(
         // 竖屏：260dp + 状态栏（大封面展示）；横屏：220dp + 状态栏（加大模糊背景）
         val heroHeight = if (isLandscape) 220.dp + statusBarHeightDp
             else 260.dp + statusBarHeightDp
-        // 【Surface 与 Hero 的重叠量】— 控制下半部分内容区域的起始位置
-        // 横屏：30dp 重叠，避免覆盖过小的 Hero 区域
-        // 竖屏：根据 Chip 行数动态调整 —— 一行时抬高(52dp)，两行时降低(36dp)
-        val estimatedChipCount = book.getKindList().size + 3 // +3: 字数/进度/时间
+        // 【Surface 与 Hero 的重叠量】— chip 始终单行，固定 52dp
         val surfaceOverlap = when {
             isLandscape -> 30.dp
-            estimatedChipCount > 5 -> 36.dp  // Chip 换两行时降低重叠
-            else -> 52.dp                     // Chip 一行时抬高重叠
+            else -> 42.dp
         }
 
         // 【顶部深色渐变遮罩】— 叠加在模糊背景上，确保文字与图标可读性

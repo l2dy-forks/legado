@@ -105,7 +105,7 @@ fun ReadRecordScreen(
         showMenu = false
     }
 
-    // 预测性返回手势：无子状态时整个页面跟手缩小淡出
+    // 预测性返回手势：无子状态时整个页面跟手右滑（标准 Android 平移动画）
     var backProgress by remember { mutableFloatStateOf(0f) }
     PredictiveBackHandler(enabled = !showSearch && !showMenu) { progress ->
         try {
@@ -124,10 +124,8 @@ fun ReadRecordScreen(
         modifier = Modifier
             .nestedScroll(scrollBehavior.nestedScrollConnection)
             .graphicsLayer {
-                val scale = 1f - (backProgress * 0.08f)
-                scaleX = scale
-                scaleY = scale
-                alpha = 1f - (backProgress * 0.1f)
+                translationX = size.width * backProgress
+                alpha = 1f - (backProgress * 0.3f)
             },
         topBar = {
             Column {
@@ -147,15 +145,15 @@ fun ReadRecordScreen(
                             MaterialTheme.colorScheme.primary
                         },
                     ),
-                    navigationIcon = { IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_arrow_back), "返回") } },
+                    navigationIcon = { IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = "返回", tint = if (AppConfig.isEInkMode) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary) } },
                     actions = {
                         IconButton(onClick = {
                             val modes = DisplayMode.entries
                             val next = modes[(modes.indexOf(state.displayMode) + 1) % modes.size]
                             onIntent(ReadRecordIntent.SetMode(next))
-                        }) { Icon(painterResource(R.drawable.ic_baseline_sort_24), "切换视图") }
-                        IconButton(onClick = { showSearch = !showSearch }) { Icon(painterResource(R.drawable.ic_search), "搜索") }
-                        IconButton(onClick = { showMenu = true }) { Icon(painterResource(R.drawable.ic_more_vert), "菜单") }
+                        }) { Icon(painterResource(R.drawable.ic_baseline_sort_24), contentDescription = "切换视图", tint = if (AppConfig.isEInkMode) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary) }
+                        IconButton(onClick = { showSearch = !showSearch }) { Icon(painterResource(R.drawable.ic_search), contentDescription = "搜索", tint = if (AppConfig.isEInkMode) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary) }
+                        IconButton(onClick = { showMenu = true }) { Icon(painterResource(R.drawable.ic_more_vert), contentDescription = "菜单", tint = if (AppConfig.isEInkMode) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary) }
                         RoundDropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) { dismiss ->
                             DisplayMode.entries.forEach { m ->
                                 RoundDropdownMenuItem(
@@ -174,7 +172,7 @@ fun ReadRecordScreen(
                 AnimatedVisibility(visible = showSearch) {
                     Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 2.dp) {
                         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(onClick = { showSearch = false; searchText = ""; onIntent(ReadRecordIntent.Search(null)) }) { Icon(painterResource(R.drawable.ic_arrow_back), "关闭") }
+                            IconButton(onClick = { showSearch = false; searchText = ""; onIntent(ReadRecordIntent.Search(null)) }) { Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = "关闭") }
                             OutlinedTextField(value = searchText, onValueChange = { v -> searchText = v; onIntent(ReadRecordIntent.Search(v.ifBlank { null })) },
                                 modifier = Modifier.weight(1f), placeholder = { Text("搜索书名") }, singleLine = true, shape = RoundedCornerShape(12.dp))
                         }
@@ -292,18 +290,19 @@ private fun ReadingSummaryCard(state: ReadRecordUiState, onClick: () -> Unit) {
 private fun BookStackView(covers: List<BookReadRecordItem>) {
     val step = 12.dp
     val stackWidth = 44.dp + (step * (covers.size - 1).coerceAtLeast(0))
-    val rotations = listOf(-8f, 0f, -3f, 3f, 5f)
-
+    val rotations = listOf(5f, 3f, -3f, 0f,-8f)
+    
     Box(
         modifier = Modifier.width(stackWidth).height(64.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
         covers.forEachIndexed { i, item ->
+            val rev = covers.size - 1 - i
             val rot = rotations[i % rotations.size]
             Surface(
                 modifier = Modifier
-                    .padding(start = step * i)
-                    .zIndex(i.toFloat())
+                    .padding(start = step * rev)
+                    .zIndex(rev.toFloat())
                     .graphicsLayer { rotationZ = rot },
                 shadowElevation = 4.dp,
                 shape = RoundedCornerShape(4.dp),

@@ -132,7 +132,7 @@ fun BookCoverCompose(
                         )
                     }
                 },
-                update = { it.load(null, name, author) },
+                update = { it.load(coverUrl, name, author) },
                 modifier = Modifier.fillMaxSize(),
             )
         }

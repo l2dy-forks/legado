@@ -8,6 +8,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.widget.SearchView
 import androidx.compose.animation.AnimatedVisibility
@@ -28,9 +30,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.neverEqualPolicy
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.view.indices
 import androidx.lifecycle.Observer
@@ -66,6 +70,7 @@ import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 
 /**
@@ -142,6 +147,21 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
                                 android.view.View.GONE else android.view.View.VISIBLE
                         }
 
+                        // 预测性返回手势：浮窗跟手右滑退出
+                        var backProgress by remember { mutableFloatStateOf(0f) }
+                        PredictiveBackHandler(enabled = activeBookInfoRoute != null) { progress ->
+                            try {
+                                progress.collect { event ->
+                                    backProgress = event.progress
+                                }
+                                activeBookInfoRoute = null
+                            } catch (_: CancellationException) {
+                                // 手势取消，恢复原状
+                            } finally {
+                                backProgress = 0f
+                            }
+                        }
+
                         // Callback for showing book info overlay
                         val showBookInfo: (String, String, String, String?, String?) -> Unit =
                             { name, author, bookUrl, origin, coverPath ->
@@ -157,22 +177,29 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
                             visible = true,
                             modifier = Modifier.fillMaxSize(),
                         ) {
-                            val sharedAvs = this // persistent AnimatedVisibilityScope
+                            val outerAvs = this // persistent outer scope
 
                             Box(Modifier.fillMaxSize()) {
-                                // ── Bookshelf: always alive underneath (no flicker on back) ──
+                                // ── Bookshelf: source cover bound to OUTER scope (resting) ──
                                 BookshelfFragmentContent(
                                     sharedTransitionScope = this@SharedTransitionLayout,
-                                    animatedVisibilityScope = sharedAvs,
+                                    animatedVisibilityScope = outerAvs,
                                     onShowBookInfo = showBookInfo,
                                 )
 
-                                // ── Book info: overlay with fade ──
+                                // ── Book info: overlay with MD3-matching timing ──
+                                // enter 480ms FastOutSlowInEasing, exit 360ms LinearOutSlowInEasing
                                 AnimatedVisibility(
                                     visible = activeBookInfoRoute != null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    enter = fadeIn(animationSpec = tween(300)),
-                                    exit = fadeOut(animationSpec = tween(200)),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer {
+                                            translationX = size.width * backProgress
+                                        },
+                                    enter = fadeIn(animationSpec = tween(480,
+                                        easing = androidx.compose.animation.core.FastOutSlowInEasing)),
+                                    exit = fadeOut(animationSpec = tween(360,
+                                        easing = androidx.compose.animation.core.LinearOutSlowInEasing)),
                                 ) {
                                     activeBookInfoRoute?.let { route ->
                                         key(route.bookUrl) {
@@ -180,6 +207,7 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
                                                 bookUrl = route.bookUrl,
                                                 name = route.name,
                                                 author = route.author,
+                                                coverPath = route.coverPath,
                                                 onBack = { activeBookInfoRoute = null },
                                                 onReadBook = { url, inShelf, _ ->
                                                     activeBookInfoRoute = null
@@ -192,7 +220,7 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
                                                     readBookResult.launch(intent)
                                                 },
                                                 sharedTransitionScope = this@SharedTransitionLayout,
-                                                animatedVisibilityScope = sharedAvs, // parent scope for shared element matching
+                                                animatedVisibilityScope = this, // inner overlay's scope
                                                 sharedCoverKey = route.sharedCoverKey,
                                             )
                                         }
