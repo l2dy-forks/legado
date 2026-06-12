@@ -104,13 +104,16 @@ import io.legado.app.utils.Debounce
 import io.legado.app.utils.LogUtils
 import io.legado.app.utils.NetworkUtils
 import io.legado.app.utils.StartActivityContract
-import io.legado.app.utils.applyOpenTint
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
+import io.legado.app.ui.common.compose.showComposeDropdownMenu
+import io.legado.app.utils.visible
 import io.legado.app.utils.buildMainHandler
 import io.legado.app.utils.dismissDialogFragment
 import io.legado.app.utils.getPrefBoolean
 import io.legado.app.utils.getPrefString
 import io.legado.app.utils.hexString
 import io.legado.app.utils.iconItemOnLongClick
+import io.legado.app.utils.invisible
 import io.legado.app.utils.invisible
 import io.legado.app.utils.isAbsUrl
 import io.legado.app.utils.isTrue
@@ -120,7 +123,7 @@ import io.legado.app.utils.observeEvent
 import io.legado.app.utils.observeEventSticky
 import io.legado.app.utils.postEvent
 import io.legado.app.utils.showDialogFragment
-import io.legado.app.utils.showThemed
+import io.legado.app.utils.showHelp
 import io.legado.app.utils.showHelp
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.startActivityForBook
@@ -385,19 +388,38 @@ class ReadBookActivity : BaseReadBookActivity(),
 
     override fun onCompatCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.book_read, menu)
-        menu.iconItemOnLongClick(R.id.menu_change_source) {
-            PopupMenu(this, it).apply {
-                inflate(R.menu.book_read_change_source)
-                this.menu.applyOpenTint(this@ReadBookActivity)
-                setOnMenuItemClickListener(this@ReadBookActivity)
-            }.showThemed()
+        menu.iconItemOnLongClick(R.id.menu_change_source) { anchor ->
+            showComposeDropdownMenu(this, anchor) { dismiss ->
+                RoundDropdownMenuItem(
+                    text = getString(R.string.chapter_change_source),
+                    onClick = { dismiss(); lifecycleScope.launch {
+                        val book = ReadBook.book ?: return@launch
+                        val chapter = appDb.bookChapterDao.getChapter(book.bookUrl, ReadBook.durChapterIndex) ?: return@launch
+                        binding.readMenu.runMenuOut()
+                        showDialogFragment(ChangeChapterSourceDialog(book.name, book.author, chapter.index, chapter.title))
+                    } },
+                )
+                RoundDropdownMenuItem(
+                    text = getString(R.string.book_change_source),
+                    onClick = { dismiss(); binding.readMenu.runMenuOut(); ReadBook.book?.let { showDialogFragment(ChangeBookSourceDialog(it.name, it.author)) } },
+                )
+            }
         }
-        menu.iconItemOnLongClick(R.id.menu_refresh) {
-            PopupMenu(this, it).apply {
-                inflate(R.menu.book_read_refresh)
-                this.menu.applyOpenTint(this@ReadBookActivity)
-                setOnMenuItemClickListener(this@ReadBookActivity)
-            }.showThemed()
+        menu.iconItemOnLongClick(R.id.menu_refresh) { anchor ->
+            showComposeDropdownMenu(this, anchor) { dismiss ->
+                RoundDropdownMenuItem(
+                    text = getString(R.string.menu_refresh_dur),
+                    onClick = { dismiss(); if (ReadBook.bookSource == null) upContent() else ReadBook.book?.let { ReadBook.curTextChapter = null; binding.readView.upContent(); viewModel.refreshContentDur(it) } },
+                )
+                RoundDropdownMenuItem(
+                    text = getString(R.string.menu_refresh_after),
+                    onClick = { dismiss(); if (ReadBook.bookSource == null) upContent() else ReadBook.book?.let { ReadBook.clearTextChapter(); binding.readView.upContent(); viewModel.refreshContentAfter(it) } },
+                )
+                RoundDropdownMenuItem(
+                    text = getString(R.string.menu_refresh_all),
+                    onClick = { dismiss(); if (ReadBook.bookSource == null) upContent() else ReadBook.book?.let { refreshContentAll(it) } },
+                )
+            }
         }
         binding.readMenu.refreshMenuColorFilter()
         return super.onCompatCreateOptionsMenu(menu)

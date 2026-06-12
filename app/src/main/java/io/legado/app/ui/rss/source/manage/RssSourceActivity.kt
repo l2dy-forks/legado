@@ -31,7 +31,7 @@ import io.legado.app.ui.widget.recycler.DragSelectTouchHelper
 import io.legado.app.ui.widget.recycler.ItemTouchCallback
 import io.legado.app.ui.widget.recycler.VerticalDivider
 import io.legado.app.ui.common.compose.RoundDropdownMenuItem
-import io.legado.app.ui.common.compose.createOverflowMenuView
+import io.legado.app.ui.common.compose.createComposeDropdownIcon
 import io.legado.app.utils.ACache
 import io.legado.app.utils.applyTint
 import io.legado.app.utils.dpToPx
@@ -109,9 +109,7 @@ class RssSourceActivity : VMBaseActivity<ActivityRssSourceBinding, RssSourceView
 
     override fun onCompatCreateOptionsMenu(menu: Menu): Boolean {
         // Group icon with dynamic submenu via Compose RoundDropdownMenu (spring bounce)
-        val groupView = createOverflowMenuView(
-            iconContentDescriptionId = R.string.menu_action_group
-        ) { dismiss ->
+        val groupView = createComposeDropdownIcon { dismiss ->
             RoundDropdownMenuItem(
                 text = getString(R.string.group_manage),
                 onClick = { dismiss(); showDialogFragment<GroupManageDialog>() },
@@ -146,7 +144,7 @@ class RssSourceActivity : VMBaseActivity<ActivityRssSourceBinding, RssSourceView
             it.actionView = groupView
         }
         // Overflow items via Compose RoundDropdownMenu
-        val overflowView = createOverflowMenuView { dismiss ->
+        val overflowView = createComposeDropdownIcon { dismiss ->
             RoundDropdownMenuItem(
                 text = getString(R.string.add_rss_source),
                 onClick = { dismiss(); startActivity<RssSourceEditActivity>() },

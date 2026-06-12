@@ -9,10 +9,10 @@ import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+import android.view.ViewGroup
 import android.view.animation.Animation
 import android.widget.FrameLayout
 import android.widget.SeekBar
-import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import io.legado.app.R
@@ -47,7 +47,8 @@ import io.legado.app.utils.loadAnimation
 import io.legado.app.utils.modifyBegin
 import io.legado.app.utils.openUrl
 import io.legado.app.utils.putPrefBoolean
-import io.legado.app.utils.showThemed
+import io.legado.app.ui.common.compose.RoundDropdownMenuItem
+import io.legado.app.ui.common.compose.createComposeDropdownText
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.visible
 import splitties.views.onClick
@@ -102,25 +103,9 @@ class ReadMenu @JvmOverloads constructor(
             PreferKey.showBrightnessView,
             true
         )
-    private val sourceMenu by lazy {
-        PopupMenu(context, binding.tvSourceAction).apply {
-            inflate(R.menu.book_read_source)
-            setOnMenuItemClickListener {
-                when (it.itemId) {
-                    R.id.menu_login -> callBack.showLogin()
-                    R.id.menu_chapter_pay -> callBack.payAction()
-                    R.id.menu_edit_source -> callBack.openSourceEditActivity()
-                    R.id.menu_disable_source -> callBack.disableSource()
-                }
-                true
-            }
-        }
-    }
+
     private val menuInListener = object : Animation.AnimationListener {
         override fun onAnimationStart(animation: Animation) {
-            binding.tvSourceAction.text =
-                ReadBook.bookSource?.bookSourceName ?: context.getString(R.string.book_source)
-            binding.tvSourceAction.isGone = ReadBook.isLocalBook
             callBack.upSystemUiVisibility()
             binding.llBrightness.visible(showBrightnessView)
         }
@@ -366,15 +351,42 @@ class ReadMenu @JvmOverloads constructor(
         tvChapterName.setOnLongClickListener(chapterViewLongClickListener)
         tvChapterUrl.setOnClickListener(chapterViewClickListener)
         tvChapterUrl.setOnLongClickListener(chapterViewLongClickListener)
-        //书源操作
-        tvSourceAction.onClick {
-            sourceMenu.menu.findItem(R.id.menu_login).isVisible =
-                !ReadBook.bookSource?.loginUrl.isNullOrEmpty()
-            sourceMenu.menu.findItem(R.id.menu_chapter_pay).isVisible =
-                !ReadBook.bookSource?.loginUrl.isNullOrEmpty()
-                        && ReadBook.curTextChapter?.isVip == true
-                        && ReadBook.curTextChapter?.isPay != true
-            sourceMenu.showThemed()
+        //书源操作 — Compose dropdown with spring bounce
+        tvSourceAction.apply {
+            val parent = parent as? ViewGroup ?: return@run
+            val idx = parent.indexOfChild(this)
+            val lp = layoutParams
+            parent.removeView(this)
+            parent.addView(
+                this@ReadMenu.context.createComposeDropdownText(
+                    getLabel = { ReadBook.bookSource?.bookSourceName ?: context.getString(R.string.book_source) },
+                    isVisible = { !ReadBook.isLocalBook },
+                    textColor = androidx.compose.ui.graphics.Color(this@ReadMenu.textColor),
+                    menuContent = { dismiss ->
+                        val hasLogin = !ReadBook.bookSource?.loginUrl.isNullOrEmpty()
+                        if (hasLogin) {
+                            RoundDropdownMenuItem(
+                                text = context.getString(R.string.login),
+                                onClick = { dismiss(); callBack.showLogin() },
+                            )
+                            RoundDropdownMenuItem(
+                                text = context.getString(R.string.chapter_pay),
+                                onClick = { dismiss(); callBack.payAction() },
+                            )
+                        }
+                        RoundDropdownMenuItem(
+                            text = context.getString(R.string.edit_source),
+                            onClick = { dismiss(); callBack.openSourceEditActivity() },
+                        )
+                        RoundDropdownMenuItem(
+                            text = context.getString(R.string.disable_source),
+                            onClick = { dismiss(); callBack.disableSource() },
+                        )
+                    },
+                ),
+                idx,
+                lp,
+            )
         }
         //亮度跟随
         ivBrightnessAuto.setOnClickListener {

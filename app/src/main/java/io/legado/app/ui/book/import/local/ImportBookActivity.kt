@@ -33,7 +33,7 @@ import io.legado.app.utils.isUri
 import io.legado.app.utils.launch
 import io.legado.app.utils.putPrefInt
 import io.legado.app.ui.common.compose.RoundDropdownMenuItem
-import io.legado.app.ui.common.compose.createOverflowMenuView
+import io.legado.app.ui.common.compose.createComposeDropdownIcon
 import io.legado.app.utils.visible
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -86,9 +86,7 @@ class ImportBookActivity : BaseImportBookActivity<ImportBookViewModel>(),
             it.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         }
         // Sort icon with Compose RoundDropdownMenu (spring bounce)
-        val sortView = createOverflowMenuView(
-            iconContentDescriptionId = R.string.sort
-        ) { dismiss ->
+        val sortView = createComposeDropdownIcon { dismiss ->
             RoundDropdownMenuItem(
                 text = getString(R.string.sort_by_name),
                 onClick = { dismiss(); upSort(0) },
@@ -112,7 +110,7 @@ class ImportBookActivity : BaseImportBookActivity<ImportBookViewModel>(),
             it.actionView = sortView
         }
         // Overflow: other items via Compose RoundDropdownMenu
-        val overflowView = createOverflowMenuView { dismiss ->
+        val overflowView = createComposeDropdownIcon { dismiss ->
             RoundDropdownMenuItem(
                 text = getString(R.string.scan_folder),
                 onClick = { dismiss(); scanFolder() },

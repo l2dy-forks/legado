@@ -46,7 +46,7 @@ import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.showHelp
 import io.legado.app.utils.splitNotBlank
 import io.legado.app.ui.common.compose.RoundDropdownMenuItem
-import io.legado.app.ui.common.compose.createOverflowMenuView
+import io.legado.app.ui.common.compose.createComposeDropdownIcon
 import io.legado.app.utils.transaction
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.Dispatchers.IO
@@ -119,9 +119,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
 
     override fun onCompatCreateOptionsMenu(menu: Menu): Boolean {
         // Group icon with dynamic submenu via Compose RoundDropdownMenu (spring bounce)
-        val groupView = createOverflowMenuView(
-            iconContentDescriptionId = R.string.menu_action_group
-        ) { dismiss ->
+        val groupView = createComposeDropdownIcon { dismiss ->
             RoundDropdownMenuItem(
                 text = getString(R.string.group_manage),
                 onClick = { dismiss(); showDialogFragment<GroupManageDialog>() },
@@ -144,7 +142,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
             it.actionView = groupView
         }
         // Overflow items via Compose RoundDropdownMenu
-        val overflowView = createOverflowMenuView { dismiss ->
+        val overflowView = createComposeDropdownIcon { dismiss ->
             RoundDropdownMenuItem(
                 text = getString(R.string.add_replace_rule),
                 onClick = { dismiss(); editActivity.launch(ReplaceEditActivity.startIntent(this@ReplaceRuleActivity)) },
