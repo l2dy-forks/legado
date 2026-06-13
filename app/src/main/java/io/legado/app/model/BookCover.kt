@@ -107,7 +107,7 @@ object BookCover {
         loadOnlyWifi: Boolean = false,
         sourceOrigin: String? = null,
     ): ImageRequest {
-        if (useDefaultCover()) {
+        if (useDefaultCover() || path == "use_default_cover") {
             return ImageRequest.Builder(context)
                 .data(defaultDrawable)
                 .build()

@@ -1,12 +1,16 @@
 package io.legado.app.ui.book.readRecord
 
+import android.view.View
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -41,28 +46,43 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import io.legado.app.R
 import io.legado.app.help.config.AppConfig
 import io.legado.app.ui.common.compose.BookCoverImage
+import io.legado.app.ui.common.compose.LocalAnimationsEnabled
 import io.legado.app.ui.common.compose.RoundDropdownMenu
 import io.legado.app.ui.common.compose.RoundDropdownMenuItem
 import io.legado.app.ui.common.compose.legadoCardBackgroundColor
 import kotlinx.coroutines.flow.Flow
+import kotlin.math.roundToInt
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.NonDisposableHandle.parent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -324,3 +344,107 @@ private fun BookItem(item: BookReadRecordItem, onClick: () -> Unit, onDelete: ()
         dismissButton = { TextButton(onClick = { showDelete = false }) { Text("取消") } },
     )
 }
+
+///**
+// * 左滑露出删除按钮，滑到固定距离后停住，点击按钮才删除。
+// * 使用动画实现平滑滑动和回弹。
+// */
+//@Composable
+//private fun SwipeToDeleteItem(
+//    onDelete: () -> Unit,
+//    modifier: Modifier = Modifier,
+//    content: @Composable () -> Unit,
+//) {
+//    val density = LocalDensity.current
+//    val revealDp = 120.dp
+//    val revealPx = with(density) { revealDp.toPx() }
+//    val directionSlopPx = with(density) { 8.dp.toPx() }
+//    var offsetX by remember { mutableFloatStateOf(0f) }
+//    val animationsEnabled = LocalAnimationsEnabled.current
+//    val view = LocalView.current
+//
+//    Box(modifier = modifier.clipToBounds()) {
+//        // 底层：删除按钮（固定在右侧）
+//        Box(
+//            modifier = Modifier
+//                .matchParentSize()
+//                .background(
+//                    MaterialTheme.colorScheme.error,
+//                    MaterialTheme.shapes.large,
+//                )
+//                .padding(horizontal = 16.dp),
+//            contentAlignment = Alignment.CenterEnd,
+//        ) {
+//            IconButton(onClick = {
+//                // 点击删除后先弹回再执行删除
+//                onDelete()
+//            }) {
+//                Icon(
+//                    painter = painterResource(R.drawable.ic_outline_delete),
+//                    contentDescription = "删除",
+//                    tint = Color.White,
+//                    modifier = Modifier.size(24.dp),
+//                )
+//            }
+//        }
+//        // 上层：书籍卡片，可左滑偏移
+//        Box(
+//            modifier = Modifier
+//                .offset { IntOffset(offsetX.roundToInt(), 0) }
+//                .pointerInput(Unit) {
+//                    awaitEachGesture {
+//                        val down = awaitFirstDown(requireUnconsumed = false)
+//                        var totalDragX = 0f
+//                        var disallowingParent = false
+//                        while (true) {
+//                            val event = awaitPointerEvent()
+//                            val change = event.changes
+//                                .firstOrNull { it.id == down.id }
+//                                ?: break
+//                            if (!change.pressed) break
+//                            totalDragX += change.positionChange().x
+//                            if (totalDragX < -directionSlopPx && !disallowingParent) {
+//                                view.requestParentDisallowIntercept(true)
+//                                disallowingParent = true
+//                            }
+//                        }
+//                        if (disallowingParent) {
+//                            view.requestParentDisallowIntercept(false)
+//                        }
+//                    }
+//                }
+//                .draggable(
+//                    orientation = Orientation.Horizontal,
+//                    state = rememberDraggableState { delta ->
+//                        // 只允许左滑（delta < 0）
+//                        val newOffset = (offsetX + delta).coerceIn(-revealPx, 0f)
+//                        offsetX = newOffset
+//                    },
+//                    onDragStopped = {
+//                        // 松手后：滑过 50% 则保持露出，否则弹回
+//                        val target = if (offsetX < -revealPx * 0.5f) -revealPx else 0f
+//                        if (animationsEnabled) {
+//                            animate(
+//                                initialValue = offsetX,
+//                                targetValue = target,
+//                                animationSpec = tween(durationMillis = 200),
+//                            ) { value, _ -> offsetX = value }
+//                        } else {
+//                            // E-Ink 模式：瞬间跳转，无动画
+//                            offsetX = target
+//                        }
+//                    },
+//                ),
+//        ) {
+//            content()
+//        }
+//    }
+//}
+//
+//private fun AndroidView.requestParentDisallowIntercept(disallow: Boolean) {
+//    var viewParent = parent
+//    while (viewParent != null) {
+//        viewParent.requestDisallowInterceptTouchEvent(disallow)
+//        viewParent = viewParent.parent
+//    }
+//}

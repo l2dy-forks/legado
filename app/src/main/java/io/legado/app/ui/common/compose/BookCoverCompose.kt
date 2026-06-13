@@ -2,7 +2,6 @@
 
 package io.legado.app.ui.common.compose
 
-import android.view.ViewGroup
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -21,7 +20,6 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -31,7 +29,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.view.ViewCompat
 import coil3.compose.AsyncImage
 import io.legado.app.help.config.AppConfig
 import io.legado.app.model.BookCover
@@ -121,18 +118,18 @@ fun BookCoverCompose(
             )
         }
 
-        // Default cover: use legacy CoverImageView (draws name/author on default bg)
+        // Default cover: CoverImageView (onError keeps defaultCover=true → draws text)
         if (!isOnlineCoverLoaded) {
             AndroidView(
                 factory = { ctx ->
-                    CoverImageView(ctx).apply {
-                        layoutParams = ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT,
+                    io.legado.app.ui.widget.image.CoverImageView(ctx).apply {
+                        layoutParams = android.view.ViewGroup.LayoutParams(
+                            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                         )
                     }
                 },
-                update = { it.load(coverUrl, name, author) },
+                update = { it.load(null, name, author) },
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -176,3 +173,4 @@ private fun rememberSharedCoverTransitionRadius(
 
     return animatedRadiusValue.dp
 }
+

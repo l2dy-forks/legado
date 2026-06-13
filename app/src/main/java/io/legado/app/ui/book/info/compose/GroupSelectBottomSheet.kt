@@ -105,7 +105,7 @@ fun GroupSelectBottomSheet(
                             text = group.groupName,
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(start = 8.dp),

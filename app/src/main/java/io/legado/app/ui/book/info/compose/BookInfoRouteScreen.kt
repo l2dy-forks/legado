@@ -179,7 +179,17 @@ fun BookInfoRouteScreen(
     }
 
     DisposableEffect(Unit) {
-        val bo = Observer<Book?> { book = it ?: eagerBook }
+        val bo = Observer<Book?> { received ->
+            // 过滤旧书籍的残留 LiveData 值（bookUrl 不匹配则丢弃）
+            if (received != null) {
+                if (received.bookUrl != bookUrl) return@Observer
+                book = received
+                inShelf = vm.inBookshelf
+            } else {
+                book = eagerBook
+                inShelf = false
+            }
+        }
         val co = Observer<List<BookChapter>?> { chapters = it }
         vm.bookData.observeForever(bo); vm.chapterListData.observeForever(co)
         onDispose { vm.bookData.removeObserver(bo); vm.chapterListData.removeObserver(co) }
@@ -197,8 +207,6 @@ fun BookInfoRouteScreen(
         }
         vm.waitDialogData.observeForever(wo); onDispose { vm.waitDialogData.removeObserver(wo) }
     }
-    LaunchedEffect(Unit) { inShelf = vm.inBookshelf }
-
     // Resume refresh: mimics BookInfoComposeActivity.onResume() behavior
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {

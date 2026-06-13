@@ -81,8 +81,8 @@ class IconListPreference(context: Context, attrs: AttributeSet) : ListPreference
                 args.putString("value", value)
                 args.putCharSequenceArray("entries", entries)
                 args.putCharSequenceArray("entryValues", entryValues)
-                args.putCharSequenceArray("iconNames", iconNames)
                 arguments = args
+                iconDrawables = mEntryDrawables
                 onChanged = { value ->
                     this@IconListPreference.value = value
                 }
@@ -126,7 +126,7 @@ class IconListPreference(context: Context, attrs: AttributeSet) : ListPreference
         var dialogValue: String? = null
         var dialogEntries: Array<CharSequence>? = null
         var dialogEntryValues: Array<CharSequence>? = null
-        var dialogIconNames: Array<CharSequence>? = null
+        var iconDrawables: List<Drawable?> = emptyList()
         private val binding by viewBinding(DialogRecyclerViewBinding::bind)
 
         override fun onStart() {
@@ -144,7 +144,6 @@ class IconListPreference(context: Context, attrs: AttributeSet) : ListPreference
                 dialogValue = it.getString("value")
                 dialogEntries = it.getCharSequenceArray("entries")
                 dialogEntryValues = it.getCharSequenceArray("entryValues")
-                dialogIconNames = it.getCharSequenceArray("iconNames")
                 dialogEntryValues?.let { values ->
                     adapter.setItems(values.toList())
                 }
@@ -166,21 +165,18 @@ class IconListPreference(context: Context, attrs: AttributeSet) : ListPreference
                 payloads: MutableList<Any>
             ) {
                 binding.run {
-                    val index = findIndexOfValue(item.toString())
-                    dialogEntries?.let {
-                        label.text = it[index]
+                    val position = holder.layoutPosition
+                    dialogEntries?.getOrNull(position)?.let {
+                        label.text = it
                     }
-                    dialogIconNames?.let {
-                        val resId = context.resources
-                            .getIdentifier(it[index].toString(), "mipmap", context.packageName)
-                        val d = try {
-                            context.getCompatDrawable(resId)
-                        } catch (e: Exception) {
-                            null
-                        }
-                        d?.let {
-                            icon.setImageDrawable(d)
-                        }
+                    val originalDrawable = this@IconDialog.iconDrawables.getOrNull(position)
+                    if (originalDrawable != null) {
+                        val copy = originalDrawable.constantState?.newDrawable()?.mutate()
+                            ?: originalDrawable
+                        icon.setImageDrawable(copy)
+                        // BaseDialogFragment.applyDialogTextColor 会通过 post 给所有
+                        // ImageView 设置 imageTintList，这里延迟清除确保不被覆盖
+                        icon.post { icon.imageTintList = null }
                     }
                     label.isChecked = item.toString() == dialogValue
                     root.setOnClickListener {

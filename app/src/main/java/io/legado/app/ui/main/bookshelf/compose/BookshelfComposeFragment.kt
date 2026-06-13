@@ -28,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.mutableFloatStateOf
@@ -138,6 +139,7 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
                         var activeBookInfoRoute by remember {
                             mutableStateOf<io.legado.app.ui.main.MainRouteBookInfo?>(null)
                         }
+                        var showCount by remember { mutableIntStateOf(0) }
 
                         // Hide bottom nav when book info overlay is active
                         LaunchedEffect(activeBookInfoRoute) {
@@ -165,6 +167,7 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
                         // Callback for showing book info overlay
                         val showBookInfo: (String, String, String, String?, String?) -> Unit =
                             { name, author, bookUrl, origin, coverPath ->
+                                showCount++
                                 activeBookInfoRoute = io.legado.app.ui.main.MainRouteBookInfo(
                                     name = name, author = author, bookUrl = bookUrl,
                                     origin = origin, coverPath = coverPath,
@@ -187,8 +190,9 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
                                     onShowBookInfo = showBookInfo,
                                 )
 
-                                // ── Book info: overlay with MD3-matching timing ──
-                                // enter 480ms FastOutSlowInEasing, exit 360ms LinearOutSlowInEasing
+                                // ── Book info: overlay with responsive shared element timing ──
+                                // LinearOutSlowInEasing: moves immediately, decelerates at end
+                                // 400ms total — no dead zone at start
                                 AnimatedVisibility(
                                     visible = activeBookInfoRoute != null,
                                     modifier = Modifier
@@ -196,13 +200,13 @@ class BookshelfComposeFragment() : BaseBookshelfFragment(0),
                                         .graphicsLayer {
                                             translationX = size.width * backProgress
                                         },
-                                    enter = fadeIn(animationSpec = tween(480,
-                                        easing = androidx.compose.animation.core.FastOutSlowInEasing)),
+                                    enter = fadeIn(animationSpec = tween(400,
+                                        easing = androidx.compose.animation.core.LinearOutSlowInEasing)),
                                     exit = fadeOut(animationSpec = tween(360,
                                         easing = androidx.compose.animation.core.LinearOutSlowInEasing)),
                                 ) {
                                     activeBookInfoRoute?.let { route ->
-                                        key(route.bookUrl) {
+                                        key(route.bookUrl + showCount) {
                                             BookInfoRouteScreen(
                                                 bookUrl = route.bookUrl,
                                                 name = route.name,
