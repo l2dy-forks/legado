@@ -37,7 +37,7 @@ import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.showHelp
 import io.legado.app.utils.splitNotBlank
 import io.legado.app.ui.common.compose.RoundDropdownMenuItem
-import io.legado.app.ui.common.compose.createOverflowMenuView
+import io.legado.app.ui.common.compose.createComposeDropdownIcon
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.flow.catch
@@ -93,7 +93,7 @@ class DictRuleActivity : VMBaseActivity<ActivityDictRuleBinding, DictRuleViewMod
             it.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         }
         // Overflow items via Compose RoundDropdownMenu with spring bounce
-        val overflowView = createOverflowMenuView { dismiss ->
+        val overflowView = createComposeDropdownIcon { dismiss ->
             RoundDropdownMenuItem(
                 text = getString(R.string.import_local),
                 onClick = {

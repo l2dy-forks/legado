@@ -37,7 +37,7 @@ import io.legado.app.service.ExportBookService
 import io.legado.app.ui.about.AppLogDialog
 import io.legado.app.ui.file.HandleFileContract
 import io.legado.app.ui.common.compose.RoundDropdownMenuItem
-import io.legado.app.ui.common.compose.createOverflowMenuView
+import io.legado.app.ui.common.compose.createComposeDropdownIcon
 import io.legado.app.utils.ACache
 import io.legado.app.utils.FileDoc
 import io.legado.app.utils.applyNavigationBarPadding
@@ -132,9 +132,7 @@ class CacheActivity : VMBaseActivity<ActivityCacheBookBinding, CacheViewModel>()
             it.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         }
         // Group icon with dynamic submenu via Compose RoundDropdownMenu (spring bounce)
-        val groupView = createOverflowMenuView(
-            iconContentDescriptionId = R.string.group
-        ) { dismiss ->
+        val groupView = createComposeDropdownIcon { dismiss ->
             groupList.forEach { bookGroup ->
                 RoundDropdownMenuItem(
                     text = bookGroup.groupName,
@@ -154,7 +152,7 @@ class CacheActivity : VMBaseActivity<ActivityCacheBookBinding, CacheViewModel>()
             it.actionView = groupView
         }
         // Overflow items via Compose RoundDropdownMenu
-        val overflowView = createOverflowMenuView { dismiss ->
+        val overflowView = createComposeDropdownIcon { dismiss ->
             RoundDropdownMenuItem(
                 text = getString(R.string.menu_download_after),
                 onClick = {
