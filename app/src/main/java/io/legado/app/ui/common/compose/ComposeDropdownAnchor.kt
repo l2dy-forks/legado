@@ -3,6 +3,7 @@ package io.legado.app.ui.common.compose
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.AppCompatImageButton
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
@@ -24,49 +25,32 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import io.legado.app.R
-import io.legado.app.help.config.AppConfig
 import io.legado.app.utils.activity
 
 // ── Unified factory: ComposeView { ⋮ or label + RoundDropdownMenu } ──
 
 /**
- * Creates an icon-style ⋮ [ComposeView] that opens [RoundDropdownMenu] with spring bounce.
+ * Creates a plain [AppCompatImageButton] (⋮ icon) for use as a Toolbar actionView.
+ * On click, shows [RoundDropdownMenu] via [showComposeDropdownMenu] anchored to the button.
  *
- * For Toolbar setActionView(): `menuItem.setActionView(view)`
- * For Adapter item: replace ivMenuMore ImageView with this ComposeView.
+ * Using a regular View avoids AbstractComposeView.onMeasure being called before the view
+ * is attached to a window (which happens when ActionMenuPresenter.flagActionItems runs).
  */
 fun Context.createComposeDropdownIcon(
     iconTint: Color = Color.Unspecified,
     menuContent: @Composable ColumnScope.(dismiss: () -> Unit) -> Unit
 ): View {
-    return ComposeView(this).apply {
-        setContent {
-            LegadoTheme {
-                val tint = if (iconTint == Color.Unspecified || AppConfig.isEInkMode)
-                    MaterialTheme.colorScheme.onPrimary else iconTint
-                var expanded by remember { mutableStateOf(false) }
-                Box {
-                    IconButton(onClick = { expanded = true }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_more_vert),
-                            contentDescription = null,
-                            tint = tint,
-                        )
-                    }
-                    RoundDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                        content = menuContent,
-                    )
-                }
-            }
-        }
+    return AppCompatImageButton(this).apply {
+        setImageResource(R.drawable.ic_more_vert)
+        background = null
+        contentDescription = null
+        setOnClickListener { showComposeDropdownMenu(context, this, menuContent) }
     }
 }
 
 /**
- * Creates a text-label ComposeView that opens [RoundDropdownMenu] on click.
- * Used e.g. in ReadMenu for the source name button.
+ * Creates a plain [View] showing a text label for use as a Toolbar actionView.
+ * On click, shows [RoundDropdownMenu] via [showComposeDropdownMenu] anchored to the view.
  */
 fun Context.createComposeDropdownText(
     getLabel: () -> String,
@@ -75,28 +59,33 @@ fun Context.createComposeDropdownText(
     menuContent: @Composable ColumnScope.(dismiss: () -> Unit) -> Unit
 ): View {
     return ComposeView(this).apply {
-        setContent {
-            LegadoTheme {
-                if (!isVisible()) return@LegadoTheme
-                var expanded by remember { mutableStateOf(false) }
-                val label = getLabel()
-                val color = if (textColor == Color.Unspecified)
-                    MaterialTheme.colorScheme.onSurface else textColor
-                Box {
-                    Text(
-                        text = label,
-                        color = color,
-                        fontSize = 14.sp,
-                        modifier = Modifier.clickable { expanded = true },
-                    )
-                    RoundDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                        content = menuContent,
-                    )
+        addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) {
+                setContent {
+                    LegadoTheme {
+                        if (!isVisible()) return@LegadoTheme
+                        var expanded by remember { mutableStateOf(false) }
+                        val label = getLabel()
+                        val color = if (textColor == Color.Unspecified)
+                            MaterialTheme.colorScheme.onSurface else textColor
+                        Box {
+                            Text(
+                                text = label,
+                                color = color,
+                                fontSize = 14.sp,
+                                modifier = Modifier.clickable { expanded = true },
+                            )
+                            RoundDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false },
+                                content = menuContent,
+                            )
+                        }
+                    }
                 }
             }
-        }
+            override fun onViewDetachedFromWindow(v: View) = Unit
+        })
     }
 }
 
