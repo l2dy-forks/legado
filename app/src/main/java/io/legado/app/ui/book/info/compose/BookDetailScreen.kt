@@ -191,7 +191,8 @@ fun BookDetailScreen(
                     if (inBookshelf) {
                         FilledTonalButton(
                             onClick = onReadClick,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth()
+                            .height(52.dp),
                             colors = androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
                                 containerColor = accent,
                                 contentColor = Color.White,
@@ -206,7 +207,8 @@ fun BookDetailScreen(
                         Row(modifier = Modifier.fillMaxWidth()) {
                             OutlinedButton(
                                 onClick = onShelfClick,
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f)
+                                    .height(52.dp),
                             ) {
                                 Text(
                                     text = stringResource(R.string.add_to_bookshelf),
@@ -216,7 +218,8 @@ fun BookDetailScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             FilledTonalButton(
                                 onClick = onReadClick,
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f)
+                                    .height(52.dp),
                                 colors = androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
                                     containerColor = accent,
                                     contentColor = Color.White,

@@ -18,9 +18,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,9 +41,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+//import androidx.compose.ui.layout.IntrinsicSize
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.legado.app.R
@@ -171,12 +176,16 @@ fun showComposeDropdownMenu(
     anchor.getLocationInWindow(loc)
     val anchorX = loc[0]
     val anchorY = loc[1] + anchor.height
+    val anchorWidth = anchor.width
+    val screenWidth = context.resources.displayMetrics.widthPixels
+    val screenHeight = context.resources.displayMetrics.heightPixels
 
     val cv = ComposeView(context)
     showingMenuView = WeakReference(cv)
     cv.setContent {
         LegadoTheme {
             var visible by remember { mutableStateOf(false) }
+            var menuSize by remember { mutableStateOf(IntSize.Zero) }
             val focusRequester = remember { FocusRequester() }
 
             // Animate in on next frame
@@ -215,7 +224,17 @@ fun showComposeDropdownMenu(
                 // Anchored menu panel with spring bounce animation
                 AnimatedVisibility(
                     visible = visible,
-                    modifier = Modifier.offset { IntOffset(anchorX, anchorY) },
+                    modifier = Modifier.offset {
+                        var x = anchorX
+                        var y = anchorY
+                        if (menuSize.width > 0 && x + menuSize.width > screenWidth) {
+                            x = (anchorX + anchorWidth - menuSize.width).coerceAtLeast(0)
+                        }
+                        if (menuSize.height > 0 && y + menuSize.height > screenHeight) {
+                            y = (loc[1] - menuSize.height).coerceAtLeast(0)
+                        }
+                        IntOffset(x, y)
+                    },
                     enter = fadeIn(spring(stiffness = Spring.StiffnessLow)) +
                         scaleIn(
                             animationSpec = spring(
@@ -227,6 +246,11 @@ fun showComposeDropdownMenu(
                     exit = fadeOut() + scaleOut(targetScale = 0.85f),
                 ) {
                     Surface(
+                        modifier = Modifier
+                            .width(IntrinsicSize.Max)
+                            .onGloballyPositioned { coordinates ->
+                                menuSize = coordinates.size
+                            },
                         shape = MaterialTheme.shapes.medium,
                         color = legadoPopupBackgroundColor(),
                         shadowElevation = 4.dp,

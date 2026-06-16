@@ -142,6 +142,12 @@ fun BookshelfScreen(
     val coroutineScope = rememberCoroutineScope()
     val touchSlopPx = with(LocalDensity.current) { 8.dp.toPx() }
 
+    // 只有当 top bar 处于完全展开状态（未滚动）时，才允许下拉刷新，
+    // 避免与上滑回顶使 top bar 变色的效果冲突。
+    // 用 contentOffset 而非 collapsedFraction，因为 pinned 行为下 heightOffset 始终为 0。
+    // 直接读 State 让 Compose 自动追踪变化，避免 LaunchedEffect/snapshotFlow 的时序问题。
+    val topBarAtRest = scrollBehavior.state.contentOffset < 0.5f
+
     // 是否为 Tab 分组模式且有多于一个分组可用
     val usePager = bookGroupStyle == 0 && groups.size > 1
     val selectedIndex = if (usePager) {
@@ -195,7 +201,7 @@ fun BookshelfScreen(
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier,
         topBar = {
             TopAppBar(
                 title = {
@@ -238,7 +244,7 @@ fun BookshelfScreen(
                     RoundDropdownMenu(
                         expanded = menuExpanded,
                         onDismissRequest = { menuExpanded = false },
-                        modifier = Modifier.widthIn(min = 200.dp, max = 300.dp),
+                        modifier = Modifier.widthIn(min = 160.dp, max = 300.dp),
                     ) { dismiss ->
                         // 排序
                         RoundDropdownMenuItem(
@@ -514,14 +520,25 @@ fun BookshelfScreen(
                 }
             }
         }
+        // 将 scrollBehavior.nestedScrollConnection 放在 PTR 内部，
+        // 使其在 post-scroll 链中位于 PTR 之前，从而 contentOffset 只反映
+        // LazyColumn 的真实滚动量，避免 PTR 自身的滚动消耗形成反馈循环。
+        val wrappedContent: @Composable () -> Unit = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .nestedScroll(scrollBehavior.nestedScrollConnection)
+            ) { content() }
+        }
         if (enableRefresh) {
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
                 onRefresh = onRefresh,
                 modifier = contentModifier,
-            ) { content() }
+                enabled = topBarAtRest,
+            ) { wrappedContent() }
         } else {
-            Box(modifier = contentModifier) { content() }
+            Box(modifier = contentModifier) { wrappedContent() }
         }
     }
 }
