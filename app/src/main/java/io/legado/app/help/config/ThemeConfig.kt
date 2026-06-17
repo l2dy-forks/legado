@@ -14,6 +14,7 @@ import io.legado.app.constant.PreferKey
 import io.legado.app.constant.Theme
 import io.legado.app.help.DefaultData
 import io.legado.app.lib.theme.M3ColorHelper
+import io.legado.app.lib.theme.ThemeManager
 import io.legado.app.lib.theme.ThemeStore
 import io.legado.app.model.BookCover
 import io.legado.app.utils.BitmapUtils
@@ -37,6 +38,8 @@ import java.io.File
 
 @Keep
 object ThemeConfig {
+    private const val THEME_CONFIG_VERSION = 1
+
     const val configFileName = "themeConfig.json"
     val configFilePath = FileUtils.getPath(appCtx.filesDir, configFileName)
 
@@ -57,14 +60,21 @@ object ThemeConfig {
 
     fun applyDayNight(context: Context) {
         applyTheme(context)
+        ThemeManager.refresh(context)
         initNightMode()
         BookCover.upDefaultCover()
         postEvent(EventBus.RECREATE, "")
     }
 
     fun applyDayNightInit(context: Context) {
+        migrateIfNeeded(context)
         applyTheme(context)
+        ThemeManager.refresh(context)
         initNightMode()
+    }
+
+    fun migrateIfNeeded(context: Context) {
+        ThemeStore.isConfigured(context, THEME_CONFIG_VERSION)
     }
 
     private fun initNightMode() {

@@ -33,7 +33,7 @@
 - **使用页面**: 所有设置页面（`ThemeConfigFragment`、`OtherConfigFragment`、`BackupConfigFragment`、`CoverConfigFragment`、`WelcomeConfigFragment` 等）
 
 ### `theme/`
-- **说明**: 主题引擎系统。`ThemeStore`（主题颜色持久化，基于 SharedPreferences）、`ThemeStoreInterface`（主题存储接口）、`TintHelper`（控件着色辅助，覆盖所有标准 Material 组件）、`Selector`（StateListDrawable/ColorStateList 构建器）、`MaterialValueHelper`（Context/Fragment 扩展属性：`primaryColor`、`accentColor`、`backgroundColor` 等）、`ThemeUtils`（主题工具）、`M3ColorHelper`（Material 3 颜色辅助）、`view/`（自动着色控件：`ThemeCheckBox`、`ThemeSwitch`、`ThemeEditText`、`ThemeSeekBar`、`ThemeRadioButton`、`ThemeProgressBar`、`ThemeBottomNavigationVIew`）
+- **说明**: 主题引擎系统。`ThemeColors`（不可变颜色快照，内存缓存层，一次 SP 读取全部 20+ 种颜色）、`ThemeManager`（StateFlow 响应式颜色源，Compose 通过 collectAsState 消费）、`ThemeStore`（主题颜色持久化，基于 SharedPreferences，现通过 ThemeColors 缓存读取）、`ThemeStoreInterface`（主题存储接口）、`ThemeStorePrefKeys`（持久化键名常量）、`TintHelper`（控件着色辅助，覆盖所有标准 Material 组件）、`Selector`（StateListDrawable/ColorStateList 构建器）、`MaterialValueHelper`（Context/Fragment 扩展属性：`primaryColor`、`accentColor`、`backgroundColor` 等）、`ThemeUtils`（主题工具）、`M3ColorHelper`（Material 3 颜色辅助）、`view/`（自动着色控件：`ThemeCheckBox`、`ThemeSwitch`、`ThemeEditText`、`ThemeSeekBar`、`ThemeRadioButton`、`ThemeProgressBar`、`ThemeBottomNavigationVIew`）
 - **使用页面**: 全局生效，所有界面的主题颜色和控件着色
 
 ### `webdav/`
