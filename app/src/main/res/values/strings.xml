@@ -617,6 +617,7 @@
     <string name="web_dav_test_s">Test WebDav server connection</string>
     <string name="web_dav_test_success">WebDav connection successful</string>
     <string name="web_dav_test_fail">WebDav connection failed: %s</string>
+    <string name="web_dav_not_configured">WebDav not configured yet</string>
     <string name="rss_source">RSS source</string>
     <string name="rss_source_edit">Edit RSS source</string>
     <string name="screen">Filter</string>

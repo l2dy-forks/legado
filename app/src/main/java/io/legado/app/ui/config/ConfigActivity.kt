@@ -7,6 +7,12 @@ import io.legado.app.R
 import io.legado.app.base.VMBaseActivity
 import io.legado.app.constant.EventBus
 import io.legado.app.databinding.ActivityConfigBinding
+import io.legado.app.ui.config.compose.BackupConfigComposeFragment
+import io.legado.app.ui.config.compose.CoverConfigComposeFragment
+import io.legado.app.ui.config.compose.OtherConfigComposeFragment
+import io.legado.app.ui.config.compose.ThemeConfigComposeFragment
+import io.legado.app.ui.config.compose.WelcomeConfigComposeFragment
+import io.legado.app.utils.gone
 import io.legado.app.utils.observeEvent
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 
@@ -16,12 +22,13 @@ class ConfigActivity : VMBaseActivity<ActivityConfigBinding, ConfigViewModel>() 
     override val viewModel by viewModels<ConfigViewModel>()
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
+        binding.titleBar.gone()
         when (val configTag = intent.getStringExtra("configTag")) {
-            ConfigTag.OTHER_CONFIG -> replaceFragment<OtherConfigFragment>(configTag)
-            ConfigTag.THEME_CONFIG -> replaceFragment<ThemeConfigFragment>(configTag)
-            ConfigTag.BACKUP_CONFIG -> replaceFragment<BackupConfigFragment>(configTag)
-            ConfigTag.COVER_CONFIG -> replaceFragment<CoverConfigFragment>(configTag)
-            ConfigTag.WELCOME_CONFIG -> replaceFragment<WelcomeConfigFragment>(configTag)
+            ConfigTag.OTHER_CONFIG -> replaceFragment<OtherConfigComposeFragment>(configTag)
+            ConfigTag.THEME_CONFIG -> replaceFragment<ThemeConfigComposeFragment>(configTag)
+            ConfigTag.BACKUP_CONFIG -> replaceFragment<BackupConfigComposeFragment>(configTag)
+            ConfigTag.COVER_CONFIG -> replaceFragment<CoverConfigComposeFragment>(configTag)
+            ConfigTag.WELCOME_CONFIG -> replaceFragment<WelcomeConfigComposeFragment>(configTag)
             else -> finish()
         }
     }

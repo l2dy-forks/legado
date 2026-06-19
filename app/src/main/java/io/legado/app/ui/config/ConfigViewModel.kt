@@ -7,6 +7,7 @@ import io.legado.app.base.BaseViewModel
 import io.legado.app.data.appDb
 import io.legado.app.help.AppWebDav
 import io.legado.app.help.book.BookHelp
+import io.legado.app.help.storage.Backup
 import io.legado.app.utils.FileUtils
 import io.legado.app.utils.restart
 import io.legado.app.utils.toastOnUi
@@ -18,6 +19,44 @@ class ConfigViewModel(application: Application) : BaseViewModel(application) {
     fun upWebDavConfig() {
         execute {
             AppWebDav.upConfig()
+        }
+    }
+
+    fun testWebDav() {
+        execute {
+            AppWebDav.testConnection()
+                .onSuccess { context.toastOnUi(R.string.success) }
+                .onFailure { context.toastOnUi("WebDAV test failed: ${it.localizedMessage}") }
+        }
+    }
+
+    fun backupWebDav() {
+        execute {
+            if (!AppWebDav.isOk) {
+                context.toastOnUi(R.string.web_dav_not_configured)
+                return@execute
+            }
+            Backup.backupWebDavLocked(context)
+            context.toastOnUi(R.string.success)
+        }
+    }
+
+    fun restoreWebDav() {
+        execute {
+            context.toastOnUi(R.string.restore_summary)
+        }
+    }
+
+    fun backupLocal() {
+        execute {
+            Backup.backupLocalLocked(context, null)
+            context.toastOnUi(R.string.success)
+        }
+    }
+
+    fun restoreLocal() {
+        execute {
+            context.toastOnUi(R.string.restore_summary)
         }
     }
 
