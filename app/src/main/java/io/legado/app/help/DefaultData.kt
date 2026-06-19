@@ -2,6 +2,7 @@ package io.legado.app.help
 
 import io.legado.app.constant.AppConst
 import io.legado.app.data.appDb
+import io.legado.app.data.entities.AiDictRule
 import io.legado.app.data.entities.DictRule
 import io.legado.app.data.entities.HttpTTS
 import io.legado.app.data.entities.KeyboardAssist
@@ -35,6 +36,9 @@ object DefaultData {
                 }
                 if (LocalConfig.needUpDictRule) {
                     importDefaultDictRules()
+                }
+                if (LocalConfig.needUpAiDictRule) {
+                    importDefaultAiDictRules()
                 }
             }.onError {
                 it.printOnDebug()
@@ -102,6 +106,14 @@ object DefaultData {
         GSON.fromJsonArray<DictRule>(json).getOrThrow()
     }
 
+    val aiDictRules: List<AiDictRule> by lazy {
+        val json = String(
+            appCtx.assets.open("defaultData${File.separator}aiDictRules.json")
+                .readBytes()
+        )
+        GSON.fromJsonArray<AiDictRule>(json).getOrThrow()
+    }
+
     val keyboardAssists: List<KeyboardAssist> by lazy {
         val json = String(
             appCtx.assets.open("defaultData${File.separator}keyboardAssists.json")
@@ -127,6 +139,10 @@ object DefaultData {
 
     fun importDefaultDictRules() {
         appDb.dictRuleDao.insert(*dictRules.toTypedArray())
+    }
+
+    fun importDefaultAiDictRules() {
+        appDb.aiDictRuleDao.insert(*aiDictRules.toTypedArray())
     }
 
 }

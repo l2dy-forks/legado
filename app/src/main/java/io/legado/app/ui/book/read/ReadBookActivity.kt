@@ -92,7 +92,7 @@ import io.legado.app.ui.book.source.edit.BookSourceEditActivity
 import io.legado.app.ui.book.toc.TocActivityResult
 import io.legado.app.ui.book.toc.rule.TxtTocRuleDialog
 import io.legado.app.ui.browser.WebViewActivity
-import io.legado.app.ui.dict.DictDialog
+import io.legado.app.ui.dict.createDictSheetDialog
 import io.legado.app.ui.file.HandleFileContract
 import io.legado.app.ui.login.SourceLoginActivity
 import io.legado.app.ui.replace.ReplaceRuleActivity
@@ -913,7 +913,7 @@ class ReadBookActivity : BaseReadBookActivity(),
             }
 
             R.id.menu_dict -> {
-                showDialogFragment(DictDialog(selectedText))
+                showDialogFragment(createDictSheetDialog(selectedText))
                 return true
             }
         }

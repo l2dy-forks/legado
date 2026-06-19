@@ -28,6 +28,7 @@ fun MyScreen(
     onTxtTocRuleManage: () -> Unit,
     onReplaceManage: () -> Unit,
     onDictRuleManage: () -> Unit,
+    onAiDictRuleManage: () -> Unit,
     onBookmark: () -> Unit,
     onReadRecord: () -> Unit,
     onBackupRestore: () -> Unit,
@@ -73,6 +74,12 @@ fun MyScreen(
                     description = stringResource(R.string.config_dict_rule),
                     painter = painterResource(R.drawable.ic_translate),
                     onClick = onDictRuleManage,
+                )
+                ClickableSettingItem(
+                    title = stringResource(R.string.ai_dict_rule),
+                    description = stringResource(R.string.config_ai_dict_rule),
+                    painter = painterResource(R.drawable.ic_web_outline),
+                    onClick = onAiDictRuleManage,
                 )
             }
         }

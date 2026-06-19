@@ -1,6 +1,5 @@
 package io.legado.app.ui.book.readRecord
 
-import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -31,7 +30,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,7 +49,6 @@ import io.legado.app.ui.widget.ReadHeatmapView
 import io.legado.app.ui.widget.ReadVerticalBarChartView
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import kotlinx.coroutines.CancellationException
 
 enum class ReadPeriod(val label: String) { DAY("日"), WEEK("周"), MONTH("月"), YEAR("年"), ALL("总") }
 
@@ -66,19 +63,6 @@ fun ReadRecordOverviewScreen(
     onBookClick: (String, String) -> Unit,
 ) {
     var selectedTab by remember { mutableIntStateOf(ReadPeriod.entries.indexOf(state.period)) }
-
-    // 预测性返回手势：跟手滑动，系统处理跨 Activity 返回动画
-    var backProgress by remember { mutableFloatStateOf(0f) }
-    PredictiveBackHandler { progress ->
-        try {
-            progress.collect { event -> backProgress = event.progress }
-            onBack()
-        } catch (_: CancellationException) {
-            // 手势取消
-        } finally {
-            backProgress = 0f
-        }
-    }
 
     Scaffold(
         topBar = {

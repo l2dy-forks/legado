@@ -31,6 +31,7 @@ import io.legado.app.ui.common.compose.LegadoTheme
 import io.legado.app.ui.config.ConfigActivity
 import io.legado.app.ui.config.ConfigTag
 import io.legado.app.ui.dict.rule.DictRuleActivity
+import io.legado.app.ui.dict.rule.ai.AiDictRuleActivity
 import io.legado.app.ui.file.FileManageActivity
 import io.legado.app.ui.main.MainFragmentInterface
 import io.legado.app.ui.replace.ReplaceRuleActivity
@@ -117,6 +118,7 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
             onTxtTocRuleManage = { startActivity<TxtTocRuleActivity>() },
             onReplaceManage = { startActivity<ReplaceRuleActivity>() },
             onDictRuleManage = { startActivity<DictRuleActivity>() },
+            onAiDictRuleManage = { startActivity<AiDictRuleActivity>() },
             onBookmark = { startActivity<AllBookmarkActivity>() },
             onReadRecord = { startActivity<ReadRecordActivity>() },
             onBackupRestore = {

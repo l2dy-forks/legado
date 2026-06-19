@@ -62,7 +62,7 @@ class DictDialog() : BaseDialogFragment(R.layout.dialog_dict) {
             override fun onTabSelected(tab: TabLayout.Tab) {
                 val dictRule = tab.tag as DictRule
                 binding.rotateLoading.visible()
-                viewModel.dict(dictRule, word!!) {
+                viewModel.search(DictTab.Web(dictRule), word!!) {
                     binding.rotateLoading.inVisible()
                     binding.tvDict.setHtml(it)
                 }

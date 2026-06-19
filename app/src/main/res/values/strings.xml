@@ -1131,6 +1131,10 @@
     <string name="source_tab_list">List</string>
     <string name="dict_rule">Dict rule</string>
     <string name="config_dict_rule">Config dict rule</string>
+    <string name="ai_dict_rule">AI dict rule</string>
+    <string name="config_ai_dict_rule">Config AI dict rule</string>
+    <string name="add_ai_dict_rule">Add AI dict rule</string>
+    <string name="edit_ai_dict_rule">Edit AI dict rule</string>
     <string name="create">Create</string>
     <string name="url_rule">url规则(urlRule)</string>
     <string name="show_rule">显示规则(showRule)</string>
@@ -1268,4 +1272,12 @@
     <string name="auto_check_new_backup_t">自动检查新备份</string>
     <string name="auto_check_new_backup_s">打开软件时检查是否有新备份，有新备份时提示是否更新</string>
     <string name="sys_image_picker">系统图片选择器</string>
+    <string name="endpoint">API Endpoint</string>
+    <string name="api_key">API Key</string>
+    <string name="model">Model</string>
+    <string name="system_prompt">System Prompt</string>
+    <string name="user_prompt_template">User Prompt Template</string>
+    <string name="temperature">Temperature</string>
+    <string name="max_tokens">Max Tokens</string>
+    <string name="prompt_template_presets">Prompt presets</string>
 </resources>
