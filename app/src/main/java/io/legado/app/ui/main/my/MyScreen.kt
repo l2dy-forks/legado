@@ -40,12 +40,13 @@ fun MyScreen(
     onFileManage: () -> Unit,
     onAbout: () -> Unit,
     onExit: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val themeModeEntries = stringArrayResource(R.array.theme_mode)
     val themeModeValues = stringArrayResource(R.array.theme_mode_v)
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+        modifier = modifier.fillMaxSize().padding(horizontal = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         // 内容源管理

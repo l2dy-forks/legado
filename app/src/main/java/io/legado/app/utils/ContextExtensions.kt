@@ -62,11 +62,13 @@ inline fun <reified A : Activity> Context.startActivity(configIntent: Intent.() 
     }
     intent.apply(configIntent)
     startActivity(intent)
-    // Slide+fade transition animation
-    (this as? Activity)?.overridePendingTransition(
-        R.anim.slide_in_right,
-        R.anim.slide_out_left
-    )
+    // Android 14+ 不覆盖转场，否则会禁用系统预返回手势动画
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        (this as? Activity)?.overridePendingTransition(
+            R.anim.slide_in_right,
+            R.anim.slide_out_left
+        )
+    }
 }
 
 fun Context.startActivityForBook(

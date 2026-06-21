@@ -269,6 +269,9 @@ fun ThemeConfigScreen(
     var immNavigationBar by remember {
         mutableStateOf(context.getPrefBoolean(PreferKey.immNavigationBar, false))
     }
+    var predictiveBack by remember {
+        mutableStateOf(context.getPrefBoolean(PreferKey.predictiveBack, true))
+    }
     var barElevation by remember {
         mutableStateOf(AppConfig.elevation)
     }
@@ -416,6 +419,15 @@ fun ThemeConfigScreen(
                                 immNavigationBar = v
                                 context.putPrefBoolean(PreferKey.immNavigationBar, v)
                                 postEvent(EventBus.RECREATE, "")
+                            },
+                        )
+                        SwitchSettingItem(
+                            title = stringResource(R.string.predictive_back),
+                            description = stringResource(R.string.predictive_back_summary),
+                            checked = predictiveBack,
+                            onCheckedChange = { v ->
+                                predictiveBack = v
+                                context.putPrefBoolean(PreferKey.predictiveBack, v)
                             },
                         )
                     

@@ -383,6 +383,8 @@
     <string name="status_bar_immersion">The status bar color becomes transparent</string>
     <string name="imm_navigation_bar">immersion navigation bar</string>
     <string name="imm_navigation_bar_s">The navigation bar becomes transparent</string>
+    <string name="predictive_back">Predictive back gesture</string>
+    <string name="predictive_back_summary">Scale and slide animation when returning from sub-pages of My page</string>
     <string name="add_to_bookshelf">Add to Bookshelf</string>
     <string name="continue_read">Continue reading</string>
     <string name="cover_path">Cover path</string>
