@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 77,
-    "identityHash": "cf3704ee9573e4ce164bc3040115ddc9",
+    "version": 80,
+    "identityHash": "8217d778a033e55943577f3158ecf0b1",
     "entities": [
       {
         "tableName": "books",
@@ -1710,7 +1710,7 @@
       },
       {
         "tableName": "aiDictRules",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`name` TEXT NOT NULL, `endpoint` TEXT NOT NULL, `apiKey` TEXT NOT NULL, `model` TEXT NOT NULL, `systemPrompt` TEXT NOT NULL, `userPromptTemplate` TEXT NOT NULL, `temperature` REAL NOT NULL DEFAULT 0.7, `maxTokens` INTEGER NOT NULL DEFAULT 512, `enabled` INTEGER NOT NULL DEFAULT 1, `sortNumber` INTEGER NOT NULL DEFAULT 0, `extraJson` TEXT NOT NULL, PRIMARY KEY(`name`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`name` TEXT NOT NULL, `endpoint` TEXT NOT NULL, `apiKey` TEXT NOT NULL, `model` TEXT NOT NULL, `systemPrompt` TEXT NOT NULL, `userPromptTemplate` TEXT NOT NULL, `temperature` REAL NOT NULL, `maxTokens` INTEGER NOT NULL, `enabled` INTEGER NOT NULL DEFAULT 1, `sortNumber` INTEGER NOT NULL DEFAULT 0, `extraJson` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`name`))",
         "fields": [
           {
             "fieldPath": "name",
@@ -1752,15 +1752,13 @@
             "fieldPath": "temperature",
             "columnName": "temperature",
             "affinity": "REAL",
-            "notNull": true,
-            "defaultValue": "0.7"
+            "notNull": true
           },
           {
             "fieldPath": "maxTokens",
             "columnName": "maxTokens",
             "affinity": "INTEGER",
-            "notNull": true,
-            "defaultValue": "512"
+            "notNull": true
           },
           {
             "fieldPath": "enabled",
@@ -1780,7 +1778,8 @@
             "fieldPath": "extraJson",
             "columnName": "extraJson",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "''"
           }
         ],
         "primaryKey": {
@@ -1912,7 +1911,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cf3704ee9573e4ce164bc3040115ddc9')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8217d778a033e55943577f3158ecf0b1')"
     ]
   }
 }

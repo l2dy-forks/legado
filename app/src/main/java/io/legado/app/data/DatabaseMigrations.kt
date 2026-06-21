@@ -20,6 +20,7 @@ object DatabaseMigrations {
             migration_31_32, migration_32_33, migration_33_34, migration_34_35,
             migration_35_36, migration_36_37, migration_37_38, migration_38_39,
             migration_39_40, migration_40_41, migration_41_42, migration_42_43,
+            migration_76_77, migration_77_78, migration_78_79, migration_79_80,
         )
     }
 
@@ -324,6 +325,37 @@ object DatabaseMigrations {
         }
     }
 
+    private val migration_76_77 = object : Migration(76, 77) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """CREATE TABLE IF NOT EXISTS `aiDictRules` (
+                    `name` TEXT NOT NULL, `endpoint` TEXT NOT NULL, `apiKey` TEXT NOT NULL,
+                    `model` TEXT NOT NULL, `systemPrompt` TEXT NOT NULL,
+                    `userPromptTemplate` TEXT NOT NULL, `temperature` REAL NOT NULL,
+                    `maxTokens` INTEGER NOT NULL, `enabled` INTEGER NOT NULL DEFAULT 1,
+                    `sortNumber` INTEGER NOT NULL DEFAULT 0,
+                    PRIMARY KEY(`name`))"""
+            )
+        }
+    }
+
+    private val migration_77_78 = object : Migration(77, 78) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `aiDictRules` ADD `extraJson` TEXT NOT NULL DEFAULT ''")
+        }
+    }
+
+    private val migration_78_79 = object : Migration(78, 79) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // schema unchanged; bumped to regenerate identity hash
+        }
+    }
+
+    private val migration_79_80 = object : Migration(79, 80) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // entity @ColumnInfo adjusted to match migration-created table defaults
+        }
+    }
 
     @Suppress("ClassName")
     class Migration_54_55 : AutoMigrationSpec {

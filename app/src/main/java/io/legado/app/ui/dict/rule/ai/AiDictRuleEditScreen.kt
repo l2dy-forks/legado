@@ -1,7 +1,10 @@
 package io.legado.app.ui.dict.rule.ai
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -45,13 +49,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.legado.app.R
 import io.legado.app.data.entities.AiDictRule
+import io.legado.app.utils.GSON
+import io.legado.app.utils.fromJsonObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +88,8 @@ fun AiDictRuleEditScreen(
     var fetchingModels by remember { mutableStateOf(false) }
     var fetchedModels by remember { mutableStateOf<List<String>?>(null) }
     var extraJson by remember { mutableStateOf("") }
+    var testing by remember { mutableStateOf(false) }
+    var testResult by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
 
     LaunchedEffect(Unit) {
         editViewModel.initData(editName) {
@@ -223,19 +234,25 @@ fun AiDictRuleEditScreen(
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     AssistChip(
-                        onClick = { userPromptTemplate = "请解释词语: {{word}}" },
+                        onClick = { 
+                            systemPrompt = "你是一个词典助手。请用Markdown格式回复：**加粗**标注关键词、空行分隔段落。不使用代码块或表格。"
+                            userPromptTemplate = "请给出拼音并简要解释词语: {{word}}" },
                         label = { Text("简要") },
                     )
                     AssistChip(
-                        onClick = { userPromptTemplate = "请详细解释'{{word}}'的含义，包括词源、用法示例和同义词。" },
+                        onClick = { 
+                            systemPrompt = "你是一个词典助手。请用Markdown格式回复：**加粗**标注关键词、空行分隔段落。不使用代码块或表格。"
+                            userPromptTemplate = "请详细解释'{{word}}'的含义，包括读音、词源、用法示例和同义词。" },
                         label = { Text("详细") },
                     )
                     AssistChip(
-                        onClick = { userPromptTemplate = "请将'{{word}}'翻译并给出释义。" },
+                        onClick = {
+                            systemPrompt = "你是一个词典助手。请用Markdown格式回复：**加粗**标注关键词、空行分隔段落。不使用代码块或表格。" 
+                            userPromptTemplate = "请将'{{word}}'翻译并给出释义。" },
                         label = { Text("翻译") },
                     )
                 }
@@ -255,7 +272,9 @@ fun AiDictRuleEditScreen(
                 )
                 Slider(
                     value = temperature,
-                    onValueChange = { temperature = it },
+                    onValueChange = { newValue ->
+                                    temperature = (newValue * 10 + 0.5f).toInt() / 10f
+                                    },
                     valueRange = 0f..2f,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -269,14 +288,85 @@ fun AiDictRuleEditScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 )
 
+                // 测试连接按钮
+                OutlinedButton(
+                    onClick = {
+                        if (endpoint.isNotBlank()) {
+                            testing = true
+                            testResult = null
+                            editViewModel.testConnection(
+                                endpoint = endpoint,
+                                apiKey = apiKey,
+                                model = model,
+                                systemPrompt = systemPrompt,
+                                userPromptTemplate = userPromptTemplate,
+                                temperature = temperature,
+                                maxTokens = maxTokensInt,
+                                extraJson = extraJson,
+                            ) { ok, msg ->
+                                testing = false
+                                testResult = Pair(ok, msg)
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !testing && endpoint.isNotBlank(),
+                ) {
+                    if (testing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("测试中...")
+                    } else {
+                        Text("测试连接")
+                    }
+                }
+
+                // 完整请求体 JSON 预览
+                Text(
+                    text = "完整请求 JSON",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                val requestBodyPreview = remember(
+                    model, systemPrompt, userPromptTemplate, temperature, maxTokensInt, extraJson
+                ) {
+                    buildRequestBodyPreview(model, systemPrompt, userPromptTemplate, temperature, maxTokensInt, extraJson)
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = requestBodyPreview,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 12.sp,
+                            lineHeight = 18.sp,
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
                 OutlinedTextField(
                     value = extraJson,
                     onValueChange = { extraJson = it },
-                    label = { Text("额外配置 (JSON)") },
+                    label = { Text("额外参数 (JSON, 合并到请求体)") },
                     placeholder = { Text("{\"top_p\": 0.9, \"frequency_penalty\": 0.5}") },
+                    supportingText = {
+                        Text(
+                            "可选: top_p, frequency_penalty, presence_penalty, stop, seed, " +
+                                "stream, logit_bias, user, response_format 等。会覆盖上方同名字段。"
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2,
-                    maxLines = 5,
+                    maxLines = 4,
                 )
 
                 Spacer(Modifier.height(8.dp))
@@ -381,4 +471,55 @@ fun AiDictRuleEditScreen(
             )
         }
     }
+
+    // 测试连接结果对话框
+    testResult?.let { (ok, msg) ->
+        AlertDialog(
+            onDismissRequest = { testResult = null },
+            title = { Text(if (ok) "连接成功" else "连接失败") },
+            text = {
+                Text(
+                    text = msg,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { testResult = null }) {
+                    Text(stringResource(R.string.ok))
+                }
+            },
+        )
+    }
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun buildRequestBodyPreview(
+    model: String,
+    systemPrompt: String,
+    userPromptTemplate: String,
+    temperature: Float,
+    maxTokens: Int,
+    extraJson: String,
+): String {
+    val messages = mutableListOf<Map<String, String>>()
+    if (systemPrompt.isNotBlank()) {
+        messages.add(mapOf("role" to "system", "content" to systemPrompt))
+    }
+    val userContent = if (userPromptTemplate.isNotBlank()) {
+        userPromptTemplate.replace("{{word}}", "示例词语")
+    } else {
+        "请解释词语: {{word}}"
+    }
+    messages.add(mapOf("role" to "user", "content" to userContent))
+    val body = linkedMapOf<String, Any>(
+        "model" to model,
+        "messages" to messages,
+        "temperature" to ("%.1f".format(temperature).toDouble()),
+        "max_tokens" to maxTokens,
+    )
+    if (extraJson.isNotBlank()) {
+        val extra = GSON.fromJsonObject<Map<String, Any>>(extraJson).getOrNull()
+        extra?.let { body.putAll(it) }
+    }
+    return GSON.toJson(body)
 }

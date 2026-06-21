@@ -3,6 +3,8 @@ package io.legado.app.data.entities
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import io.legado.app.data.appDb
+import io.legado.app.data.entities.Cache
 import io.legado.app.help.http.okHttpClient
 import io.legado.app.help.http.postJson
 import io.legado.app.help.http.newCallStrResponse
@@ -24,14 +26,13 @@ data class AiDictRule(
     var model: String = "deepseek-v4-flash",
     var systemPrompt: String = "",
     var userPromptTemplate: String = "",
-    @ColumnInfo(defaultValue = "0.7")
     var temperature: Float = 0.7f,
-    @ColumnInfo(defaultValue = "512")
     var maxTokens: Int = 512,
     @ColumnInfo(defaultValue = "1")
     var enabled: Boolean = true,
     @ColumnInfo(defaultValue = "0")
     var sortNumber: Int = 0,
+    @ColumnInfo(defaultValue = "")
     var extraJson: String = "",
 ) {
 
@@ -46,7 +47,17 @@ data class AiDictRule(
         return false
     }
 
+    companion object {
+        private const val CACHE_KEY_PREFIX = "aiDict"
+        private const val CACHE_TTL_MS = 5 * 24 * 60 * 60 * 1000L // 5天
+    }
+
     suspend fun search(word: String): String {
+        // 检查缓存
+        val cacheKey = "${CACHE_KEY_PREFIX}_${name}_${word}"
+        val now = System.currentTimeMillis()
+        appDb.cacheDao.get(cacheKey, now)?.let { return it }
+
         val messages = mutableListOf<Map<String, String>>()
         if (systemPrompt.isNotBlank()) {
             messages.add(mapOf("role" to "system", "content" to systemPrompt))
@@ -77,8 +88,28 @@ data class AiDictRule(
             addHeader("Content-Type", "application/json")
             postJson(jsonBody)
         }
+        val body = response.body
+        if (body.isNullOrBlank()) {
+            return "AI 接口返回为空 (HTTP ${response.raw.code})"
+        }
 
         val analyzeRule = AnalyzeRule().setCoroutineContext(coroutineContext)
-        return analyzeRule.getString("$.choices[0].message.content", mContent = response.body)
+        val raw = analyzeRule.getString("$.choices[0].message.content", mContent = response.body)
+        val result = raw.markdownToHtmlIfNeeded()
+        // 写入缓存
+        appDb.cacheDao.insert(Cache(key = cacheKey, value = result, deadline = now + CACHE_TTL_MS))
+        return result
+    }
+
+    /**
+     * 如果内容不含 HTML 标签，将基本 Markdown 转为 HTML，确保换行和加粗正确渲染
+     */
+    private fun String.markdownToHtmlIfNeeded(): String {
+        if (contains(Regex("<[a-z]+[>\\s]"))) return this
+        return this
+            .replace(Regex("\\*\\*(.+?)\\*\\*"), "<b>$1</b>")
+            .replace(Regex("\\*(.+?)\\*"), "<i>$1</i>")
+            .replace("\n\n", "<br><br>")
+            .replace("\n", "<br>")
     }
 }

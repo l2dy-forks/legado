@@ -2,6 +2,7 @@ package io.legado.app.ui.dict.rule.ai
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
@@ -16,6 +17,7 @@ class AiDictRuleEditActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         val editName = intent.getStringExtra("name")
 
         setContent {

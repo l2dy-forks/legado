@@ -87,12 +87,18 @@ object BackupConfig {
         PreferKey.cAccent,
         PreferKey.cBackground,
         PreferKey.cBBackground,
+        PreferKey.cCardBg,
+        PreferKey.cPopupBg,
+        PreferKey.cTextAccent,
         PreferKey.bgImage,
         PreferKey.bgImageBlurring,
         PreferKey.cNPrimary,
         PreferKey.cNAccent,
         PreferKey.cNBackground,
         PreferKey.cNBBackground,
+        PreferKey.cNCardBg,
+        PreferKey.cNPopupBg,
+        PreferKey.cNTextAccent,
         PreferKey.bgImageN,
         PreferKey.bgImageNBlurring
     )

@@ -13,8 +13,10 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.addCallback
+import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
 import androidx.viewbinding.ViewBinding
 import io.legado.app.R
 import io.legado.app.constant.AppConst
@@ -84,6 +86,8 @@ abstract class BaseActivity<VB : ViewBinding>(
         window.decorView.disableAutoFill()
         initTheme()
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        enableEdgeToEdge()
         setupSystemBar()
         setContentView(binding.root)
         upBackgroundImage()
@@ -91,8 +95,10 @@ abstract class BaseActivity<VB : ViewBinding>(
             findViewById<TitleBar>(R.id.title_bar)
                 ?.onMultiWindowModeChanged(isInMultiWindowMode, fullScreen)
         }
-        onBackPressedDispatcher.addCallback(this) {
-            finish()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            onBackPressedDispatcher.addCallback(this) {
+                finish()
+            }
         }
         observeLiveBus()
         onActivityCreated(savedInstanceState)
@@ -194,7 +200,10 @@ abstract class BaseActivity<VB : ViewBinding>(
     }
 
     open fun setupSystemBar() {
-        if (fullScreen && !isInMultiWindow) {
+        // enableEdgeToEdge() 已处理边缘到边缘，fullScreen() 会设置已废弃的
+        // SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | SYSTEM_UI_FLAG_LAYOUT_STABLE，
+        // 与 enableEdgeToEdge() 冲突，破坏 Android 14 预返回
+        if (fullScreen && !isInMultiWindow && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             fullScreen()
         }
         val isTransparentStatusBar = AppConfig.isTransparentStatusBar
@@ -232,7 +241,8 @@ abstract class BaseActivity<VB : ViewBinding>(
     override fun finish() {
         currentFocus?.hideSoftInput()
         super.finish()
-        // Slide+fade return animation
-        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+        }
     }
 }

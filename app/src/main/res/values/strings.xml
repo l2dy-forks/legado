@@ -1131,10 +1131,10 @@
     <string name="source_tab_list">List</string>
     <string name="dict_rule">Dict rule</string>
     <string name="config_dict_rule">Config dict rule</string>
-    <string name="ai_dict_rule">AI dict rule</string>
-    <string name="config_ai_dict_rule">Config AI dict rule</string>
-    <string name="add_ai_dict_rule">Add AI dict rule</string>
-    <string name="edit_ai_dict_rule">Edit AI dict rule</string>
+    <string name="ai_dict_rule">AI 词典规则</string>
+    <string name="config_ai_dict_rule">配置 AI 词典规则</string>
+    <string name="add_ai_dict_rule">添加 AI 词典规则</string>
+    <string name="edit_ai_dict_rule">编辑 AI 词典规则</string>
     <string name="create">Create</string>
     <string name="url_rule">url规则(urlRule)</string>
     <string name="show_rule">显示规则(showRule)</string>

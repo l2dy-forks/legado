@@ -536,7 +536,7 @@ fun OtherConfigScreen(
             AlertDialog(
                 onDismissRequest = { showUserAgentDialog = false },
                 title = { Text(stringResource(R.string.user_agent)) },
-                text = { OutlinedTextField(value = uaText, onValueChange = { uaText = it }, singleLine = true, modifier = Modifier.fillMaxWidth()) },
+                text = { OutlinedTextField(value = uaText, onValueChange = { uaText = it }, singleLine = false, modifier = Modifier.fillMaxWidth(),maxLines = 3,) },
                 confirmButton = { TextButton(onClick = { AppConfig.userAgent = uaText; showUserAgentDialog = false }) { Text(stringResource(android.R.string.ok)) } },
                 dismissButton = { TextButton(onClick = { showUserAgentDialog = false }) { Text(stringResource(android.R.string.cancel)) } },
             )

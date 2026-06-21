@@ -188,11 +188,17 @@ object ThemeConfig {
                 context.putPrefInt(PreferKey.cNAccent, accent)
                 context.putPrefInt(PreferKey.cNBackground, background)
                 context.putPrefInt(PreferKey.cNBBackground, bBackground)
+                config.cardBg?.let { context.putPrefInt(PreferKey.cNCardBg, Color.parseColor(it)) }
+                config.popupBg?.let { context.putPrefInt(PreferKey.cNPopupBg, Color.parseColor(it)) }
+                config.textAccent?.let { context.putPrefInt(PreferKey.cNTextAccent, Color.parseColor(it)) }
             } else {
                 context.putPrefInt(PreferKey.cPrimary, primary)
                 context.putPrefInt(PreferKey.cAccent, accent)
                 context.putPrefInt(PreferKey.cBackground, background)
                 context.putPrefInt(PreferKey.cBBackground, bBackground)
+                config.cardBg?.let { context.putPrefInt(PreferKey.cCardBg, Color.parseColor(it)) }
+                config.popupBg?.let { context.putPrefInt(PreferKey.cPopupBg, Color.parseColor(it)) }
+                config.textAccent?.let { context.putPrefInt(PreferKey.cTextAccent, Color.parseColor(it)) }
             }
             AppConfig.isNightTheme = config.isNightTheme
             applyDayNight(context)
@@ -210,13 +216,19 @@ object ThemeConfig {
             context.getPrefInt(PreferKey.cBackground, context.getCompatColor(R.color.md_grey_100))
         val bBackground =
             context.getPrefInt(PreferKey.cBBackground, context.getCompatColor(R.color.md_grey_200))
+        val cardBg = context.getPrefInt(PreferKey.cCardBg, 0).takeIf { it != 0 }
+        val popupBg = context.getPrefInt(PreferKey.cPopupBg, 0).takeIf { it != 0 }
+        val textAccent = context.getPrefInt(PreferKey.cTextAccent, 0).takeIf { it != 0 }
         val config = Config(
             themeName = name,
             isNightTheme = false,
             primaryColor = "#${primary.hexString}",
             accentColor = "#${accent.hexString}",
             backgroundColor = "#${background.hexString}",
-            bottomBackground = "#${bBackground.hexString}"
+            bottomBackground = "#${bBackground.hexString}",
+            cardBg = cardBg?.let { "#${it.hexString}" },
+            popupBg = popupBg?.let { "#${it.hexString}" },
+            textAccent = textAccent?.let { "#${it.hexString}" }
         )
         addConfig(config)
     }
@@ -236,13 +248,19 @@ object ThemeConfig {
             context.getPrefInt(PreferKey.cNBackground, context.getCompatColor(R.color.md_grey_900))
         val bBackground =
             context.getPrefInt(PreferKey.cNBBackground, context.getCompatColor(R.color.md_grey_850))
+        val cardBg = context.getPrefInt(PreferKey.cNCardBg, 0).takeIf { it != 0 }
+        val popupBg = context.getPrefInt(PreferKey.cNPopupBg, 0).takeIf { it != 0 }
+        val textAccent = context.getPrefInt(PreferKey.cNTextAccent, 0).takeIf { it != 0 }
         val config = Config(
             themeName = name,
             isNightTheme = true,
             primaryColor = "#${primary.hexString}",
             accentColor = "#${accent.hexString}",
             backgroundColor = "#${background.hexString}",
-            bottomBackground = "#${bBackground.hexString}"
+            bottomBackground = "#${bBackground.hexString}",
+            cardBg = cardBg?.let { "#${it.hexString}" },
+            popupBg = popupBg?.let { "#${it.hexString}" },
+            textAccent = textAccent?.let { "#${it.hexString}" }
         )
         addConfig(config)
     }
@@ -372,7 +390,10 @@ object ThemeConfig {
         var primaryColor: String,
         var accentColor: String,
         var backgroundColor: String,
-        var bottomBackground: String
+        var bottomBackground: String,
+        var cardBg: String? = null,
+        var popupBg: String? = null,
+        var textAccent: String? = null
     ) {
 
         override fun hashCode(): Int {
@@ -388,6 +409,9 @@ object ThemeConfig {
                         && other.accentColor == accentColor
                         && other.backgroundColor == backgroundColor
                         && other.bottomBackground == bottomBackground
+                        && other.cardBg == cardBg
+                        && other.popupBg == popupBg
+                        && other.textAccent == textAccent
             }
             return false
         }

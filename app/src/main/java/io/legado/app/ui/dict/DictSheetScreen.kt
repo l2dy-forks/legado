@@ -132,7 +132,7 @@ fun DictSheetScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f, fill = true)
+                    .weight(1f, fill = false)
                     .padding(horizontal = 16.dp),
             ) {
                 when {
