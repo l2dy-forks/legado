@@ -49,8 +49,8 @@ import io.legado.app.utils.isAbsUrl
 import io.legado.app.utils.isContentScheme
 import io.legado.app.utils.isDataUrl
 import io.legado.app.utils.printOnDebug
+import io.legado.app.utils.htmlDecode
 import kotlinx.coroutines.runBlocking
-import org.apache.commons.text.StringEscapeUtils
 import splitties.init.appCtx
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -191,7 +191,7 @@ object LocalBook {
             content ?: return null
             if (content.indexOf('&') > -1) {
                 content = content.replace("&lt;img", "&lt; img", true)
-                return StringEscapeUtils.unescapeHtml4(content)
+                return content.htmlDecode()
             }
         }
 

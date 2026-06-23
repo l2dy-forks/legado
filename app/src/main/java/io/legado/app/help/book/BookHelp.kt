@@ -37,7 +37,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
-import org.apache.commons.text.similarity.JaccardSimilarity
+
 import splitties.init.appCtx
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -489,8 +489,12 @@ object BookHelp {
             .trim { it <= ' ' }
     }
 
-    private val jaccardSimilarity by lazy {
-        JaccardSimilarity()
+    private fun jaccardSimilarity(s1: String, s2: String): Double {
+        val set1 = s1.toSet()
+        val set2 = s2.toSet()
+        val intersection = set1.intersect(set2).size
+        val union = set1.union(set2).size
+        return if (union == 0) 0.0 else intersection.toDouble() / union
     }
 
     /**
@@ -518,7 +522,7 @@ object BookHelp {
         if (oldName.isNotEmpty()) {
             for (i in min..max) {
                 val newName = getPureChapterName(newChapterList[i].title)
-                val temp = jaccardSimilarity.apply(oldName, newName)
+                val temp = jaccardSimilarity(oldName, newName)
                 if (temp > nameSim) {
                     nameSim = temp
                     newIndex = i

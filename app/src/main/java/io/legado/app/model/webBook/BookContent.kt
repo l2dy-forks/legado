@@ -20,9 +20,9 @@ import io.legado.app.model.analyzeRule.AnalyzeUrl
 import io.legado.app.utils.HtmlFormatter
 import io.legado.app.utils.NetworkUtils
 import io.legado.app.utils.mapAsync
+import io.legado.app.utils.htmlDecode
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.flow
-import org.apache.commons.text.StringEscapeUtils
 import splitties.init.appCtx
 import kotlin.coroutines.coroutineContext
 
@@ -179,7 +179,7 @@ object BookContent {
         var content = analyzeRule.getString(contentRule.content, unescape = false)
         content = HtmlFormatter.formatKeepImg(content, rUrl)
         if (content.indexOf('&') > -1) {
-            content = StringEscapeUtils.unescapeHtml4(content)
+            content = content.htmlDecode()
         }
         //获取下一页链接
         if (getNextPageUrl) {

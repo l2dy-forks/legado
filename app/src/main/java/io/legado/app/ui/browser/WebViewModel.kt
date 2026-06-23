@@ -22,7 +22,7 @@ import io.legado.app.utils.createFileIfNotExist
 import io.legado.app.utils.openOutputStream
 import io.legado.app.utils.printOnDebug
 import io.legado.app.utils.toastOnUi
-import org.apache.commons.text.StringEscapeUtils
+import io.legado.app.utils.jsonDecode
 import java.util.Date
 
 class WebViewModel(application: Application) : BaseViewModel(application) {
@@ -114,7 +114,7 @@ class WebViewModel(application: Application) : BaseViewModel(application) {
         } else {
             webView.evaluateJavascript("document.documentElement.outerHTML") {
                 execute {
-                    html = StringEscapeUtils.unescapeJson(it).trim('"')
+                    html = it.jsonDecode()
                     SourceVerificationHelp.setResult(sourceOrigin, html ?: "")
                 }.onSuccess {
                     success.invoke()

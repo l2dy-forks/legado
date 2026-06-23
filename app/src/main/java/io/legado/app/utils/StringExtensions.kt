@@ -6,7 +6,9 @@ import android.annotation.SuppressLint
 import android.icu.text.Collator
 import android.icu.util.ULocale
 import android.net.Uri
+import android.os.Build
 import android.text.Editable
+import android.text.Html
 import cn.hutool.core.net.URLEncodeUtil
 import io.legado.app.constant.AppPattern
 import io.legado.app.constant.AppPattern.dataUriRegex
@@ -143,4 +145,16 @@ fun String.encodeURI(): String = URLEncodeUtil.encodeQuery(this)
 
 fun String.normalizeFileName(): String {
     return replace(AppPattern.fileNameRegex2, "_")
+}
+
+@Suppress("DEPRECATION")
+fun String.htmlDecode(): String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+    Html.fromHtml(this, Html.FROM_HTML_MODE_LEGACY).toString()
+} else {
+    Html.fromHtml(this).toString()
+}
+
+fun String.jsonDecode(): String {
+    val json = org.json.JSONObject("{\"k\":$this}")
+    return json.getString("k")
 }

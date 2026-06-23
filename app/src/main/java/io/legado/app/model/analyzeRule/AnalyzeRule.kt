@@ -29,10 +29,10 @@ import io.legado.app.utils.isJson
 import io.legado.app.utils.printOnDebug
 import io.legado.app.utils.splitNotBlank
 import io.legado.app.utils.stackTraceStr
+import io.legado.app.utils.htmlDecode
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import org.apache.commons.text.StringEscapeUtils
 import org.jsoup.nodes.Node
 import org.mozilla.javascript.NativeObject
 import org.mozilla.javascript.Scriptable
@@ -312,7 +312,7 @@ class AnalyzeRule(
         if (result == null) result = ""
         val resultStr = result.toString()
         val str = if (unescape && resultStr.indexOf('&') > -1) {
-            StringEscapeUtils.unescapeHtml4(resultStr)
+            resultStr.htmlDecode()
         } else {
             resultStr
         }

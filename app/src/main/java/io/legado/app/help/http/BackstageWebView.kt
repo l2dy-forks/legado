@@ -17,6 +17,7 @@ import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.utils.runOnUI
+import io.legado.app.utils.jsonDecode
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -24,7 +25,6 @@ import kotlinx.coroutines.withTimeout
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import org.apache.commons.text.StringEscapeUtils
 import splitties.init.appCtx
 import java.lang.ref.WeakReference
 import kotlin.coroutines.resume
@@ -195,7 +195,7 @@ class BackstageWebView(
 
             private fun handleResult(result: String) = Coroutine.async {
                 if (result.isNotEmpty() && result != "null") {
-                    val content = StringEscapeUtils.unescapeJson(result)
+                    val content = result.jsonDecode()
                         .replace(quoteRegex, "")
                     try {
                         val response = buildStrResponse(content)
