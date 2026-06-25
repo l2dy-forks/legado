@@ -1,32 +1,23 @@
 package io.legado.app.ui.book.changecover
 
+import android.app.Dialog
 import android.os.Bundle
-import android.view.MenuItem
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.Toolbar
+import android.view.WindowManager
+import androidx.compose.ui.platform.ComposeView
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle.State.STARTED
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
-import io.legado.app.R
-import io.legado.app.base.BaseDialogFragment
-import io.legado.app.databinding.DialogChangeCoverBinding
-import io.legado.app.lib.theme.primaryColor
-import io.legado.app.utils.applyTint
+import io.legado.app.help.config.AppConfig
+import io.legado.app.lib.theme.filletBackground
+import io.legado.app.ui.common.compose.LegadoTheme
 import io.legado.app.utils.setLayout
-import io.legado.app.utils.viewbindingdelegate.viewBinding
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 
 /**
- * 换封面
+ * 换封面弹窗 — Compose 版。
  */
-class ChangeCoverDialog() : BaseDialogFragment(R.layout.dialog_change_cover),
-    Toolbar.OnMenuItemClickListener,
-    CoverAdapter.CallBack {
+class ChangeCoverDialog() : DialogFragment() {
 
     constructor(name: String, author: String) : this() {
         arguments = Bundle().apply {
@@ -35,82 +26,53 @@ class ChangeCoverDialog() : BaseDialogFragment(R.layout.dialog_change_cover),
         }
     }
 
-    private val binding by viewBinding(DialogChangeCoverBinding::bind)
-    private val callBack: CallBack? get() = activity as? CallBack
-    private val viewModel: ChangeCoverViewModel by viewModels()
-    private val adapter by lazy { CoverAdapter(requireContext(), this) }
-
-    private val startStopMenuItem: MenuItem?
-        get() = binding.toolBar.menu.findItem(R.id.menu_start_stop)
+    private val viewModel by viewModels<ChangeCoverViewModel>()
 
     override fun onStart() {
         super.onStart()
-        setLayout(1f, ViewGroup.LayoutParams.MATCH_PARENT)
-    }
-
-    override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) {
-        binding.toolBar.setBackgroundColor(primaryColor)
-        binding.toolBar.setTitle(R.string.change_cover_source)
-        viewModel.initData(arguments)
-        initMenu()
-        initView()
-        initData()
-    }
-
-    private fun initMenu() {
-        binding.toolBar.inflateMenu(R.menu.change_cover)
-        binding.toolBar.menu.applyTint(requireContext())
-        binding.toolBar.setOnMenuItemClickListener(this)
-    }
-
-    private fun initView() {
-        binding.recyclerView.layoutManager = GridLayoutManager(requireContext(), 3)
-        binding.recyclerView.adapter = adapter
-    }
-
-    private fun initData() {
-        lifecycleScope.launch {
-            lifecycle.currentStateFlow.first { it.isAtLeast(STARTED) }
-            viewModel.dataFlow.conflate().collect {
-                adapter.setItems(it)
-                delay(1000)
-            }
+        setLayout(0.95f, 0.9f)
+        if (!AppConfig.isEInkMode) {
+            dialog?.window?.setBackgroundDrawable(requireContext().filletBackground)
         }
     }
 
-    override fun observeLiveBus() {
-        super.observeLiveBus()
-        viewModel.searchStateData.observe(viewLifecycleOwner) {
-            binding.refreshProgressBar.isAutoLoading = it
-            if (it) {
-                startStopMenuItem?.let { item ->
-                    item.setIcon(R.drawable.ic_stop_black_24dp)
-                    item.setTitle(R.string.stop)
-                }
-            } else {
-                startStopMenuItem?.let { item ->
-                    item.setIcon(R.drawable.ic_refresh_black_24dp)
-                    item.setTitle(R.string.refresh)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View {
+        val name = arguments?.getString("name").orEmpty()
+        val author = arguments?.getString("author").orEmpty()
+        viewModel.onIntent(ChangeCoverIntent.Initialize(name, author))
+
+        return ComposeView(requireContext()).apply {
+            setContent {
+                LegadoTheme {
+                    ChangeCoverScreen(
+                        viewModel = viewModel,
+                        onDismiss = { dismissAllowingStateLoss() },
+                        onCoverSelected = { coverUrl ->
+                            (activity as? CallBack)?.coverChangeTo(coverUrl)
+                            dismissAllowingStateLoss()
+                        },
+                    )
                 }
             }
-            binding.toolBar.menu.applyTint(requireContext())
         }
-
-    }
-
-    override fun onMenuItemClick(item: MenuItem?): Boolean {
-        when (item?.itemId) {
-            R.id.menu_start_stop -> viewModel.startOrStopSearch()
-        }
-        return false
-    }
-
-    override fun changeTo(coverUrl: String) {
-        callBack?.coverChangeTo(coverUrl)
-        dismissAllowingStateLoss()
     }
 
     interface CallBack {
         fun coverChangeTo(coverUrl: String)
+    }
+
+    companion object {
+        fun create(name: String, author: String): ChangeCoverDialog {
+            return ChangeCoverDialog().apply {
+                arguments = Bundle().apply {
+                    putString("name", name)
+                    putString("author", author)
+                }
+            }
+        }
     }
 }

@@ -652,32 +652,49 @@ private fun SettingsSheet(
         show = show,
         onDismissRequest = onDismissRequest,
         title = stringResource(R.string.setting),
+        skipPartiallyExpanded = true,
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.layout_mode), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
 
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            // 选项1：列表
             Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { if (isSourceGroupedMode) onToggleLayoutMode() }.padding(vertical = 12.dp, horizontal = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { if (isSourceGroupedMode) onToggleLayoutMode() }
+                    .padding(vertical = 4.dp, horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                RadioButton(selected = !isSourceGroupedMode, onClick = { if (isSourceGroupedMode) onToggleLayoutMode() })
-                Spacer(Modifier.width(12.dp))
+                RadioButton(selected = !isSourceGroupedMode, onClick = null) // onClick 交给外层
+                Spacer(Modifier.width(8.dp))
                 Text("列表", style = MaterialTheme.typography.bodyLarge)
             }
+
+            Spacer(modifier = Modifier.width(48.dp))
+            // 选项2：按书源分组
             Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { if (!isSourceGroupedMode) onToggleLayoutMode() }.padding(vertical = 12.dp, horizontal = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { if (!isSourceGroupedMode) onToggleLayoutMode() }
+                    .padding(vertical = 4.dp, horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                RadioButton(selected = isSourceGroupedMode, onClick = { if (!isSourceGroupedMode) onToggleLayoutMode() })
-                Spacer(Modifier.width(12.dp))
+                RadioButton(selected = isSourceGroupedMode, onClick = null)
+                Spacer(Modifier.width(8.dp))
                 Text("按书源分组", style = MaterialTheme.typography.bodyLarge)
             }
+        }
 
             Spacer(modifier = Modifier.height(8.dp))
             Text(stringResource(R.string.search_type), style = MaterialTheme.typography.titleSmall)
 
             Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { selectedSourceTypes.forEach { onToggleSourceType(it) } }.padding(vertical = 12.dp, horizontal = 4.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { selectedSourceTypes.forEach { onToggleSourceType(it) } }.padding(vertical = 8.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Checkbox(checked = selectedSourceTypes.isEmpty(), onCheckedChange = { selectedSourceTypes.forEach { onToggleSourceType(it) } })
@@ -685,7 +702,7 @@ private fun SettingsSheet(
                 Text(stringResource(R.string.all), style = MaterialTheme.typography.bodyLarge)
             }
             Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { onToggleSourceType(0) }.padding(vertical = 12.dp, horizontal = 4.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { onToggleSourceType(0) }.padding(vertical = 8.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Checkbox(checked = selectedSourceTypes.contains(0), onCheckedChange = { onToggleSourceType(0) })
@@ -693,7 +710,7 @@ private fun SettingsSheet(
                 Text(stringResource(R.string.noval), style = MaterialTheme.typography.bodyLarge)
             }
             Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { onToggleSourceType(2) }.padding(vertical = 12.dp, horizontal = 4.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { onToggleSourceType(2) }.padding(vertical = 8.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Checkbox(checked = selectedSourceTypes.contains(2), onCheckedChange = { onToggleSourceType(2) })
@@ -701,7 +718,7 @@ private fun SettingsSheet(
                 Text(stringResource(R.string.manga), style = MaterialTheme.typography.bodyLarge)
             }
             Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { onToggleSourceType(1) }.padding(vertical = 12.dp, horizontal = 4.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { onToggleSourceType(1) }.padding(vertical = 8.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Checkbox(checked = selectedSourceTypes.contains(1), onCheckedChange = { onToggleSourceType(1) })

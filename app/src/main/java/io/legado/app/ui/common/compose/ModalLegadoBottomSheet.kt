@@ -7,6 +7,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -26,21 +29,25 @@ import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -66,12 +73,14 @@ fun ModalLegadoBottomSheet(
     actions: @Composable RowScope.() -> Unit = {},
     expandedContent: (@Composable ColumnScope.() -> Unit)? = null,
     onExpanded: (() -> Unit)? = null,
+    transitionOverlay: (@Composable BoxScope.(expansionProgress: Float) -> Unit)? = null,
+    contentContainerColor: Color? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     if (!show) return
 
     val colorScheme = rememberLegadoColorScheme()
-    val containerColor = legadoCardBackgroundColor()
+    val containerColor = contentContainerColor ?: legadoCardBackgroundColor()
     val dragHandleColor = legadoPopupPrimaryTextColor().copy(alpha = 0.4f)
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
@@ -81,7 +90,7 @@ fun ModalLegadoBottomSheet(
         ?: rememberModalBottomSheetState(skipPartiallyExpanded = skipPartiallyExpanded)
 
     val isExpanding by remember {
-        derivedStateOf { resolvedSheetState.targetValue == SheetValue.Expanded }
+        derivedStateOf { resolvedSheetState.currentValue == SheetValue.Expanded }
     }
     val expansionProgress by animateFloatAsState(
         targetValue = if (isExpanding) 1f else 0f,
@@ -98,6 +107,20 @@ fun ModalLegadoBottomSheet(
         snapshotFlow { resolvedSheetState.currentValue }
             .first { it == SheetValue.Expanded }
         currentOnExpanded?.invoke()
+    }
+
+    // 展开状态下拽 DragHandle 时阻止直接关闭，先退回预览状态
+    if (expandedContent != null) {
+        val scope = rememberCoroutineScope()
+        LaunchedEffect(resolvedSheetState) {
+            snapshotFlow {
+                Pair(resolvedSheetState.currentValue, resolvedSheetState.targetValue)
+            }.collect { (current, target) ->
+                if (current == SheetValue.Expanded && target == SheetValue.Hidden) {
+                    scope.launch { resolvedSheetState.partialExpand() }
+                }
+            }
+        }
     }
 
     val titleWidthDp = if (title != null) {
@@ -162,26 +185,36 @@ fun ModalLegadoBottomSheet(
                         }
                     }
 
-                    Surface(color = containerColor) {
+                    val contentTextColor = legadoPopupPrimaryTextColor()
+                    CompositionLocalProvider(LocalContentColor provides contentTextColor) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .background(containerColor)
                         ) {
                             Spacer(Modifier.height(16.dp))
-                        if (expandedContent != null) {
-                            AnimatedContent(
-                                targetState = isExpanding,
-                                transitionSpec = {
-                                    (fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(200)))
-                                        .using(SizeTransform(clip = false))
-                                },
-                                label = "sheetContent"
-                            ) { expanded ->
-                                if (expanded) expandedContent() else content()
+                            val columnScope = this
+                            Box {
+                                with(columnScope) {
+                                    if (expandedContent != null) {
+                                        AnimatedContent(
+                                            targetState = isExpanding,
+                                            transitionSpec = {
+                                                (fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(200)))
+                                                    .using(SizeTransform(clip = false))
+                                            },
+                                            label = "sheetContent"
+                                        ) { expanded ->
+                                            if (expanded) expandedContent() else content()
+                                        }
+                                    } else {
+                                        content()
+                                    }
+                                }
+                                if (transitionOverlay != null) {
+                                    transitionOverlay(expansionProgress)
+                                }
                             }
-                        } else {
-                            content()
-                        }
                     }
                     }
                 } else {
@@ -189,19 +222,31 @@ fun ModalLegadoBottomSheet(
                         color = dragHandleColor,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
-                    if (expandedContent != null) {
-                        AnimatedContent(
-                            targetState = isExpanding,
-                            transitionSpec = {
-                                (fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(200)))
-                                    .using(SizeTransform(clip = false))
-                            },
-                            label = "sheetContent"
-                        ) { expanded ->
-                            if (expanded) expandedContent() else content()
+                    val columnScope = this
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(containerColor)
+                    ) {
+                        with(columnScope) {
+                            if (expandedContent != null) {
+                                AnimatedContent(
+                                    targetState = isExpanding,
+                                    transitionSpec = {
+                                        (fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(200)))
+                                            .using(SizeTransform(clip = false))
+                                    },
+                                    label = "sheetContent"
+                                ) { expanded ->
+                                    if (expanded) expandedContent() else content()
+                                }
+                            } else {
+                                content()
+                            }
                         }
-                    } else {
-                        content()
+                        if (transitionOverlay != null) {
+                            transitionOverlay(expansionProgress)
+                        }
                     }
                 }
             }
