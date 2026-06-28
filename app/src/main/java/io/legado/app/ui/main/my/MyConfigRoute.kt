@@ -57,8 +57,14 @@ fun MyOtherConfigRoute(
     onBack: () -> Unit,
     actions: OtherConfigActions,
 ) {
-    val owner = fragment ?: LocalViewModelStoreOwner.current!!
-    val viewModel: ConfigViewModel = viewModel(viewModelStoreOwner = owner)
+    val application = LocalContext.current.applicationContext as android.app.Application
+    val viewModel: ConfigViewModel = if (fragment != null) {
+        viewModel(viewModelStoreOwner = fragment)
+    } else {
+        viewModel(
+            factory = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.getInstance(application)
+        )
+    }
     OtherConfigScreen(
         onBackClick = onBack,
         viewModel = viewModel,
@@ -74,8 +80,14 @@ fun MyBackupConfigRoute(
     onBack: () -> Unit,
     actions: BackupConfigActions,
 ) {
-    val owner = fragment ?: LocalViewModelStoreOwner.current!!
-    val viewModel: ConfigViewModel = viewModel(viewModelStoreOwner = owner)
+    val application = LocalContext.current.applicationContext as android.app.Application
+    val viewModel: ConfigViewModel = if (fragment != null) {
+        viewModel(viewModelStoreOwner = fragment)
+    } else {
+        viewModel(
+            factory = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.getInstance(application)
+        )
+    }
     BackupConfigScreen(
         onBackClick = onBack,
         viewModel = viewModel,
