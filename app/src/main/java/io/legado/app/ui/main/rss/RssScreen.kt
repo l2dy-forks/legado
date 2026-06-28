@@ -1,17 +1,22 @@
 package io.legado.app.ui.main.rss
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -44,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -64,6 +70,7 @@ import io.legado.app.help.coil.LegadoFetcher
 import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.ui.common.compose.EmptyStateView
+import io.legado.app.ui.common.compose.legadoCardBackgroundColor
 import io.legado.app.ui.common.compose.RoundDropdownMenu
 import io.legado.app.ui.common.compose.RoundDropdownMenuItem
 import io.legado.app.ui.main.MainRoute
@@ -124,29 +131,49 @@ fun RssScreen(
                     actionIconContentColor = onSurfaceColor,
                 ),
                 title = {
-                    TextField(
-                        value = searchKey.replace("group:", ""),
-                        onValueChange = { searchKey = it },
-                        placeholder = { Text(stringResource(R.string.rss)) },
-                        singleLine = true,
-                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                        textStyle = MaterialTheme.typography.bodyMedium,
-                        shape = RoundedCornerShape(16.dp),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = onSurfaceColor.copy(alpha = 0.12f),
-                            unfocusedContainerColor = onSurfaceColor.copy(alpha = 0.08f),
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            focusedTextColor = onSurfaceColor,
-                            unfocusedTextColor = onSurfaceColor,
-                            cursorColor = onSurfaceColor,
-                            focusedLeadingIconColor = onSurfaceColor,
-                            unfocusedLeadingIconColor = onSurfaceColor.copy(alpha = 0.7f),
-                            focusedPlaceholderColor = onSurfaceColor.copy(alpha = 0.5f),
-                            unfocusedPlaceholderColor = onSurfaceColor.copy(alpha = 0.4f),
-                        ),
-                        modifier = Modifier.fillMaxWidth().height(42.dp).padding(bottom = 6.dp),
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(36.dp)
+                            .background(
+                                onSurfaceColor.copy(alpha = 0.08f),
+                                RoundedCornerShape(16.dp),
+                            ),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        BasicTextField(
+                            value = searchKey.replace("group:", ""),
+                            onValueChange = { searchKey = it },
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(color = onSurfaceColor),
+                            cursorBrush = SolidColor(onSurfaceColor),
+                            modifier = Modifier.fillMaxWidth(),
+                            decorationBox = { innerTextField ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 12.dp),
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Search,
+                                        contentDescription = null,
+                                        tint = onSurfaceColor.copy(alpha = 0.7f),
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Box(Modifier.weight(1f)) {
+                                        if (searchKey.isBlank()) {
+                                            Text(
+                                                stringResource(R.string.rss),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = onSurfaceColor.copy(alpha = 0.5f),
+                                            )
+                                        }
+                                        innerTextField()
+                                    }
+                                }
+                            },
+                        )
+                    }
                 },
                 actions = {
                     // 收藏夹
@@ -260,7 +287,7 @@ fun RssScreen(
                             ),
                             colors = CardDefaults.cardColors(
                                 containerColor = if (AppConfig.isEInkMode) MaterialTheme.colorScheme.surface
-                                else MaterialTheme.colorScheme.surfaceContainer,
+                                else legadoCardBackgroundColor(),
                             ),
                         ) {
                             Column(
