@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,19 +58,29 @@ fun SettingItem(
     var showMenu by remember { mutableStateOf(false) }
     val isExpandable = expandContent != null && onExpandChange != null
 
-    val itemModifier = Modifier.combinedClickable(
-        onClick = {
-            when {
-                dropdownMenu != null -> showMenu = true
-                isExpandable -> onExpandChange.invoke(!expanded)
-                else -> onClick?.invoke()
+    // 用 rememberUpdatedState 让闭包始终读到最新参数，modifier 本身只创建一次
+    val currentDropdownMenu by rememberUpdatedState(dropdownMenu)
+    val currentOnExpandChange by rememberUpdatedState(onExpandChange)
+    val currentExpanded by rememberUpdatedState(expanded)
+    val currentOnClick by rememberUpdatedState(onClick)
+    val currentOnLongClick by rememberUpdatedState(onLongClick)
+    val currentIsExpandable by rememberUpdatedState(isExpandable)
+
+    val itemModifier = remember {
+        Modifier.combinedClickable(
+            onClick = {
+                when {
+                    currentDropdownMenu != null -> showMenu = true
+                    currentIsExpandable -> currentOnExpandChange?.invoke(!currentExpanded)
+                    else -> currentOnClick?.invoke()
+                }
+            },
+            onLongClick = {
+                if (currentDropdownMenu != null) showMenu = true
+                currentOnLongClick?.invoke()
             }
-        },
-        onLongClick = {
-            if (dropdownMenu != null) showMenu = true
-            onLongClick?.invoke()
-        }
-    )
+        )
+    }
 
     Column(
         modifier = modifier

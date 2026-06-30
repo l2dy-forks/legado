@@ -130,7 +130,9 @@ fun BottomNavScreen(
                     val selected = pagerState.currentPage == index
                     NavigationBarItem(
                         selected = selected,
-                        onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
+                        onClick = remember(index) {
+                            { scope.launch { pagerState.animateScrollToPage(index) } }
+                        },
                         icon = {
                             Icon(
                                 painterResource(if (selected) dest.selectedIconRes else dest.iconRes),
@@ -196,30 +198,60 @@ fun BottomNavScreen(
                                 themeMode = myThemeMode,
                                 webServiceRunning = isRunning,
                                 webServiceAddress = hostAddress,
-                                onBookSourceManage = { context.startActivity<BookSourceActivity>() },
-                                onTxtTocRuleManage = { context.startActivity<TxtTocRuleActivity>() },
-                                onReplaceManage = { context.startActivity<ReplaceRuleActivity>() },
-                                onDictRuleManage = { context.startActivity<DictRuleActivity>() },
-                                onAiDictRuleManage = { onNavigateToRoute(MainRouteAiDictRule) },
-                                onBookmark = { context.startActivity<AllBookmarkActivity>() },
-                                onReadRecord = { onNavigateToRoute(MainRouteReadRecord) },
-                                onBackupRestore = { onNavigateToRoute(MainRouteBackupConfig) },
-                                onThemeSetting = { onNavigateToRoute(MainRouteThemeConfig) },
-                                onThemeModeChange = {
-                                    myThemeMode = it
-                                    appCtx.putPrefString(PreferKey.themeMode, it)
-                                    ThemeConfig.applyDayNight(context)
+                                onBookSourceManage = remember {
+                                    { context.startActivity<BookSourceActivity>() }
                                 },
-                                onOtherSetting = { onNavigateToRoute(MainRouteOtherConfig) },
-                                onWebServiceChange = { checked ->
-                                    webServiceRunning.value = checked
-                                    if (checked) WebService.start(context) else WebService.stop(context)
-                                    context.putPrefBoolean(PreferKey.webService, checked)
+                                onTxtTocRuleManage = remember {
+                                    { context.startActivity<TxtTocRuleActivity>() }
                                 },
-                                onWebServiceLongClick = {},
-                                onFileManage = { context.startActivity<FileManageActivity>() },
-                                onAbout = { onNavigateToRoute(MainRouteAbout) },
-                                onExit = { (context as? android.app.Activity)?.finish() },
+                                onReplaceManage = remember {
+                                    { context.startActivity<ReplaceRuleActivity>() }
+                                },
+                                onDictRuleManage = remember {
+                                    { context.startActivity<DictRuleActivity>() }
+                                },
+                                onAiDictRuleManage = remember(onNavigateToRoute) {
+                                    { onNavigateToRoute(MainRouteAiDictRule) }
+                                },
+                                onBookmark = remember {
+                                    { context.startActivity<AllBookmarkActivity>() }
+                                },
+                                onReadRecord = remember(onNavigateToRoute) {
+                                    { onNavigateToRoute(MainRouteReadRecord) }
+                                },
+                                onBackupRestore = remember(onNavigateToRoute) {
+                                    { onNavigateToRoute(MainRouteBackupConfig) }
+                                },
+                                onThemeSetting = remember(onNavigateToRoute) {
+                                    { onNavigateToRoute(MainRouteThemeConfig) }
+                                },
+                                onThemeModeChange = remember {
+                                    {
+                                        myThemeMode = it
+                                        appCtx.putPrefString(PreferKey.themeMode, it)
+                                        ThemeConfig.applyDayNight(context)
+                                    }
+                                },
+                                onOtherSetting = remember(onNavigateToRoute) {
+                                    { onNavigateToRoute(MainRouteOtherConfig) }
+                                },
+                                onWebServiceChange = remember {
+                                    { checked ->
+                                        webServiceRunning.value = checked
+                                        if (checked) WebService.start(context) else WebService.stop(context)
+                                        context.putPrefBoolean(PreferKey.webService, checked)
+                                    }
+                                },
+                                onWebServiceLongClick = remember { {} },
+                                onFileManage = remember {
+                                    { context.startActivity<FileManageActivity>() }
+                                },
+                                onAbout = remember(onNavigateToRoute) {
+                                    { onNavigateToRoute(MainRouteAbout) }
+                                },
+                                onExit = remember {
+                                    { (context as? android.app.Activity)?.finish() }
+                                },
                             )
                         }
                     }

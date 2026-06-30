@@ -49,6 +49,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -114,7 +115,7 @@ fun ExploreScreen(
     var showGroupMenu by remember { mutableStateOf(false) }
     var expandedIndex by remember { mutableIntStateOf(-1) }
     var contextMenuSource by remember { mutableStateOf<BookSourcePart?>(null) }
-    val categoriesMap = remember { mutableMapOf<String, List<ExploreKind>>() }
+    val categoriesMap = remember { mutableStateMapOf<String, List<ExploreKind>>() }
     var loadingCategoriesForUrl by remember { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
     val onSurfaceColor = if (AppConfig.isEInkMode) MaterialTheme.colorScheme.onSurface
