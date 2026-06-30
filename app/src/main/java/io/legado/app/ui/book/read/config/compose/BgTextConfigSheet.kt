@@ -2,6 +2,8 @@
 
 package io.legado.app.ui.book.read.config.compose
 
+import android.app.Activity
+import android.content.ContextWrapper
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Image
@@ -31,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -49,6 +52,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
+import androidx.fragment.app.FragmentActivity
 import io.legado.app.R
 import io.legado.app.constant.EventBus
 import io.legado.app.help.DefaultData
@@ -78,6 +82,7 @@ import io.legado.app.utils.outputStream
 import io.legado.app.utils.postEvent
 import io.legado.app.utils.printOnDebug
 import io.legado.app.utils.readBytes
+import io.legado.app.utils.showM3EditDialog
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.compress.ZipUtils
 import io.legado.app.utils.GSON
@@ -100,6 +105,7 @@ fun BgTextConfigSheet(
     var bgAlpha by remember { mutableFloatStateOf(durConfig.bgAlpha.toFloat()) }
     var underLine by remember { mutableStateOf(durConfig.underline) }
     var darkStatusIcon by remember { mutableStateOf(durConfig.curStatusIconDark()) }
+    var name by remember { mutableStateOf(durConfig.name) }
 
     val bgAssets = remember {
         runCatching { context.assets.list("bg")?.toList().orEmpty() }.getOrDefault(emptyList())
@@ -147,6 +153,8 @@ fun BgTextConfigSheet(
 
     val isImageBook = ReadBook.book?.isImage == true
 
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     ModalLegadoBottomSheet(
         show = show,
         onDismissRequest = {
@@ -154,6 +162,7 @@ fun BgTextConfigSheet(
             onDismiss()
         },
         title = "",
+        sheetState = sheetState,
     ) {
         Column(
             modifier = Modifier
@@ -173,11 +182,31 @@ fun BgTextConfigSheet(
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    text = durConfig.name.ifBlank { "Aa" },
+                    text = name.ifBlank { "Aa" },
                     style = MaterialTheme.typography.bodyMedium,
                     color = LocalContentColor.current.copy(alpha = 0.6f),
                     modifier = Modifier.padding(horizontal = 6.dp),
                 )
+                IconButton(
+                    onClick = {
+                        findActivity(context).showM3EditDialog(
+                            title = context.getString(R.string.style_name),
+                            initialValue = name,
+                            hint = "name",
+                            onConfirm = { value ->
+                                name = value
+                                durConfig.name = value
+                            },
+                        )
+                    },
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_edit),
+                        contentDescription = stringResource(R.string.edit),
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
                     text = stringResource(R.string.restore),
@@ -230,28 +259,31 @@ fun BgTextConfigSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = stringResource(R.string.text_color),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
-                        .weight(2f)
                         .clickable { onTextColorClick(durConfig.curTextColor()) }
-                        .padding(vertical = 6.dp, horizontal = 6.dp),
+                        .padding(vertical = 6.dp, horizontal = 4.dp),
                 )
                 Text(
                     text = stringResource(R.string.bg_color),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
-                        .weight(2f)
-                        .clickable { onBgColorClick(durConfig.curBgStr().toColorInt()) }
-                        .padding(vertical = 6.dp, horizontal = 6.dp),
+                        .clickable {
+                            onBgColorClick(
+                                if (durConfig.curBgType() == 0) durConfig.curBgStr().toColorInt()
+                                else "#015A86".toColorInt()
+                            )
+                        }
+                        .padding(vertical = 6.dp, horizontal = 4.dp),
                 )
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(40.dp)
                         .clickable {
                             selectImportDoc.launch {
                                 mode = HandleFileContract.FILE
@@ -265,12 +297,12 @@ fun BgTextConfigSheet(
                     Icon(
                         painter = painterResource(R.drawable.ic_import),
                         contentDescription = stringResource(R.string.import_str),
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(28.dp),
                     )
                 }
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(40.dp)
                         .clickable {
                             selectExportDir.launch { title = context.getString(R.string.export_str) }
                         },
@@ -279,12 +311,12 @@ fun BgTextConfigSheet(
                     Icon(
                         painter = painterResource(R.drawable.ic_export),
                         contentDescription = stringResource(R.string.export_str),
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(28.dp),
                     )
                 }
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(40.dp)
                         .clickable {
                             if (ReadBookConfig.deleteDur()) {
                                 postEvent(EventBus.UP_CONFIG, arrayListOf(1, 2, 12, 5))
@@ -298,7 +330,7 @@ fun BgTextConfigSheet(
                     Icon(
                         painter = painterResource(R.drawable.ic_clear_all),
                         contentDescription = stringResource(R.string.delete),
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(28.dp),
                     )
                 }
             }
@@ -482,4 +514,12 @@ private fun importConfig(byteArray: ByteArray) {
         it.printOnDebug()
         appCtx.toastOnUi("导入失败:${it.localizedMessage}")
     }
+}
+
+private fun findActivity(context: android.content.Context): FragmentActivity {
+    var ctx = context
+    while (ctx !is Activity && ctx is ContextWrapper) {
+        ctx = ctx.baseContext
+    }
+    return ctx as FragmentActivity
 }

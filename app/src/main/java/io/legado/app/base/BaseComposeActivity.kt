@@ -81,7 +81,7 @@ abstract class BaseComposeActivity(
                     LocalStatusBarTransparent provides _statusBarTransparent,
                     LocalStatusBarColor provides _statusBarColor,
                 ) {
-                    Box(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                         Content()
 
                         if (!transparent) {

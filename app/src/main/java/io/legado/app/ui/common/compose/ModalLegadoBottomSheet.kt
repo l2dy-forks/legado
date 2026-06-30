@@ -155,7 +155,8 @@ fun ModalLegadoBottomSheet(
                     BoxWithConstraints(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 16.dp),
+                            .height(64.dp)
+                            .padding(start = 20.dp, end = 4.dp),
                         contentAlignment = Alignment.CenterStart,
                     ) {
                         val containerWidthPx = with(density) { maxWidth.toPx() }
@@ -215,7 +216,7 @@ fun ModalLegadoBottomSheet(
                                     transitionOverlay(expansionProgress)
                                 }
                             }
-                    }
+                        }
                     }
                 } else {
                     BottomSheetDefaults.DragHandle(

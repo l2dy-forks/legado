@@ -101,7 +101,7 @@ fun StylePresetRow(
                     fontSize = 12.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     textAlign = TextAlign.Center,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(2.dp),
                 )

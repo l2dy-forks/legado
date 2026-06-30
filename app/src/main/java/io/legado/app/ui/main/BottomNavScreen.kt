@@ -35,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.legado.app.R
 import io.legado.app.help.config.AppConfig
+import io.legado.app.help.config.ThemeConfig
 import io.legado.app.lib.theme.bottomBackground
 import io.legado.app.ui.book.source.manage.BookSourceActivity
 import io.legado.app.ui.book.toc.rule.TxtTocRuleActivity
@@ -52,8 +53,10 @@ import io.legado.app.constant.EventBus
 import io.legado.app.utils.flowWithLifecycleAndDatabaseChange
 import io.legado.app.utils.observeEventSticky
 import io.legado.app.utils.putPrefBoolean
+import io.legado.app.utils.putPrefString
 import io.legado.app.utils.showHelp
 import io.legado.app.utils.startActivity
+import splitties.init.appCtx
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
@@ -96,7 +99,7 @@ fun BottomNavScreen(
 
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val scope = rememberCoroutineScope()
-    var myThemeMode by remember { mutableStateOf("followSystem") }
+    var myThemeMode by remember { mutableStateOf(AppConfig.themeMode ?: "0") }
     val webServiceRunning = remember { MutableStateFlow(WebService.isRun) }
     val webServiceAddress = remember { MutableStateFlow(WebService.hostAddress) }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -202,7 +205,11 @@ fun BottomNavScreen(
                                 onReadRecord = { onNavigateToRoute(MainRouteReadRecord) },
                                 onBackupRestore = { onNavigateToRoute(MainRouteBackupConfig) },
                                 onThemeSetting = { onNavigateToRoute(MainRouteThemeConfig) },
-                                onThemeModeChange = { myThemeMode = it },
+                                onThemeModeChange = {
+                                    myThemeMode = it
+                                    appCtx.putPrefString(PreferKey.themeMode, it)
+                                    ThemeConfig.applyDayNight(context)
+                                },
                                 onOtherSetting = { onNavigateToRoute(MainRouteOtherConfig) },
                                 onWebServiceChange = { checked ->
                                     webServiceRunning.value = checked

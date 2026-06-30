@@ -714,6 +714,10 @@
     <string name="contact">联系我们</string>
     <string name="license">开源许可</string>
     <string name="other">其它</string>
+    <string name="screen_category">屏幕</string>
+    <string name="page">页面</string>
+    <string name="text_layout">文字布局</string>
+    <string name="interaction">交互</string>
     <string name="official_account">开源阅读</string>
     <string name="follow_official_account">关注公众号</string>
     <string name="wechat">微信</string>

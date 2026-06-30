@@ -79,6 +79,7 @@ import io.legado.app.ui.book.info.compose.BookInfoComposeActivity
 import io.legado.app.ui.book.read.config.AutoReadDialog
 import io.legado.app.ui.book.read.config.BgTextConfigDialog.Companion.BG_COLOR
 import io.legado.app.ui.book.read.config.BgTextConfigDialog.Companion.TEXT_COLOR
+import io.legado.app.lib.prefs.ColorPreference
 import io.legado.app.ui.book.read.config.compose.MoreConfigSheet
 import io.legado.app.ui.book.read.config.compose.ReadStyleSheet
 import io.legado.app.ui.book.read.config.MoreConfigDialog
@@ -291,24 +292,24 @@ class ReadBookActivity : BaseReadBookActivity(),
                     onDismiss = { bottomDialog--; showReadStyleSheet = false },
                     onFontSelect = { showDialogFragment<FontSelectDialog>() },
                     onTextColorClick = { color ->
-                        com.jaredrummler.android.colorpicker.ColorPickerDialog.newBuilder()
+                        ColorPreference.ColorPickerDialogCompat.newBuilder()
                             .setColor(color)
                             .setShowAlphaSlider(false)
                             .setDialogType(com.jaredrummler.android.colorpicker.ColorPickerDialog.TYPE_CUSTOM)
                             .setDialogId(TEXT_COLOR)
-                            .show(this@ReadBookActivity)
+                            .create().apply {
+                                show(this@ReadBookActivity.supportFragmentManager, "textColorPicker")
+                            }
                     },
                     onBgColorClick = { color ->
-                        com.jaredrummler.android.colorpicker.ColorPickerDialog.newBuilder()
+                        ColorPreference.ColorPickerDialogCompat.newBuilder()
                             .setColor(color)
                             .setShowAlphaSlider(false)
                             .setDialogType(com.jaredrummler.android.colorpicker.ColorPickerDialog.TYPE_CUSTOM)
                             .setDialogId(BG_COLOR)
-                            .show(this@ReadBookActivity)
-                    },
-                    onPaddingConfig = { showPaddingConfig() },
-                    onTipConfig = {
-                        TipConfigDialog().show(supportFragmentManager, "tipConfigDialog")
+                            .create().apply {
+                                show(this@ReadBookActivity.supportFragmentManager, "bgColorPicker")
+                            }
                     },
                 )
                 MoreConfigSheet(

@@ -143,7 +143,7 @@ fun MoreConfigSheet(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             // ── Screen Settings ─────────────────────────────────────────────
-            CategorySection("Screen") {
+            CategorySection(stringResource(R.string.screen_category)) {
                 ClickableSettingItem(
                     title = stringResource(R.string.screen_direction),
                     trailingContent = {
@@ -208,7 +208,7 @@ fun MoreConfigSheet(
             }
 
             // ── Page Control ────────────────────────────────────────────────
-            CategorySection("Page") {
+            CategorySection(stringResource(R.string.page)) {
                 ClickableSettingItem(
                     title = stringResource(R.string.double_page_horizontal),
                     trailingContent = {
@@ -264,7 +264,7 @@ fun MoreConfigSheet(
             }
 
             // ── Text Layout ─────────────────────────────────────────────────
-            CategorySection("Text Layout") {
+            CategorySection(stringResource(R.string.text_layout)) {
                 SwitchSettingItem(
                     title = stringResource(R.string.use_zh_layout),
                     checked = useZhLayout,
@@ -309,7 +309,7 @@ fun MoreConfigSheet(
             }
 
             // ── Interaction ─────────────────────────────────────────────────
-            CategorySection("Interaction") {
+            CategorySection(stringResource(R.string.interaction)) {
                 SwitchSettingItem(
                     title = stringResource(R.string.mouse_wheel_page),
                     checked = mouseWheelPage,
@@ -405,7 +405,7 @@ fun MoreConfigSheet(
             }
 
             // ── Other ───────────────────────────────────────────────────────
-            CategorySection("Other") {
+            CategorySection(stringResource(R.string.other)) {
                 ClickableSettingItem(
                     title = stringResource(R.string.click_regional_config),
                     onClick = onClickRegionalConfig,
