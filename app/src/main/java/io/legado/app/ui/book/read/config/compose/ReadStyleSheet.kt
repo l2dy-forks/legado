@@ -750,7 +750,7 @@ private fun InlineTipConfig() {
                             .setDialogType(com.jaredrummler.android.colorpicker.ColorPickerDialog.TYPE_CUSTOM)
                             .setShowAlphaSlider(false)
                             .setColor(tipColor)
-                            .setDialogId(io.legado.app.ui.book.read.config.TipConfigDialog.TIP_COLOR)
+                            .setDialogId(io.legado.app.ui.book.read.config.ReadConfigIds.TIP_COLOR)
                             .create().apply {
                                 show(findActivity(context).supportFragmentManager, "tipColorPicker")
                             }
@@ -778,7 +778,7 @@ private fun InlineTipConfig() {
                             .setDialogType(com.jaredrummler.android.colorpicker.ColorPickerDialog.TYPE_CUSTOM)
                             .setShowAlphaSlider(false)
                             .setColor(tipDividerColor)
-                            .setDialogId(io.legado.app.ui.book.read.config.TipConfigDialog.TIP_DIVIDER_COLOR)
+                            .setDialogId(io.legado.app.ui.book.read.config.ReadConfigIds.TIP_DIVIDER_COLOR)
                             .create().apply {
                                 show(findActivity(context).supportFragmentManager, "tipDividerColorPicker")
                             }

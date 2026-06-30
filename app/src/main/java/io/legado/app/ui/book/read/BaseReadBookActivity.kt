@@ -36,9 +36,7 @@ import io.legado.app.lib.theme.ThemeStore
 import io.legado.app.lib.theme.bottomBackground
 import io.legado.app.model.CacheBook
 import io.legado.app.model.ReadBook
-import io.legado.app.ui.book.read.config.BgTextConfigDialog
 import io.legado.app.ui.book.read.config.ClickActionConfigDialog
-import io.legado.app.ui.book.read.config.PaddingConfigDialog
 import io.legado.app.ui.book.read.config.PageKeyDialog
 import io.legado.app.ui.file.HandleFileContract
 import io.legado.app.utils.ColorUtils
@@ -144,14 +142,6 @@ abstract class BaseReadBookActivity :
 
     open fun onMenuHide() {
 
-    }
-
-    fun showPaddingConfig() {
-        showDialogFragment<PaddingConfigDialog>()
-    }
-
-    fun showBgTextConfig() {
-        showDialogFragment<BgTextConfigDialog>()
     }
 
     fun showClickRegionalConfig() {
