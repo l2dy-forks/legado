@@ -17,8 +17,14 @@ interface DictRuleDao {
     @Query("select * from dictRules order by sortNumber")
     fun flowAll(): Flow<List<DictRule>>
 
+    @Query("select * from dictRules where name LIKE '%' || :key || '%' order by sortNumber")
+    fun flowSearch(key: String): Flow<List<DictRule>>
+
     @Query("select * from dictRules where name = :name")
     fun getByName(name: String): DictRule?
+
+    @Query("SELECT * FROM dictRules WHERE name IN (:names)")
+    fun getByNames(names: Set<String>): List<DictRule>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg dictRule: DictRule)
@@ -28,5 +34,20 @@ interface DictRuleDao {
 
     @Delete
     fun delete(vararg dictRule: DictRule)
+
+    @Query("UPDATE dictRules SET enabled = :enabled WHERE name IN (:names)")
+    suspend fun updateEnabled(names: Set<String>, enabled: Boolean)
+
+    @Query("DELETE FROM dictRules WHERE name IN (:names)")
+    suspend fun deleteByIds(names: Set<String>)
+
+    @Query("DELETE FROM dictRules WHERE name = :name")
+    fun deleteByName(name: String)
+
+    @Transaction
+    fun replacePrimaryKey(oldName: String, rule: DictRule) {
+        deleteByName(oldName)
+        insert(rule)
+    }
 
 }

@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import io.legado.app.constant.AppPattern
 import io.legado.app.data.entities.ReplaceRule
@@ -22,7 +23,7 @@ interface ReplaceRuleDao {
     @Query("SELECT * FROM replace_rules ORDER BY sortOrder ASC")
     fun flowAll(): Flow<List<ReplaceRule>>
 
-    @Query("SELECT * FROM replace_rules where `group` like :key or name like :key ORDER BY sortOrder ASC")
+    @Query("SELECT * FROM replace_rules where `group` like :key or name like :key or pattern like :key or replacement like :key or scope like :key ORDER BY sortOrder ASC")
     fun flowSearch(key: String): Flow<List<ReplaceRule>>
 
     @Query("SELECT * FROM replace_rules where `group` like :key ORDER BY sortOrder ASC")
@@ -82,6 +83,31 @@ interface ReplaceRuleDao {
 
     @Query("UPDATE replace_rules SET isEnabled = :enable")
     fun enableAll(enable: Boolean)
+
+    @Query("UPDATE replace_rules SET isEnabled = :enabled WHERE id = :id")
+    suspend fun updateEnabled(id: Long, enabled: Boolean)
+
+    @Query("UPDATE replace_rules SET isEnabled = :enabled WHERE id IN (:ids)")
+    suspend fun updateEnabled(ids: List<Long>, enabled: Boolean)
+
+    @Query("DELETE FROM replace_rules WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<Long>)
+
+    @Query("UPDATE replace_rules SET sortOrder = :order WHERE id = :id")
+    suspend fun updateOrder(id: Long, order: Int)
+
+    @Query("SELECT * FROM replace_rules WHERE id IN (:ids)")
+    fun getByIds(ids: Set<Long>): List<ReplaceRule>
+
+    @Query("UPDATE replace_rules SET `group` = NULL WHERE `group` IN (:groups)")
+    suspend fun clearGroups(groups: List<String>)
+
+    @Transaction
+    suspend fun updateAllOrders(rules: List<ReplaceRule>) {
+        rules.forEachIndexed { index, rule ->
+            updateOrder(rule.id, index + 1)
+        }
+    }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg replaceRule: ReplaceRule): List<Long>

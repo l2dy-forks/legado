@@ -15,6 +15,7 @@ object PreferKey {
     const val coverShowNameN = "coverShowNameN"
     const val coverShowAuthorN = "coverShowAuthorN"
     const val remoteServerId = "remoteServerId"
+    const val replaceSortMode = "replaceSortMode"
     const val hideStatusBar = "hideStatusBar"
     const val clickActionTL = "clickActionTopLeft"
     const val clickActionTC = "clickActionTopCenter"

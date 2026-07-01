@@ -10,6 +10,12 @@ interface TxtTocRuleDao {
     @Query("select * from txtTocRules order by serialNumber")
     fun observeAll(): Flow<List<TxtTocRule>>
 
+    @Query("select * from txtTocRules where name LIKE '%' || :key || '%' order by serialNumber")
+    fun flowSearch(key: String): Flow<List<TxtTocRule>>
+
+    @Query("select * from txtTocRules where id in (:ids)")
+    fun getByIds(ids: Set<Long>): List<TxtTocRule>
+
     @get:Query("select * from txtTocRules order by serialNumber")
     val all: List<TxtTocRule>
 

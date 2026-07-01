@@ -20,7 +20,8 @@ import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.model.ReadBook
-import io.legado.app.ui.replace.edit.ReplaceEditActivity
+import io.legado.app.ui.replace.ReplaceEditRoute
+import io.legado.app.ui.replace.ReplaceRuleActivity
 import io.legado.app.utils.setLayout
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 
@@ -95,7 +96,7 @@ class EffectiveReplacesDialog : BaseDialogFragment(R.layout.dialog_recycler_view
                         showChineseConvertAlert()
                         return@let
                     }
-                    editActivity.launch(ReplaceEditActivity.startIntent(requireContext(), item.id))
+                    editActivity.launch(ReplaceRuleActivity.startIntent(requireContext(), ReplaceEditRoute(id = item.id)))
                 }
             }
         }

@@ -95,13 +95,12 @@ import io.legado.app.ui.book.searchContent.SearchContentActivity
 import io.legado.app.ui.book.searchContent.SearchResult
 import io.legado.app.ui.book.source.edit.BookSourceEditActivity
 import io.legado.app.ui.book.toc.TocActivityResult
-import io.legado.app.ui.book.toc.rule.TxtTocRuleDialog
 import io.legado.app.ui.browser.WebViewActivity
 import io.legado.app.ui.dict.createDictSheetDialog
 import io.legado.app.ui.file.HandleFileContract
 import io.legado.app.ui.login.SourceLoginActivity
+import io.legado.app.ui.replace.ReplaceEditRoute
 import io.legado.app.ui.replace.ReplaceRuleActivity
-import io.legado.app.ui.replace.edit.ReplaceEditActivity
 import io.legado.app.ui.widget.PopupAction
 import io.legado.app.ui.widget.dialog.PhotoDialog
 import io.legado.app.ui.widget.number.NumberPickerDialog
@@ -164,7 +163,6 @@ class ReadBookActivity : BaseReadBookActivity(),
     ChangeChapterSourceDialog.CallBack,
     ReadBook.CallBack,
     AutoReadDialog.CallBack,
-    TxtTocRuleDialog.CallBack,
     FontSelectDialog.CallBack,
     ColorPickerDialogListener,
     LayoutProgressListener {
@@ -671,9 +669,13 @@ class ReadBookActivity : BaseReadBookActivity(),
             }
 
             R.id.menu_log -> showLogSheet()
-            R.id.menu_toc_regex -> showDialogFragment(
-                TxtTocRuleDialog(ReadBook.book?.tocUrl)
-            )
+            R.id.menu_toc_regex -> {
+                // TODO: use TxtTocRuleActivity with startActivityForResult
+                val intent = android.content.Intent(this, io.legado.app.ui.book.toc.rule.TxtTocRuleActivity::class.java).apply {
+                    putExtra("tocRegex", ReadBook.book?.tocUrl)
+                }
+                startActivityForResult(intent, 0)
+            }
 
             R.id.menu_reverse_content -> ReadBook.book?.let {
                 viewModel.reverseContent(it)
@@ -981,10 +983,12 @@ class ReadBookActivity : BaseReadBookActivity(),
                 }
                 val text = selectedText.lineSequence().joinToString("\n") { it.trim() }
                 replaceActivity.launch(
-                    ReplaceEditActivity.startIntent(
+                    ReplaceRuleActivity.startIntent(
                         this,
-                        pattern = text,
-                        scope = scopes.joinToString(";")
+                        ReplaceEditRoute(
+                            pattern = text,
+                            scope = scopes.joinToString(";")
+                        )
                     )
                 )
                 return true
@@ -1574,7 +1578,8 @@ class ReadBookActivity : BaseReadBookActivity(),
      */
     override fun onDialogDismissed(dialogId: Int) = Unit
 
-    override fun onTocRegexDialogResult(tocRegex: String) {
+    // TODO: rewire through onActivityResult from TxtTocRuleActivity
+    fun onTocRegexDialogResult(tocRegex: String) {
         ReadBook.book?.let {
             it.tocUrl = tocRegex
             loadChapterList(it)

@@ -22,7 +22,6 @@ import io.legado.app.lib.theme.primaryColor
 import io.legado.app.lib.theme.primaryTextColor
 import io.legado.app.model.ReadBook
 import io.legado.app.utils.showLogSheet
-import io.legado.app.ui.book.toc.rule.TxtTocRuleDialog
 import io.legado.app.ui.file.HandleFileContract
 import io.legado.app.ui.widget.dialog.WaitDialog
 import io.legado.app.utils.applyTint
@@ -34,8 +33,7 @@ import io.legado.app.utils.visible
 /**
  * 目录
  */
-class TocActivity : VMBaseActivity<ActivityChapterListBinding, TocViewModel>(),
-    TxtTocRuleDialog.CallBack {
+class TocActivity : VMBaseActivity<ActivityChapterListBinding, TocViewModel>() {
 
     override val binding by viewBinding(ActivityChapterListBinding::inflate)
     override val viewModel by viewModels<TocViewModel>()
@@ -128,9 +126,12 @@ class TocActivity : VMBaseActivity<ActivityChapterListBinding, TocViewModel>(),
 
     override fun onCompatOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.menu_toc_regex -> showDialogFragment(
-                TxtTocRuleDialog(viewModel.bookData.value?.tocUrl)
-            )
+            R.id.menu_toc_regex -> {
+                val intent = android.content.Intent(this, io.legado.app.ui.book.toc.rule.TxtTocRuleActivity::class.java).apply {
+                    putExtra("tocRegex", viewModel.bookData.value?.tocUrl)
+                }
+                startActivityForResult(intent, 0)
+            }
 
             R.id.menu_split_long_chapter -> {
                 viewModel.bookData.value?.let { book ->
@@ -172,7 +173,8 @@ class TocActivity : VMBaseActivity<ActivityChapterListBinding, TocViewModel>(),
         return super.onCompatOptionsItemSelected(item)
     }
 
-    override fun onTocRegexDialogResult(tocRegex: String) {
+    // TODO: rewire through onActivityResult from TxtTocRuleActivity
+    fun onTocRegexDialogResult(tocRegex: String) {
         viewModel.bookData.value?.let { book ->
             book.tocUrl = tocRegex
             upBookAndToc(book)

@@ -309,6 +309,7 @@ dependencies {
     implementation libs.androidx.navigation3.runtime
     implementation libs.androidx.navigation3.ui
     implementation libs.kotlinx.serialization.json
+    implementation libs.reorderable
     debugImplementation libs.compose.ui.tooling
 
     //LeakCanary, 内存泄露检测
