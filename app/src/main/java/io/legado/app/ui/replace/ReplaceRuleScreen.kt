@@ -89,7 +89,7 @@ fun ReplaceRuleRouteScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val importState by viewModel.importState.collectAsStateWithLifecycle()
     val groups by viewModel.allGroups.collectAsStateWithLifecycle()
-    ReplaceRuleScreen(state = uiState, importState = importState, events = viewModel.events, groups = groups, onIntent = viewModel::onIntent, onBackClick = onBackClick, onNavigateToEdit = onNavigateToEdit)
+    ReplaceRuleScreen(state = uiState, importState = importState, events = viewModel.events, groups = groups, onIntent = viewModel::onIntent, onPasteRule = viewModel::pasteRule, onBackClick = onBackClick, onNavigateToEdit = onNavigateToEdit)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,6 +100,7 @@ fun ReplaceRuleScreen(
     events: kotlinx.coroutines.flow.Flow<BaseRuleEvent>,
     groups: List<String>,
     onIntent: (ReplaceRuleIntent) -> Unit,
+    onPasteRule: () -> ReplaceRule?,
     onBackClick: () -> Unit,
     onNavigateToEdit: (ReplaceEditRoute) -> Unit,
 ) {
@@ -242,6 +243,7 @@ fun ReplaceRuleScreen(
                                     IconButton(onClick = { itemMenuRule = item.toEntity() }) { Icon(Icons.Default.MoreVert, contentDescription = "More") }
                                     itemMenuRule?.let { menuRule ->
                                         RoundDropdownMenu(expanded = menuRule.id == item.id, onDismissRequest = { itemMenuRule = null }) { dismiss ->
+                                            RoundDropdownMenuItem(text = stringResource(R.string.edit), onClick = { dismiss(); itemMenuRule = null; onNavigateToEdit(ReplaceEditRoute(id = item.id)) })
                                             RoundDropdownMenuItem(text = stringResource(R.string.to_top), onClick = { dismiss(); itemMenuRule = null; onIntent(ReplaceRuleIntent.ToTop(item.toEntity())) })
                                             RoundDropdownMenuItem(text = stringResource(R.string.to_bottom), onClick = { dismiss(); itemMenuRule = null; onIntent(ReplaceRuleIntent.ToBottom(item.toEntity())) })
                                             RoundDropdownMenuItem(text = stringResource(R.string.delete), onClick = { dismiss(); itemMenuRule = null; showDeleteDialog = item.toEntity() })

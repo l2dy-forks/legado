@@ -5,6 +5,8 @@ import android.content.ClipboardManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -94,7 +96,7 @@ fun TxtRuleRouteScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TxtRuleScreen(
     state: TxtTocRuleUiState,
@@ -270,6 +272,9 @@ fun TxtRuleScreen(
                         onIntent(TxtTocRuleIntent.DisableSelection)
                         onIntent(TxtTocRuleIntent.ClearSelection)
                     }) { Text(stringResource(R.string.disable_selection)) }
+                    TextButton(onClick = { onIntent(TxtTocRuleIntent.InvertSelection) }) {
+                        Text(stringResource(R.string.revert_selection))
+                    }
                     TextButton(onClick = { exportFile.launch("exportTxtTocRule.json") }) {
                         Text(stringResource(R.string.export_selection))
                     }
@@ -292,15 +297,20 @@ fun TxtRuleScreen(
 
                     ReorderableItem(reorderableState, key = item.id) { isDragging ->
                         Card(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)
+                                .combinedClickable(
+                                    onClick = {
+                                        if (isPickMode) { onPickRule?.invoke(item.rule.rule); onBackClick() }
+                                        else if (inSelectionMode) onIntent(TxtTocRuleIntent.ToggleSelection(item.id))
+                                    },
+                                    onLongClick = {
+                                        if (!isPickMode) onIntent(TxtTocRuleIntent.ToggleSelection(item.id))
+                                    }
+                                ),
                             colors = CardDefaults.cardColors(
                                 containerColor = if (isItemHighlighted) MaterialTheme.colorScheme.secondaryContainer
                                 else MaterialTheme.colorScheme.surfaceContainerLow
-                            ),
-                            onClick = {
-                                if (isPickMode) { onPickRule?.invoke(item.rule.rule); onBackClick() }
-                                else if (inSelectionMode) onIntent(TxtTocRuleIntent.ToggleSelection(item.id))
-                            }
+                            )
                         ) {
                             Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                                 if (inSelectionMode) {
@@ -344,6 +354,18 @@ fun TxtRuleScreen(
             OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.name)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             OutlinedTextField(value = ruleText, onValueChange = { ruleText = it }, label = { Text(stringResource(R.string.regex)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             OutlinedTextField(value = example, onValueChange = { example = it }, label = { Text(stringResource(R.string.example)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            if (editingRule != null) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { onIntent(TxtTocRuleIntent.CopyRule(editingRule!!)) }) { Text(stringResource(R.string.copy_rule)) }
+                    TextButton(onClick = {
+                        onPasteRule()?.let { pasted ->
+                            name = pasted.name
+                            ruleText = pasted.rule
+                            example = pasted.example ?: ""
+                        }
+                    }) { Text(stringResource(R.string.paste_rule)) }
+                }
+            }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = { showEditSheet = false; editingRule = null }) { Text(stringResource(R.string.cancel)) }
                 TextButton(onClick = {

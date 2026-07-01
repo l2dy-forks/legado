@@ -67,6 +67,12 @@ fun ReplaceEditRouteScreen(
                     }
                 },
                 actions = {
+                    TextButton(onClick = { viewModel.onIntent(ReplaceEditIntent.CopyRule) }) {
+                        Text(stringResource(R.string.copy_rule), color = onSurfaceColor)
+                    }
+                    TextButton(onClick = { viewModel.onIntent(ReplaceEditIntent.PasteRule) }) {
+                        Text(stringResource(R.string.paste_rule), color = onSurfaceColor)
+                    }
                     TextButton(onClick = { viewModel.onIntent(ReplaceEditIntent.Save) }) {
                         Text("保存", color = onSurfaceColor)
                     }

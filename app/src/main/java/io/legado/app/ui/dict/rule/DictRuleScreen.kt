@@ -218,6 +218,18 @@ fun DictRuleScreen(
             OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.name)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             OutlinedTextField(value = urlRule, onValueChange = { urlRule = it }, label = { Text(stringResource(R.string.url_rule)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             OutlinedTextField(value = showRule, onValueChange = { showRule = it }, label = { Text(stringResource(R.string.show_rule)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            if (editingRule != null) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { onIntent(DictRuleIntent.CopyRule(editingRule!!)) }) { Text(stringResource(R.string.copy_rule)) }
+                    TextButton(onClick = {
+                        onPasteRule()?.let { pasted ->
+                            name = pasted.name
+                            urlRule = pasted.urlRule
+                            showRule = pasted.showRule ?: ""
+                        }
+                    }) { Text(stringResource(R.string.paste_rule)) }
+                }
+            }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = { showEditSheet = false; editingRule = null }) { Text(stringResource(R.string.cancel)) }
                 TextButton(onClick = {

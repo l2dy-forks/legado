@@ -14,11 +14,15 @@ import io.legado.app.help.ReplaceAnalyzer
 import io.legado.app.ui.widget.components.importComponents.BaseImportUiState
 import io.legado.app.ui.widget.components.list.InteractionState
 import io.legado.app.utils.GSON
+import io.legado.app.utils.fromJsonObject
+import io.legado.app.utils.getClipText
 import io.legado.app.utils.getPrefString
 import io.legado.app.utils.isJsonArray
 import io.legado.app.utils.isJsonObject
 import io.legado.app.utils.putPrefString
+import io.legado.app.utils.sendToClip
 import io.legado.app.utils.splitNotBlank
+import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -88,7 +92,7 @@ class ReplaceRuleViewModel(
             ReplaceRuleIntent.SaveSortOrder -> saveSortOrder()
             is ReplaceRuleIntent.DeleteRule -> delete(intent.rule)
             is ReplaceRuleIntent.SetRuleEnabled -> setEnabled(intent.id, intent.enabled)
-            is ReplaceRuleIntent.CopyRule -> { /* not implemented for ReplaceRule */ }
+            is ReplaceRuleIntent.CopyRule -> copyRule(intent.rule)
             is ReplaceRuleIntent.ImportSource -> importSource(intent.text)
             ReplaceRuleIntent.CancelImport -> cancelImport()
             is ReplaceRuleIntent.ToggleImportSelection -> toggleImportSelection(intent.index)
@@ -305,6 +309,24 @@ class ReplaceRuleViewModel(
 
     private fun bottomSelectByIds(ids: Set<Long>) =
         viewModelScope.launch { repository.bottomByIds(ids, _sortMode.value == "desc") }
+
+    private fun copyRule(rule: ReplaceRule) {
+        context.sendToClip(GSON.toJson(rule))
+    }
+
+    fun pasteRule(): ReplaceRule? {
+        val text = context.getClipText()
+        if (text.isNullOrBlank()) {
+            context.toastOnUi("剪贴板没有内容")
+            return null
+        }
+        return try {
+            GSON.fromJsonObject<ReplaceRule>(text).getOrThrow()
+        } catch (e: Exception) {
+            context.toastOnUi("格式不对")
+            null
+        }
+    }
 
     private fun upGroup(oldGroup: String, newGroup: String?) =
         viewModelScope.launch { repository.upGroup(oldGroup, newGroup) }
