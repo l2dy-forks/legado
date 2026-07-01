@@ -1,6 +1,7 @@
 package io.legado.app.ui.book.manage
 
 import android.app.Application
+
 import androidx.lifecycle.MutableLiveData
 import io.legado.app.R
 import io.legado.app.base.BaseViewModel

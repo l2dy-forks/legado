@@ -1,10 +1,12 @@
 package io.legado.app.ui.book.info.compose
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -79,63 +81,67 @@ fun GroupSelectBottomSheet(
                 color = MaterialTheme.colorScheme.onSurface,
             )
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                items(groups, key = { it.groupId }) { group ->
-                    val isSelected = (selectedGroupId and group.groupId) != 0L
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Checkbox(
-                            checked = isSelected,
-                            onCheckedChange = { checked ->
-                                selectedGroupId = if (checked) {
-                                    selectedGroupId + group.groupId
-                                } else {
-                                    selectedGroupId - group.groupId
-                                }
-                            },
-                        )
-                        Text(
-                            text = group.groupName,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface,
+            Column(modifier = Modifier.fillMaxWidth()) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 320.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(groups, key = { it.groupId }) { group ->
+                        val isSelected = (selectedGroupId and group.groupId) != 0L
+                        Row(
                             modifier = Modifier
-                                .weight(1f)
-                                .padding(start = 8.dp),
-                        )
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = isSelected,
+                                onCheckedChange = { checked ->
+                                    selectedGroupId = if (checked) {
+                                        selectedGroupId + group.groupId
+                                    } else {
+                                        selectedGroupId - group.groupId
+                                    }
+                                },
+                            )
+                            Text(
+                                text = group.groupName,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(start = 8.dp),
+                            )
+                        }
                     }
                 }
-            }
 
-            // 操作按钮栏 — 左取消 / 右确定
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                OutlinedButton(onClick = onDismissRequest) {
-                    Text(stringResource(R.string.cancel))
-                }
-                Spacer(Modifier.width(12.dp))
-                FilledTonalButton(
-                    onClick = {
-                        onConfirm(selectedGroupId)
-                        onDismissRequest()
-                    },
+                // 操作按钮栏 — 左取消 / 右确定
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        stringResource(R.string.ok),
-                        color = colorScheme.primary,
-                    )
+                    OutlinedButton(onClick = onDismissRequest) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    FilledTonalButton(
+                        onClick = {
+                            onConfirm(selectedGroupId)
+                            onDismissRequest()
+                        },
+                    ) {
+                        Text(
+                            stringResource(R.string.ok),
+                            color = colorScheme.primary,
+                        )
+                    }
                 }
             }
         }

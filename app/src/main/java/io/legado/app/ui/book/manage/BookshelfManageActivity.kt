@@ -2,6 +2,7 @@ package io.legado.app.ui.book.manage
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.CheckBox
@@ -249,15 +250,14 @@ class BookshelfManageActivity :
     private fun upBookData() {
         books?.let { books ->
             val searchKey = searchView.query
-            if (searchKey.isNullOrEmpty()) {
-                adapter.setItems(books)
+            val displayList = if (searchKey.isNullOrEmpty()) {
+                books
             } else {
                 books.filter {
                     it.contains(searchKey.toString())
-                }.let {
-                    adapter.setItems(it)
                 }
             }
+            adapter.setItems(displayList)
         }
     }
 
@@ -283,8 +283,8 @@ class BookshelfManageActivity :
             else -> if (item.groupId == R.id.menu_group) {
                 viewModel.groupName = item.title.toString()
                 upTitle()
-                viewModel.groupId =
-                    appDb.bookGroupDao.getByName(item.title.toString())?.groupId ?: 0
+                val newGroupId = appDb.bookGroupDao.getByName(item.title.toString())?.groupId ?: 0
+                viewModel.groupId = newGroupId
                 upBookDataByGroupId()
             }
         }
@@ -343,26 +343,47 @@ class BookshelfManageActivity :
     }
 
     override fun upGroup(requestCode: Int, groupId: Long) {
+        // viewModel.groupId == -1 表示全部分组视图，不应过滤
+        val isFilterable = viewModel.groupId != -1L && groupId != viewModel.groupId
         when (requestCode) {
-            groupRequestCode -> adapter.selection.let { books ->
-                val array = Array(books.size) {
-                    books[it].copy(group = groupId)
+            groupRequestCode -> adapter.selection.let { selectedBooks ->
+                val array = Array(selectedBooks.size) {
+                    selectedBooks[it].copy(group = groupId)
                 }
                 viewModel.updateBook(*array)
+                val urls = selectedBooks.map { it.bookUrl }.toSet()
+                books = if (isFilterable) {
+                    books?.filter { it.bookUrl !in urls }
+                } else {
+                    books?.map { if (it.bookUrl in urls) it.copy(group = groupId) else it }
+                }
+                adapter.selectAll(false)
+                upBookData()
             }
 
             adapter.groupRequestCode -> {
-                adapter.actionItem?.let {
-                    viewModel.updateBook(it.copy(group = groupId))
+                adapter.actionItem?.let { book ->
+                    viewModel.updateBook(book.copy(group = groupId))
+                    books = if (isFilterable) {
+                        books?.filter { it.bookUrl != book.bookUrl }
+                    } else {
+                        books?.map { if (it.bookUrl == book.bookUrl) it.copy(group = groupId) else it }
+                    }
+                    upBookData()
                 }
             }
 
-            addToGroupRequestCode -> adapter.selection.let { books ->
-                val array = Array(books.size) { index ->
-                    val book = books[index]
+            addToGroupRequestCode -> adapter.selection.let { selectedBooks ->
+                val array = Array(selectedBooks.size) { index ->
+                    val book = selectedBooks[index]
                     book.copy(group = book.group or groupId)
                 }
                 viewModel.updateBook(*array)
+                // 加入分组不改变当前视图，只更新本地数据
+                val selectionUrls = selectedBooks.map { it.bookUrl }.toSet()
+                books = books?.map { if (it.bookUrl in selectionUrls) it.copy(group = it.group or groupId) else it }
+                adapter.selectAll(false)
+                upBookData()
             }
         }
     }

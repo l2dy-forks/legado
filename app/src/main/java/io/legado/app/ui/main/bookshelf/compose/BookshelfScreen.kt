@@ -111,6 +111,7 @@ fun BookshelfScreen(
     selectedGroupId: Long,
     gridColumns: Int, // 0 = list, 3-6 = grid columns
     bookGroupStyle: Int = 0, // 0 = Tab 分组, 1 = 文件布局
+    dataVersion: Long = 0, // 数据版本号，绕开 Book.equals 只比较 bookUrl 的去重拦截
     onGroupSelected: (Long) -> Unit,
     onConfigBookshelf: () -> Unit,
     onBookClick: (Book) -> Unit,
@@ -493,7 +494,7 @@ fun BookshelfScreen(
                             modifier = Modifier.fillMaxSize(),
                         ) { page ->
                             val group = groups[page]
-                            val groupBooks = remember(books, group) {
+                            val groupBooks = remember(books, group, dataVersion) {
                                 filterBooksForGroup(books, group.groupId, groups)
                             }
                             GroupPageContent(
@@ -647,7 +648,7 @@ internal fun filterBooksForGroup(
     val sumUserGroupIds = allGroups.fold(0L) { acc, g ->
         if (g.groupId > 0) acc or g.groupId else acc
     }
-    return when (groupId) {
+    val result = when (groupId) {
         BookGroup.IdAll -> allBooks
         BookGroup.IdRoot -> allBooks.filter { book ->
             (book.type and BookType.text) != 0 &&
@@ -670,6 +671,7 @@ internal fun filterBooksForGroup(
         }
         else -> allBooks.filter { (it.group and groupId) != 0L }
     }
+    return result
 }
 
 @Composable

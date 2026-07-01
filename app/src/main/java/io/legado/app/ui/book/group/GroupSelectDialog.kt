@@ -1,46 +1,64 @@
 package io.legado.app.ui.book.group
 
-import android.content.Context
+import android.app.Dialog
+import android.graphics.Color
 import android.os.Bundle
-import android.view.MenuItem
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.Toolbar
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import android.view.WindowManager
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+
+import androidx.fragment.app.DialogFragment
 import io.legado.app.R
-import io.legado.app.base.BaseDialogFragment
-import io.legado.app.base.adapter.ItemViewHolder
-import io.legado.app.base.adapter.RecyclerAdapter
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.BookGroup
-import io.legado.app.databinding.DialogBookGroupPickerBinding
-import io.legado.app.databinding.ItemGroupSelectBinding
-import io.legado.app.lib.theme.accentColor
-import io.legado.app.lib.theme.backgroundColor
-import io.legado.app.lib.theme.primaryColor
-import io.legado.app.ui.widget.recycler.ItemTouchCallback
-import io.legado.app.ui.widget.recycler.VerticalDivider
-import io.legado.app.constant.AppLog
-import io.legado.app.utils.applyTint
-import io.legado.app.utils.dpToPx
-import io.legado.app.utils.setLayout
+import io.legado.app.ui.common.compose.LegadoTheme
+import io.legado.app.ui.common.compose.legadoPopupBackgroundColor
+import io.legado.app.ui.common.compose.legadoPopupPrimaryTextColor
+import io.legado.app.ui.common.compose.rememberLegadoColorScheme
 import io.legado.app.utils.showDialogFragment
-import io.legado.app.utils.viewbindingdelegate.viewBinding
-import io.legado.app.utils.windowSize
-import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.launch
-import splitties.systemservices.windowManager
 
 
-class GroupSelectDialog() : BaseDialogFragment(R.layout.dialog_book_group_picker),
-    Toolbar.OnMenuItemClickListener {
+class GroupSelectDialog() : DialogFragment() {
 
     constructor(groupId: Long, requestCode: Int = -1) : this() {
         arguments = Bundle().apply {
@@ -49,153 +67,179 @@ class GroupSelectDialog() : BaseDialogFragment(R.layout.dialog_book_group_picker
         }
     }
 
-    private val binding by viewBinding(DialogBookGroupPickerBinding::bind)
     private var requestCode: Int = -1
-    private val viewModel: GroupViewModel by viewModels()
-    private val adapter by lazy { GroupAdapter(requireContext()) }
-    private val callBack get() = (activity as? CallBack)
     private var groupId: Long = 0
+    private val callBack get() = (activity as? CallBack)
 
-    override fun onStart() {
-        super.onStart()
-        setLayout(0.9f, ViewGroup.LayoutParams.WRAP_CONTENT)
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val dialog = object : Dialog(
+            requireContext(),
+            android.R.style.Theme_Translucent_NoTitleBar_Fullscreen
+        ) {}
+        dialog.window?.apply {
+            clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+            addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+            addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+            statusBarColor = Color.TRANSPARENT
+        }
+        return dialog
     }
 
-    override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) {
-        binding.toolBar.setBackgroundColor(primaryColor)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         arguments?.let {
             groupId = it.getLong("groupId")
             requestCode = it.getInt("requestCode", -1)
         }
-        initView()
-        initData()
-    }
-
-    private fun initView() {
-        binding.toolBar.title = getString(R.string.group_select)
-        binding.toolBar.inflateMenu(R.menu.book_group_manage)
-        binding.toolBar.menu.applyTint(requireContext())
-        binding.toolBar.setOnMenuItemClickListener(this)
-        binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        binding.recyclerView.addItemDecoration(VerticalDivider(requireContext()))
-        binding.recyclerView.adapter = adapter
-        val itemTouchCallback = ItemTouchCallback(adapter)
-        itemTouchCallback.isCanDrag = true
-        ItemTouchHelper(itemTouchCallback).attachToRecyclerView(binding.recyclerView)
-        binding.tvCancel.setOnClickListener {
-            dismissAllowingStateLoss()
-        }
-        binding.tvOk.setTextColor(requireContext().accentColor)
-        binding.tvOk.setOnClickListener {
-            callBack?.upGroup(requestCode, groupId)
-            dismissAllowingStateLoss()
-        }
-    }
-
-    private fun initData() {
-        lifecycleScope.launch {
-            appDb.bookGroupDao.flowSelect()
-                .catch {
-                    AppLog.put("分组选择弹窗获取分组数据失败\n${it.localizedMessage}", it)
-                }
-                .flowOn(IO)
-                .conflate()
-                .collect {
-                    adapter.setItems(it)
-                    adjustDialogHeight(it.size)
-                }
-        }
-    }
-
-    /**
-     * 根据分组数量动态调整弹窗高度。
-     * 内容少时缩小，内容多时最大不超过屏幕 90%。
-     */
-    private fun adjustDialogHeight(groupCount: Int) {
-        val view = view ?: return
-        view.post {
-            val screenSize = windowManager.windowSize
-            val maxHeight = (screenSize.heightPixels * 0.9f).toInt()
-            val dialogWidth = (screenSize.widthPixels * 0.9f).toInt()
-            // 估算内容高度: toolbar + 按钮区 + 分组项 × 项高
-            val toolbarHeight = binding.toolBar.height
-            val buttonBarHeight = 48.dpToPx()
-            val itemHeight = 48.dpToPx()
-            val contentHeight = toolbarHeight + buttonBarHeight + groupCount * itemHeight
-            val targetHeight = contentHeight.coerceAtMost(maxHeight)
-            dialog?.window?.setLayout(dialogWidth, targetHeight)
-        }
-    }
-
-    override fun onMenuItemClick(item: MenuItem?): Boolean {
-        when (item?.itemId) {
-            R.id.menu_add -> showDialogFragment(
-                GroupEditDialog()
-            )
-        }
-        return true
-    }
-
-    private inner class GroupAdapter(context: Context) :
-        RecyclerAdapter<BookGroup, ItemGroupSelectBinding>(context),
-        ItemTouchCallback.Callback {
-
-        private var isMoved: Boolean = false
-
-        override fun getViewBinding(parent: ViewGroup): ItemGroupSelectBinding {
-            return ItemGroupSelectBinding.inflate(inflater, parent, false)
-        }
-
-        override fun convert(
-            holder: ItemViewHolder,
-            binding: ItemGroupSelectBinding,
-            item: BookGroup,
-            payloads: MutableList<Any>
-        ) {
-            binding.run {
-                root.setBackgroundColor(context.backgroundColor)
-                cbGroup.text = item.groupName
-                cbGroup.isChecked = (groupId and item.groupId) > 0
-            }
-        }
-
-        override fun registerListener(holder: ItemViewHolder, binding: ItemGroupSelectBinding) {
-            binding.run {
-                cbGroup.setOnUserCheckedChangeListener { isChecked ->
-                    getItem(holder.layoutPosition)?.let {
-                        groupId = if (isChecked) {
-                            groupId + it.groupId
-                        } else {
-                            groupId - it.groupId
-                        }
-                    }
-                }
-                tvEdit.setOnClickListener {
-                    showDialogFragment(
-                        GroupEditDialog(getItem(holder.layoutPosition))
+        return ComposeView(requireContext()).apply {
+            setContent {
+                LegadoTheme {
+                    GroupSelectDialogContent(
+                        initialGroupId = groupId,
+                        onDismiss = { dismissAllowingStateLoss() },
+                        onConfirm = { selectedGroupId ->
+                            callBack?.upGroup(requestCode, selectedGroupId)
+                            dismissAllowingStateLoss()
+                        },
+                        onAddGroup = {
+                            showDialogFragment(GroupEditDialog())
+                        },
                     )
                 }
             }
-        }
-
-        override fun swap(srcPosition: Int, targetPosition: Int): Boolean {
-            swapItem(srcPosition, targetPosition)
-            isMoved = true
-            return true
-        }
-
-        override fun onClearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
-            if (isMoved) {
-                for ((index, item) in getItems().withIndex()) {
-                    item.order = index + 1
-                }
-                viewModel.upGroup(*getItems().toTypedArray())
-            }
-            isMoved = false
         }
     }
 
     interface CallBack {
         fun upGroup(requestCode: Int, groupId: Long)
+    }
+}
+
+@Composable
+private fun GroupSelectDialogContent(
+    initialGroupId: Long,
+    onDismiss: () -> Unit,
+    onConfirm: (Long) -> Unit,
+    onAddGroup: () -> Unit,
+) {
+    var groups by remember { mutableStateOf<List<BookGroup>>(emptyList()) }
+    var selectedGroupId by remember { mutableLongStateOf(initialGroupId) }
+    val colorScheme = rememberLegadoColorScheme()
+    val popupBg = legadoPopupBackgroundColor()
+    val popupTextColor = legadoPopupPrimaryTextColor()
+
+    LaunchedEffect(Unit) {
+        appDb.bookGroupDao.flowSelect()
+            .catch { /* ignore */ }
+            .flowOn(Dispatchers.IO)
+            .conflate()
+            .collect { groups = it }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = popupBg,
+            tonalElevation = 6.dp,
+            shadowElevation = 6.dp,
+        ) {
+            Column {
+                // 标题栏：primaryColor 背景，对应旧版 Toolbar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                        .background(colorScheme.primary)
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.group_select),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(onClick = onAddGroup) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_add),
+                            contentDescription = stringResource(R.string.add_group),
+                            tint = colorScheme.onPrimary,
+                        )
+                    }
+                }
+
+                // 内容区域
+                Column(modifier = Modifier.padding(24.dp)
+
+                ) {
+                    // 分组列表
+                    if (groups.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.empty),
+                            color = popupTextColor.copy(alpha = 0.6f),
+                            modifier = Modifier.padding(vertical = 8.dp),
+                        )
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 320.dp)
+                                .verticalScroll(rememberScrollState()),
+                        ) {
+                            groups.forEach { group ->
+                                val isSelected = (selectedGroupId and group.groupId) != 0L
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Checkbox(
+                                        checked = isSelected,
+                                        onCheckedChange = { checked ->
+                                            selectedGroupId = if (checked) {
+                                                selectedGroupId + group.groupId
+                                            } else {
+                                                selectedGroupId - group.groupId
+                                            }
+                                        },
+                                    )
+                                    Text(
+                                        text = group.groupName,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = popupTextColor,
+                                        modifier = Modifier.padding(start = 8.dp),
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    // 取消 / 确定按钮
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Spacer(Modifier.weight(1f))
+                        TextButton(onClick = onDismiss) {
+                            Text(stringResource(R.string.cancel), color = popupTextColor)
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = { onConfirm(selectedGroupId) }) {
+                            Text(stringResource(R.string.ok), color = colorScheme.primary)
+                        }
+                    }
+                }
+            }
+        }
     }
 }

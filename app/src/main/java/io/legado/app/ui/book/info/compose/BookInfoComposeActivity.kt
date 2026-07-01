@@ -3,6 +3,7 @@ package io.legado.app.ui.book.info.compose
 import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.content.Intent
+
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
@@ -561,7 +562,7 @@ class BookInfoComposeActivity :
     }
 
     override fun upGroup(requestCode: Int, groupId: Long) {
-        viewModel.getBook()?.let { book ->
+        viewModel.bookData.value?.let { book ->
             book.group = groupId
             if (viewModel.inBookshelf) {
                 viewModel.saveBook(book)

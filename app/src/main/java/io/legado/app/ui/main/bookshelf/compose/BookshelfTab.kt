@@ -1,6 +1,7 @@
 package io.legado.app.ui.main.bookshelf.compose
 
 import android.content.Intent
+
 import android.view.LayoutInflater
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
@@ -103,7 +104,7 @@ fun BookshelfTab(
     val groups: List<BookGroup> = shelfData.groups
 
     // ---- 排序 ----
-    val sortedBooks = remember(books, sortVersion) {
+    val sortedBooks = remember(shelfData.version, sortVersion) {
         when (AppConfig.bookshelfSort) {
             0 -> books.sortedByDescending { it.durChapterTime }
             1 -> books.sortedByDescending { it.latestChapterTime }
@@ -181,6 +182,7 @@ fun BookshelfTab(
         selectedGroupId = selectedGroupId,
         gridColumns = gridColumns,
         bookGroupStyle = bookGroupStyle,
+        dataVersion = shelfData.version,
         onGroupSelected = { selectedGroupId = it },
         onConfigBookshelf = {
             val layoutInflater = LayoutInflater.from(context)
